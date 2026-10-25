@@ -1,0 +1,10 @@
+# Sandbox image used for reproduction attempts. Runs with --network none.
+FROM debian:trixie-slim
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+      build-essential clang libclang-rt-dev gdb valgrind autoconf automake libtool pkg-config cmake make git \
+      libssl-dev zlib1g-dev libpsl-dev libnghttp2-dev libbrotli-dev libzstd-dev \
+      python3 python3-pip python3-venv netcat-openbsd procps file ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+RUN useradd -m -u 1000 runner
+USER runner
+WORKDIR /work

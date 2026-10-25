@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SlopProof</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <span class="logo">◆</span>
+    <div>
+      <h1>SlopProof</h1>
+      <p>Proof, not vibes, for vulnerability reports.</p>
+    </div>
+  </div>
+  <nav>
+    <button class="tab active" data-tab="triage">Triage a report</button>
+    <button class="tab" data-tab="bench">Benchmark</button>
+    <button class="tab" data-tab="how">How it works</button>
+  </nav>
+</header>
+
+<main>
+  <!-- TRIAGE -->
+  <section id="tab-triage" class="panel active">
+    <div class="intro">
+      <p>Maintainers now get AI-written security reports faster than they can read them. Most are invented;
+      some are real. Style tells you nothing. SlopProof checks every claim against the real source code,
+      checks every reference on the live web, then tries to <b>reproduce the bug in a sandbox</b>.</p>
+    </div>
+    <form id="form" class="card">
+      <label>Report URL <span class="muted">(HackerOne report or GitHub issue)</span></label>
+      <div class="row">
+        <input id="url" type="url" placeholder="https://hackerone.com/reports/2298307">
+      </div>
+      <details id="paste">
+        <summary>…or paste report text</summary>
+        <input id="repo" type="url" placeholder="GitHub repo, e.g. https://github.com/curl/curl">
+        <input id="ptitle" placeholder="Report title">
+        <textarea id="text" rows="8" placeholder="Paste the report body"></textarea>
+      </details>
+      <div class="row between">
+        <label class="check"><input id="sandbox" type="checkbox" checked> Reproduce in sandbox <span class="muted">(Docker, about 5 min)</span></label>
+        <button id="go" type="submit">Triage</button>
+      </div>
+      <div class="examples">Try:
+        <a data-url="https://hackerone.com/reports/2298307">WebSocket "strcpy overflow"</a>
+        <a data-url="https://hackerone.com/reports/3117697">cookie "double free"</a>
+        <a data-url="https://hackerone.com/reports/2187833">SOCKS5 heap overflow (real CVE)</a>
+      </div>
+      <p id="formerr" class="err"></p>
+    </form>
+
+    <div id="live" hidden>
+      <div class="card report">
+        <div class="kicker">Report</div>
+        <h2 id="r-title"></h2>
+        <div class="muted" id="r-meta"></div>
+        <details><summary>Show report text</summary><pre id="r-body"></pre></details>
+      </div>
+
+      <ol class="stages" id="stages"></ol>
+
+      <div id="verdict" class="card verdict" hidden></div>
+    </div>
+  </section>
+
+  <!-- BENCH -->
+  <section id="tab-bench" class="panel">
+    <div class="intro">
+      <p>We replayed every public curl HackerOne report we could find: the <b>AI slop reports</b> curl's maintainer
+      collected, and the reports that became <b>real CVEs</b>. Each is judged as of the day it was filed:
+      source tree from that day, and web evidence published before it.</p>
+    </div>
+    <div id="bench-head" class="stats"></div>
+    <div class="card">
+      <div class="row between">
+        <div class="filters">
+          <button class="chip active" data-f="all">All</button>
+          <button class="chip" data-f="slop">Slop</button>
+          <button class="chip" data-f="real">Real CVEs</button>
+        </div>
+        <span class="muted" id="bench-count"></span>
+      </div>
+      <table class="bench">
+        <thead><tr><th>Report</th><th>Ground truth</th><th>SlopProof verdict</th><th>Cost</th></tr></thead>
+        <tbody id="bench-rows"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="tab-how" class="panel">
+    <div class="card how">
+      <h2>Pipeline</h2>
+      <ol class="pipeline">
+        <li><b>Extract claims</b> <span class="model">Nemotron 3.5 Lightning</span>
+          Files, functions, line numbers, quoted code, CVEs, URLs, attack surface.</li>
+        <li><b>Check the code</b> <span class="model">git + fuzzy match</span>
+          The tree at the commit the reporter saw. Do the files and functions exist? Is the quoted code real or invented?</li>
+        <li><b>Check the references</b> <span class="model">Tavily search + extract · Nemotron 3 Super</span>
+          Does each cited CVE exist and match? Do cited pages say what the report says? Is this a known, fixed or documented issue?</li>
+        <li><b>Static analysis</b> <span class="model">Nemotron 3 Ultra</span>
+          Reads the real code and traces sizes, bounds and ownership to decide if the claimed condition can happen.</li>
+        <li><b>Reproduce</b> <span class="model">Nemotron 3 Ultra agent · Docker sandbox</span>
+          Builds the project with AddressSanitizer, writes a PoC through the real attack surface, runs it with no network.</li>
+        <li><b>Verdict</b> <span class="model">Nemotron 3 Ultra</span>
+          CONFIRMED only with a sandbox reproduction. Closes a report only with specific contradicting evidence.</li>
+      </ol>
+      <h2>Rules we hold ourselves to</h2>
+      <ul>
+        <li>Writing style is never evidence. Many real 2026 curl CVEs were found with AI tools.</li>
+        <li>Closing a real vulnerability is far worse than wasting a maintainer's minute, so doubt means PLAUSIBLE.</li>
+        <li>A PoC that is itself buggy proves nothing about the project.</li>
+      </ul>
+    </div>
+  </section>
+</main>
+
+<footer>Runs on NVIDIA Nemotron via Nebius Token Factory · web evidence by Tavily · MIT licensed</footer>
+<script src="/static/app.js"></script>
+</body>
+</html>
