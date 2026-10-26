@@ -9,11 +9,23 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from dotenv import load_dotenv
-from openai import OpenAI
+from openai import NotFoundError, OpenAI
 
 load_dotenv(Path(__file__).resolve().parents[2] / ".env")
 
 BASE_URL = os.environ.get("NEBIUS_BASE_URL", "https://api.tokenfactory.nebius.com/v1/")
+
+# Nebius Token Factory is the default and what the hosted demo uses. SLOPPROOF_PROVIDER=openrouter serves the same
+# Nemotron models through OpenRouter, for development when Token Factory credit runs out. Every result records
+# which provider produced it.
+PROVIDER = os.environ.get("SLOPPROOF_PROVIDER", "nebius")
+OPENROUTER_IDS = {
+    "nvidia/Nemotron-3_5-Lightning": "nvidia/nemotron-3.5-lightning",
+    "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B": "nvidia/nemotron-3-nano-30b-a3b",
+    "nvidia/nemotron-3-super-120b-a12b": "nvidia/nemotron-3-super-120b-a12b",
+    "nvidia/Nemotron-3.5-Super-VL": "nvidia/nemotron-3.5-super-vl",
+    "nvidia/Nemotron-3-Ultra-550b-a55b": "nvidia/nemotron-3-ultra-550b-a55b",
+}
 
 # Three tiers. Fast model reads and extracts, the mid model audits, the big model reasons and reproduces.
 MODELS = {
@@ -55,7 +67,8 @@ class Ledger:
             m["in"] += c["in"]
             m["out"] += c["out"]
             m["usd"] += c["usd"]
-        return {"total_usd": round(sum(c["usd"] for c in self.calls), 5), "by_model": by_model}
+        # USD is always estimated at Token Factory list prices, so runs on either provider compare directly.
+        return {"total_usd": round(sum(c["usd"] for c in self.calls), 5), "by_model": by_model, "provider": PROVIDER}
 
 
 _client: OpenAI | None = None
@@ -64,16 +77,42 @@ _client: OpenAI | None = None
 def client() -> OpenAI:
     global _client
     if _client is None:
-        _client = OpenAI(api_key=os.environ["NEBIUS_API_KEY"], base_url=BASE_URL, timeout=180, max_retries=3)
+        if PROVIDER == "openrouter":
+            _client = OpenAI(api_key=os.environ["OPENROUTER_API_KEY"], base_url="https://openrouter.ai/api/v1",
+                             timeout=300, max_retries=5)
+        else:
+            _client = OpenAI(api_key=os.environ["NEBIUS_API_KEY"], base_url=BASE_URL, timeout=180, max_retries=3)
     return _client
+
+
+def _route(model: str, kw: dict) -> tuple[str, dict]:
+    """Translate a Token Factory request for OpenRouter: model id, and thinking on/off as its reasoning flag."""
+    if PROVIDER != "openrouter":
+        return model, kw
+    rid = OPENROUTER_IDS.get(model, model.lower())
+    if os.environ.get("SLOPPROOF_OPENROUTER_FREE", "1") == "1":
+        rid += ":free"
+    extra = dict(kw.pop("extra_body", None) or {})
+    thinking = (extra.pop("chat_template_kwargs", None) or {}).get("enable_thinking", True)
+    extra["reasoning"] = {"enabled": bool(thinking)}
+    return rid, {**kw, "extra_body": extra}
 
 
 def chat(tier: str, messages: list[dict], ledger: Ledger, purpose: str, **kw):
     """One chat completion on the given tier. Returns the message object."""
-    model = MODELS[tier]
+    model, kw = _route(MODELS[tier], kw)
     t0 = time.time()
-    resp = client().chat.completions.create(model=model, messages=messages, **kw)
-    ledger.add(model, purpose, resp.usage, time.time() - t0)
+    try:
+        resp = client().chat.completions.create(model=model, messages=messages, **kw)
+    except NotFoundError:
+        if not model.endswith(":free"):
+            raise
+        # A free OpenRouter endpoint can be missing for a model; the paid one serves the same weights.
+        model = model.removesuffix(":free")
+        resp = client().chat.completions.create(model=model, messages=messages, **kw)
+    ledger.add(MODELS[tier], purpose, resp.usage, time.time() - t0)
+    if not resp.choices:
+        raise ValueError(f"{purpose}: empty response from {model}")
     return resp.choices[0].message
 
 

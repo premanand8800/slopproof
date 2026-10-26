@@ -34,7 +34,8 @@ def run_one(row: dict, sandbox: bool) -> dict:
             "verdict": res["verdict"].get("verdict"), "priority": res["verdict"].get("priority"),
             "confidence": res["verdict"].get("confidence"),
             "headline": res["verdict"].get("headline"), "repro_outcome": repro.get("outcome"),
-            "usd": res["cost"]["total_usd"], "seconds": res["seconds"], "full": res}
+            "usd": res["cost"]["total_usd"], "seconds": res["seconds"], "provider": res["cost"].get("provider", "nebius"),
+            "full": res}
 
 
 def main() -> None:
