@@ -24,6 +24,7 @@ build-backend = "uv_build"
 [dependency-groups]
 dev = [
     "playwright>=1.64.1",
+    "pytest>=9.1.1",
 ]
 
 [project.scripts]

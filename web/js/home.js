@@ -14,9 +14,10 @@ ROUTES.home = async () => {
         <div class="term-line" aria-hidden="true"><span class="prompt">C:\\&gt;</span><span id="h-kicker"></span></div>
         <h1 class="typed" style="margin-top:10px" aria-label="Slop is cheap to write. Proof is cheap to check.">
           <span id="h-l1" aria-hidden="true"></span><br><span id="h-l2" aria-hidden="true"></span></h1>
-        <p class="lead">SlopProof checks every claim in a security report against the project's real code on the day it was
-        filed, checks every reference on the web, and tries to reproduce the bug in a locked-down sandbox. Every verdict
-        comes with evidence and a reply you can post.</p>
+        <p class="lead"><b>Proof before priority, for every report.</b> SlopProof checks every claim in a security report
+        against the project's real code on the day it was filed, checks every reference on the web, follows the code to
+        where real input enters, and tries to reproduce the bug in a locked-down sandbox. Every verdict comes with evidence
+        and a reply you can post.</p>
       </div>
       <div class="kpis" id="kpis">${[1, 2, 3].map(() => `<div class="kpi"><div class="skeleton" style="width:100%"></div></div>`).join("")}</div>
     </section>

@@ -1,10 +1,12 @@
 # SlopProof
 
-**Proof, not vibes, for vulnerability reports.**
+**Proof before priority, for every vulnerability report.**
 
 SlopProof triages security reports sent to open source projects. It checks every claim against the project's
-real source code and every reference against the live web, then an NVIDIA Nemotron agent tries to **reproduce
-the bug in a locked-down sandbox**. Maintainers get a verdict backed by evidence, plus a reply they can post.
+real source code as of the day the report was filed, checks every reference on the web, follows the code to the
+callers real input comes through, and lets an NVIDIA Nemotron agent try to **reproduce the bug in a locked-down
+sandbox**. A reproduced bug becomes a **proof bundle anyone can re-run with no AI involved**. Maintainers get a
+verdict backed by evidence, plus a reply they can post.
 
 Built for the Nebius x NVIDIA Global AI Hackathon, **Coding and Agentic Engineering** track.
 It runs on **NVIDIA Nemotron models served by Nebius Token Factory**, with **Tavily** for web evidence.
@@ -23,13 +25,26 @@ judges' passcode from the submission).
 | Slop closed or sent to the bottom of the queue | 39 of 49 (80%), vs 16 of 147 real | - |
 | Cost per report | $0.02, median 25 s | $0.0014 |
 
-With the sandbox (8-report sample, about $0.44 and 4 to 8 minutes each), SlopProof **reproduced a real CVE**
-(HackerOne #3735184, a `.netrc` credential leak) and closed 3 of 5 slop reports with a run that exercised the claim.
+With the sandbox (24-report sample, about $0.30 to $0.80 and 4 to 12 minutes each): **9 of 19 slop reports closed
+with a run that exercised the claim, 0 of 5 real ones closed**, and one real CVE (HackerOne #3735184, the `.netrc`
+credential leak, CVE-2026-8926) reproduced and turned into a proof bundle that re-runs as **VERIFIED_AND_FIXED**:
+the bug is present at the reported commit and gone at curl's fix.
 <!-- BENCH:END -->
 
 ## The problem
 
 AI tools made it nearly free to write a convincing vulnerability report. Reviewing one still costs a maintainer hours.
+The problem has two halves, and the second is now the larger one:
+
+1. **Fabricated reports** ("slop"): invented code, impossible bugs. curl ended its bug bounty over them.
+2. **Accurate reports whose impact is unclear.** By spring 2026 the obvious hallucinations had largely given way to
+   a high volume of plausible, well-written reports where the hard part is deciding whether the bug is real,
+   reachable and serious ([The Register, April 2026](https://www.theregister.com/2026/04/06/ai_coding_tools_more_work/)).
+   Three in four maintainers already use AI to vet what comes in
+   ([Linux Foundation survey via Help Net Security, October 2026](https://www.helpnetsecurity.com/2026/10/26/linux-foundation-open-source-ai-slop/)),
+   which makes it matter that the vetting rests on evidence rather than on a model's word.
+
+Both halves need the same answer: proof before priority. Some background on the first:
 
 - curl ended its HackerOne bug bounty in early 2026 after a flood of fabricated AI reports, and its maintainer
   [keeps a public list of them](https://gist.github.com/bagder/07f7581f6e3d78ef37dfbfc81fd1d1cd).
@@ -41,6 +56,16 @@ AI tools made it nearly free to write a convincing vulnerability report. Reviewi
 Detecting AI *style* is the wrong fix. In our own dataset, **62 real curl CVEs reported in 2026 were found with AI
 help**. The right question is not "was this written by AI?" but "is this true?" That question can be answered
 with evidence.
+
+## Example: an accurate report, where the question is reachability
+
+A fluent-bit report, "heap out-of-bounds read in chunked parser on a
+split read" is well written and its code citations are exact. SlopProof confirms the quoted code verbatim, fetches
+`mk_string_search_n` and the function it wraps when the analysis asks for them, and walks the callers up to where
+network input enters. It finds that the search can read one byte past `len`, that `plugins/in_http/http_conn.c`
+NUL-terminates that byte (so it cannot be the `\n` the bug needs on that path), and names the monkey-server and
+HTTP/1 paths that need checking. Verdict: PLAUSIBLE, with the open question stated, at about $0.15 for the static
+path. A text-only screen voted to keep it too; deciding it takes evidence, not wording.
 
 ## Proof bundles: reports that carry their own proof
 
@@ -216,10 +241,18 @@ Tavily is how SlopProof checks the outside world, not decoration:
 - **Prior art**: `search` for the same issue already reported, fixed, or documented as intended behaviour.
 - **Time travel**: `end_date` lets the benchmark judge each report with only the web as it was that day.
 
-## Prior art and how SlopProof differs
+## Related work and how SlopProof differs
+
+The core loop (an AI that reads a report and tries to reproduce it) is not new, and the closest systems show it is
+worth doing. What SlopProof adds is the combination in the open, for any project: claim checks, web checks, caller
+analysis and sandbox reproduction in one pipeline; proof bundles that verify without a model; and a benchmark that
+replays each report as of its filing date and checks whether a baseline's stated reasons are true.
 
 | Tool | What it does | Difference |
 |---|---|---|
+| [HackerOne Hai Triage / Agentic Validation](https://www.hackerone.com/press-release/hackerone-unveils-hai-triage-upgraded-ai-powered-vulnerability-response) (2025) | AI agents assess incoming reports in minutes as likely valid, invalid or needing review; [human analysts confirm outcomes and reproduce findings](https://docs.hackerone.com/en/articles/8837878-how-hai-triage-works) | Commercial and tied to the HackerOne platform; reproduction is done by people. SlopProof is open, runs anywhere, and reproduces in a sandbox |
+| [Elastic's AI triage pipeline](https://www.elastic.co/security-labs/blog/ai-vulnerability-triage-bug-bounty-hackerone) | Analyses HackerOne reports and reproduces them in sandboxed VMs; 85% agreement with engineers on 764 reports, about $2 per report | The closest match. Internal to Elastic and its products, not released. SlopProof is open source, about $0.02 per report for the static path, and publishes a replayable benchmark |
+| [Nikasha](https://pypi.org/project/nikasha/) | Deterministic check of a report's factual claims against the source at the named version, with commit/path/line evidence | Roughly SlopProof's claim-checking step, without web checks, analysis or reproduction |
 | [ProjectDiscovery Neo Triage](https://projectdiscovery.io/triage) | Reproduces incoming findings against a company's live web and cloud assets in a sandbox | Closed, enterprise, web targets. SlopProof builds the project's source as of the report date and tests memory-safety and logic claims in C code |
 | [HackerOne Hai Triage](https://www.hackerone.com/platform/triage) | AI-assisted triage for programs on HackerOne | Platform-bound and paid. curl left HackerOne in 2026; SlopProof runs anywhere, including as a GitHub Action |
 | [Elastic's triage pipeline](https://www.elastic.co/security-labs/blog/ai-vulnerability-triage-bug-bounty-hackerone) | Internal agent for Elastic's bug bounty: 85% agreement with humans, about $2 per report | Internal, not released. SlopProof is open, about $0.02 per report statically, and publishes a replayable benchmark |
@@ -239,6 +272,7 @@ uv sync
 uv run slopproof https://hackerone.com/reports/2298307              # CLI, with sandbox
 uv run slopproof https://hackerone.com/reports/2298307 --no-sandbox # static checks only
 uv run slopproof-web                                                # web app on http://127.0.0.1:8000
+uv run pytest -q                                                    # the rules, tested without any model call
 ```
 
 The CLI also accepts GitHub issue URLs (`https://github.com/<owner>/<repo>/issues/<n>`) and `--repo` for any
