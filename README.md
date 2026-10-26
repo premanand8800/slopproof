@@ -9,6 +9,9 @@ the bug in a locked-down sandbox**. Maintainers get a verdict backed by evidence
 Built for the Nebius x NVIDIA Global AI Hackathon, **Coding and Agentic Engineering** track.
 It runs on **NVIDIA Nemotron models served by Nebius Token Factory**, with **Tavily** for web evidence.
 
+**Live demo: https://slopproof.aether-soft.tech** (recorded runs, plus live static checks; sandbox runs need the
+judges' passcode from the submission).
+
 <!-- BENCH:START -->
 **Results on 196 public curl HackerOne reports, each replayed as of the day it was filed:**
 
@@ -207,7 +210,9 @@ GitHub project. Build recipes are tuned for curl; for other projects the agent r
 
 ### Hosted demo
 
-The public demo is a static Hugging Face Space (`deploy/hf_space.sh`, built by `deploy/build_static.py`): the same
+The live demo runs the full app on a home server behind a Cloudflare tunnel (`deploy/update_live.sh`): static checks
+for anyone (40 a day), sandbox runs behind a passcode, since they execute model-written code on the host.
+A backup is a static Hugging Face Space (`deploy/hf_space.sh`, built by `deploy/build_static.py`): the same
 UI replaying every recorded benchmark run, with no keys and no running cost, so it stays up through judging.
 Triaging a new report needs your own Token Factory and Tavily keys: run it locally as above, or deploy the full app
 anywhere that runs a container (`docker build .`, port 7860).
