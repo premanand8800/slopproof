@@ -21,8 +21,9 @@ cd "$out/space"
 find . -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
 cd - >/dev/null
 
-# Only what the image needs. Screenshots stay on GitHub: the Hub rejects binaries outside LFS.
-cp -r Dockerfile pyproject.toml uv.lock LICENSE src web bench "$out/space/"
+# Only what the image needs, from the last commit (never half-written benchmark files from a running job).
+# Screenshots stay on GitHub: the Hub rejects binaries outside LFS.
+git archive HEAD Dockerfile pyproject.toml uv.lock LICENSE src web bench | tar -x -C "$out/space"
 {
   cat <<'EOF'
 ---
@@ -37,7 +38,7 @@ short_description: Proof, not vibes, for vulnerability reports
 ---
 
 EOF
-  cat README.md
+  git show HEAD:README.md
 } > "$out/space/README.md"
 
 cd "$out/space"
