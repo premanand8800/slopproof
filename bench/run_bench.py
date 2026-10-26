@@ -45,9 +45,10 @@ def main() -> None:
     ap.add_argument("--workers", type=int, default=4)
     ap.add_argument("--score", action="store_true")
     ap.add_argument("--dataset", default="dataset", help="dataset name in bench/, e.g. holdout")
+    ap.add_argument("--tag", default="", help="suffix for the results file, e.g. v2 -> results_static_v2.jsonl")
     a = ap.parse_args()
     prefix = "" if a.dataset == "dataset" else f"{a.dataset}_"
-    out = ROOT / f"results_{prefix}{a.mode}.jsonl"
+    out = ROOT / f"results_{prefix}{a.mode}{'_' + a.tag if a.tag else ''}.jsonl"
     if a.score:
         print(json.dumps(score([{k: v for k, v in r.items() if k != "full"} for r in load(out)]), indent=1))
         return
