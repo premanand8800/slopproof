@@ -12,6 +12,7 @@ from .analyze import analyze
 from .extract import extract_claims
 from .llm import MODELS, Ledger
 from .reproduce import reproduce
+from .scope import check_scope
 from .screen import screen
 from .verdict import decide
 
@@ -78,6 +79,13 @@ def triage(title: str, body: str, repo_url: str, created_at: str | None = None,
     context = codecheck.code_context(tree, code, found)
     analysis = analyze(title, body, claims, context, ledger)
     emit({"stage": "analysis", "analysis": analysis})
+    # The project's written policy, quoted for the maintainer. Shown only: in our benchmark curl issued CVEs for
+    # a few reports its own policy lists as not security issues, so it never decides a verdict.
+    try:
+        policy = check_scope(tree, title, claims.get("summary", ""), analysis, ledger)
+    except Exception as e:  # noqa: BLE001 - informative only
+        policy = {"scope": "unclear", "reason": f"policy check failed: {str(e)[:200]}"}
+    emit({"stage": "scope", "scope": policy})
 
     repro = None
     if run_sandbox:
@@ -90,7 +98,7 @@ def triage(title: str, body: str, repo_url: str, created_at: str | None = None,
     # The screen's vote is kept out of the evidence so the verdict model stays an independent second vote.
     verdict = apply_guards(decide(title, body, evidence, ledger), analysis, repro, web, text_screen)
     result = {"title": title, "project": project, "ref": ref, "claims": claims, "code": code, "web": web,
-              "screen": text_screen, "search": found,
+              "screen": text_screen, "search": found, "scope": policy,
               "analysis": analysis, "reproduction": repro, "verdict": verdict, "cost": ledger.summary(), "ledger": ledger.calls,
               "seconds": round(time.time() - t0, 1)}
     emit({"stage": "verdict", "verdict": verdict, "cost": result["cost"], "seconds": result["seconds"]})

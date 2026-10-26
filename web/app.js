@@ -133,6 +133,16 @@ function handle(ev) {
         <div class="sub muted">${ev.found[0].backfilled ? "Computed after this stored run: its static analysis did not see these." : "These functions go to the static analysis along with any code the report cites."}</div>`
         : `<div class="muted">No C functions indexed for this project.</div>`);
       break;
+    case "scope": {
+      const sc = ev.scope;
+      if (!sc) break;
+      const label = { out_of_scope: "Project policy lists this kind of issue as not a security issue",
+        in_scope: "Project policy: in scope", unclear: "Project policy: unclear" }[sc.scope] || "Project policy";
+      $("#st-analysis .body").insertAdjacentHTML("beforeend", `<div class="facts">${fact(sc.scope === "out_of_scope" ? "meh" : "good",
+        `<b>${label}</b>${sc.section ? ` (${esc(sc.section)})` : ""}`,
+        `${sc.quote ? `“${esc(sc.quote)}” — ${esc(sc.policy_file || "")}<br>` : ""}${esc(sc.reason || "")}<br><span class="muted">Shown for the maintainer; never decides the verdict.</span>`)}</div>`);
+      break;
+    }
     case "screen": {
       const sc = ev.screen;
       setStage("screen", "done", `<div class="facts">${fact(sc.close ? "bad" : "good",
@@ -271,6 +281,7 @@ function replay(res) {
   if (res.screen) handle({ stage: "screen", screen: res.screen });
   else setStage("screen", "done", `<div class="muted">Not stored for this run.</div>`);
   if (res.analysis) handle({ stage: "analysis", analysis: res.analysis });
+  if (res.scope) handle({ stage: "scope", scope: res.scope });
   if (res.reproduction) {
     handle({ stage: "reproduce", type: "begin" });
     for (const t of res.reproduction.transcript || []) {

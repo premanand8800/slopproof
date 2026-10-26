@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from dotenv import load_dotenv
-from openai import NotFoundError, OpenAI
+from openai import NotFoundError, OpenAI, RateLimitError
 
 load_dotenv(Path(__file__).resolve().parents[2] / ".env")
 
@@ -98,18 +98,29 @@ def _route(model: str, kw: dict) -> tuple[str, dict]:
     return rid, {**kw, "extra_body": extra}
 
 
+def _create(model: str, messages: list[dict], kw: dict):
+    """One completion, waiting out per-minute rate limits (free endpoints allow about 20 requests a minute)."""
+    for attempt in range(12):
+        try:
+            return client().chat.completions.create(model=model, messages=messages, **kw)
+        except RateLimitError:
+            if attempt == 11:
+                raise
+            time.sleep(10 + 5 * attempt)
+
+
 def chat(tier: str, messages: list[dict], ledger: Ledger, purpose: str, **kw):
     """One chat completion on the given tier. Returns the message object."""
     model, kw = _route(MODELS[tier], kw)
     t0 = time.time()
     try:
-        resp = client().chat.completions.create(model=model, messages=messages, **kw)
+        resp = _create(model, messages, kw)
     except NotFoundError:
         if not model.endswith(":free"):
             raise
         # A free OpenRouter endpoint can be missing for a model; the paid one serves the same weights.
         model = model.removesuffix(":free")
-        resp = client().chat.completions.create(model=model, messages=messages, **kw)
+        resp = _create(model, messages, kw)
     ledger.add(MODELS[tier], purpose, resp.usage, time.time() - t0)
     if not resp.choices:
         raise ValueError(f"{purpose}: empty response from {model}")
