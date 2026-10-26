@@ -122,10 +122,23 @@ def start(req: TriageRequest):
             jobs[job_id]["result"] = res
             emit({"stage": "done"})
         except Exception as e:
-            emit({"stage": "error", "message": str(e)[:500]})
+            emit({"stage": "error", "message": friendly_error(e)})
 
     threading.Thread(target=work, daemon=True).start()
     return {"job": job_id}
+
+
+def friendly_error(e: Exception) -> str:
+    """Say what went wrong in words a visitor can act on; keep the raw text in the server log."""
+    text = str(e)
+    print(f"run failed: {text[:2000]}", flush=True)
+    if "per-day" in text:
+        return "The free model quota for today is used up. It resets at 00:00 UTC; try again then."
+    if "429" in text or "Rate limit" in text:
+        return "The model provider is rate limiting us right now. Wait a minute and try again."
+    if "402" in text or "credits" in text.lower() or "limit" in text.lower() and "key" in text.lower():
+        return "The model provider's spending limit for this demo was reached. Try again later."
+    return f"The run failed: {text[:300]}"
 
 
 EXAMPLES = ROOT / "examples" / "bundles"
