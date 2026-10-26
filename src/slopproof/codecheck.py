@@ -338,7 +338,11 @@ def check_code(tree: Path, claims: dict, bare: Path | None = None, sha: str | No
                 m = g
         verdict = "verbatim" if m["score"] >= 90 else "paraphrased" if m["score"] >= 70 else "not_in_codebase"
         lf = lines_found(code, index)
-        if verdict != "verbatim" and lf["total"] >= 3 and lf["found"] >= 0.8 * lf["total"]:
+        if verdict != "verbatim" and lf["total"] and lf["found"] == lf["total"]:
+            # Every line is real once the reporter's own comments (// <-- vulnerable) are set aside.
+            verdict = "verbatim"
+            lf["note"] = "every line matches once the reporter's comments are removed"
+        elif verdict != "verbatim" and lf["total"] >= 3 and lf["found"] >= 0.8 * lf["total"]:
             # Nearly every line is real code; the quote was stitched together or had lines left out.
             verdict = "paraphrased"
             if lf["main_location"]:

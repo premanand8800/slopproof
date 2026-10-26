@@ -17,7 +17,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from .benchscore import score
-from .pipeline import fetch_report, triage
+from .pipeline import fetch_report, resume_from_events, triage
 
 ROOT = Path(__file__).resolve().parents[2]
 WEB = ROOT / "web"
@@ -102,6 +102,10 @@ def start(req: TriageRequest):
         repo = req.repo
     if not repo:
         raise HTTPException(400, "Could not infer the repository. Add the GitHub repo URL.")
+    return {"job": launch(rep, repo, bool(req.sandbox and SANDBOX_ENABLED), req.url)}
+
+
+def _count_run() -> None:
     with _lock:
         day = time.strftime("%Y-%m-%d")
         if _runs_today["day"] != day:
@@ -110,22 +114,59 @@ def start(req: TriageRequest):
             raise HTTPException(429, "The public demo hit today's budget. Browse the recorded runs, or run SlopProof locally.")
         _runs_today["n"] += 1
 
-    job_id, emit = new_job("triage", {"title": rep["title"], "url": req.url, "repo": repo,
-                                      "sandbox": bool(req.sandbox and SANDBOX_ENABLED)})
+
+def launch(rep: dict, repo: str, sandbox: bool, url: str | None, resume: dict | None = None,
+           retry_of: str | None = None) -> str:
+    _count_run()
+    job_id, emit = new_job("triage", {"title": rep["title"], "url": url, "repo": repo, "sandbox": sandbox,
+                                      "created_at": rep.get("created_at"), "retry_of": retry_of,
+                                      "resumed_steps": sorted(resume or {})})
 
     def work() -> None:
         try:
             emit({"stage": "report", "title": rep["title"], "body": rep["body"][:20000], "repo": repo,
                   "created_at": rep.get("created_at")})
-            res = triage(rep["title"], rep["body"], repo, rep.get("created_at"),
-                         run_sandbox=req.sandbox and SANDBOX_ENABLED, emit=emit)
+            res = triage(rep["title"], rep["body"], repo, rep.get("created_at"), run_sandbox=sandbox, emit=emit,
+                         resume=resume)
             jobs[job_id]["result"] = res
             emit({"stage": "done"})
         except Exception as e:
             emit({"stage": "error", "message": friendly_error(e)})
 
     threading.Thread(target=work, daemon=True).start()
-    return {"job": job_id}
+    return job_id
+
+
+class RetryRequest(BaseModel):
+    passcode: str | None = None
+    fresh: bool = False
+
+
+@app.post("/api/jobs/{job_id}/retry")
+def retry(job_id: str, req: RetryRequest):
+    """Run a stopped or finished report again. By default the steps that already finished are reused, so a run
+    cut off by a rate limit or a restart continues where it stopped; fresh=true starts over."""
+    saved = list(jobs[job_id]["events"]) if job_id in jobs else []
+    disk = stored_events(job_id) or []
+    if not saved and not disk:
+        raise HTTPException(404, "unknown run")
+    meta = next((e for e in disk if e["stage"] == "meta"), {})
+    events = saved or [e for e in disk if e["stage"] != "meta"]
+    if job_id in jobs and not any(e["stage"] in ("done", "error") for e in events):
+        raise HTTPException(409, "This run is still going.")
+    report = next((e for e in events if e["stage"] == "report"), None)
+    if report:
+        rep, repo = {"title": report["title"], "body": report["body"], "created_at": report.get("created_at")}, report["repo"]
+    elif meta.get("url"):
+        rep = fetch_report(meta["url"])
+        repo = meta.get("repo") or rep["repo"]
+    else:
+        raise HTTPException(400, "This run has no saved report to retry.")
+    sandbox = bool(meta.get("sandbox")) and SANDBOX_ENABLED
+    if sandbox and SANDBOX_KEY and not secrets.compare_digest(req.passcode or "", SANDBOX_KEY):
+        raise HTTPException(403, "This run uses the sandbox: enter the demo passcode to run it again.")
+    resume = {} if req.fresh else resume_from_events(events)
+    return {"job": launch(rep, repo, sandbox, meta.get("url"), resume, retry_of=job_id), "resumed": sorted(resume)}
 
 
 def friendly_error(e: Exception) -> str:

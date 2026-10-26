@@ -34,64 +34,80 @@ def fetch_report(url: str) -> dict:
 
 def triage(title: str, body: str, repo_url: str, created_at: str | None = None,
            run_sandbox: bool = True, emit: Callable[[dict], None] = lambda e: None,
-           replay: bool = False) -> dict:
+           replay: bool = False, resume: dict | None = None) -> dict:
     """Triage one report.
 
     replay=True is for the benchmark: web evidence is limited to pages published before the report,
     so a later CVE write-up cannot leak the answer.
+    resume holds results of an earlier, unfinished run of the same report (as saved in its events); those steps
+    are not run again, which is how a run cut off by a rate limit or a restart continues where it stopped.
     """
     as_of = created_at if replay else None
+    done = resume or {}
     ledger = Ledger()
     t0 = time.time()
     project = "/".join(codecheck.repo_slug(repo_url).split("__"))
-    emit({"stage": "start", "models": MODELS, "project": project})
+    emit({"stage": "start", "models": MODELS, "project": project, "resumed": sorted(done)})
 
-    claims = extract_claims(title, body, ledger)
-    emit({"stage": "claims", "claims": claims})
+    def step(key: str, stage: str, field: str, compute: Callable[[], object]):
+        """Reuse a saved result, or compute it; either way emit it so the run's timeline is complete."""
+        value = done[key] if key in done else compute()
+        emit({"stage": stage, field: value, **({"restored": True} if key in done else {})})
+        return value
 
+    claims = step("claims", "claims", "claims", lambda: extract_claims(title, body, ledger))
     bare = codecheck.ensure_repo(repo_url)
-    ref = codecheck.resolve_ref(bare, claims, created_at)
-    ref["version_tag"] = codecheck.version_tag(bare, claims.get("claimed_version"))
+
+    def resolve():
+        r = codecheck.resolve_ref(bare, claims, created_at)
+        r["version_tag"] = codecheck.version_tag(bare, claims.get("claimed_version"))
+        return r
+    ref = step("ref", "ref", "ref", resolve)
     tree = codecheck.export_tree(bare, ref["sha"])
-    emit({"stage": "ref", "ref": ref})
 
     # Code, reference and prior-art checks and the text screen are independent, so run them together.
     with ThreadPoolExecutor(max_workers=6) as pool:
-        f_screen = pool.submit(screen, title, body, project.split("/")[-1], ledger)
-        f_code = pool.submit(codecheck.check_code, tree, claims, bare, ref["sha"])
-        f_search = pool.submit(codesearch.find_code, bare, ref["sha"], title, body, claims)
-        f_cves = [pool.submit(webcheck.check_cve, c, project, claims.get("summary", ""), ledger, as_of)
-                  for c in claims["cves"][:4]]
-        f_urls = pool.submit(webcheck.check_urls, claims["urls"], claims.get("summary", ""), ledger)
-        f_prior = pool.submit(webcheck.prior_art, project, claims, ledger, as_of)
-        code = f_code.result()
-        emit({"stage": "code", "code": code})
-        web = {"cves": [_settled(f, {"supported": False, "explanation": "CVE check failed"}) for f in f_cves],
-               "urls": _settled(f_urls, []),
-               "prior_art": _settled(f_prior, {"known_issue": False, "already_fixed": False,
-                                               "documented_behaviour": False, "explanation": "prior-art check failed"})}
-        emit({"stage": "web", "web": web})
-        text_screen = _settled(f_screen, {"close": False, "confidence": None, "reason": "screen failed"})
-        emit({"stage": "screen", "screen": text_screen})
+        need = lambda key: key not in done  # noqa: E731
+        f_screen = pool.submit(screen, title, body, project.split("/")[-1], ledger) if need("screen") else None
+        f_code = pool.submit(codecheck.check_code, tree, claims, bare, ref["sha"]) if need("code") else None
+        f_search = pool.submit(codesearch.find_code, bare, ref["sha"], title, body, claims) if need("search") else None
+        if need("web"):
+            f_cves = [pool.submit(webcheck.check_cve, c, project, claims.get("summary", ""), ledger, as_of)
+                      for c in claims["cves"][:4]]
+            f_urls = pool.submit(webcheck.check_urls, claims["urls"], claims.get("summary", ""), ledger)
+            f_prior = pool.submit(webcheck.prior_art, project, claims, ledger, as_of)
+        code = step("code", "code", "code", lambda: f_code.result())
+        web = step("web", "web", "web", lambda: {
+            "cves": [_settled(f, {"supported": False, "explanation": "CVE check failed"}) for f in f_cves],
+            "urls": _settled(f_urls, []),
+            "prior_art": _settled(f_prior, {"known_issue": False, "already_fixed": False,
+                                            "documented_behaviour": False, "explanation": "prior-art check failed"})})
+        text_screen = step("screen", "screen", "screen",
+                           lambda: _settled(f_screen, {"close": False, "confidence": None, "reason": "screen failed"}))
+        found = step("search", "search", "found", lambda: f_search.result())
 
-    found = f_search.result()
-    emit({"stage": "search", "found": found})
     context = codecheck.code_context(tree, code, found)
-    analysis = analyze(title, body, claims, context, ledger)
-    emit({"stage": "analysis", "analysis": analysis})
-    # The project's written policy, quoted for the maintainer. Shown only: in our benchmark curl issued CVEs for
-    # a few reports its own policy lists as not security issues, so it never decides a verdict.
-    try:
-        policy = check_scope(tree, title, claims.get("summary", ""), analysis, ledger)
-    except Exception as e:  # noqa: BLE001 - informative only
-        policy = {"scope": "unclear", "reason": f"policy check failed: {str(e)[:200]}"}
-    emit({"stage": "scope", "scope": policy})
+    analysis = step("analysis", "analysis", "analysis", lambda: analyze(title, body, claims, context, ledger))
 
-    repro = None
-    if run_sandbox:
+    def policy_check():
+        # The project's written policy, quoted for the maintainer. Shown only: in our benchmark curl issued CVEs
+        # for a few reports its own policy lists as not security issues, so it never decides a verdict.
+        try:
+            return check_scope(tree, title, claims.get("summary", ""), analysis, ledger)
+        except Exception as e:  # noqa: BLE001 - informative only
+            return {"scope": "unclear", "reason": f"policy check failed: {str(e)[:200]}"}
+    policy = step("scope", "scope", "scope", policy_check)
+
+    repro = done.get("reproduction")
+    if run_sandbox and repro is None:
         emit({"stage": "reproduce", "type": "begin"})
         repro = reproduce(tree, project, f"{title}\n\n{body}", claims, analysis, context, ledger, emit,
                           repo_url=repo_url, sha=ref["sha"])
+        # Saved apart from the step-by-step events, so a resumed run can reuse it without the transcript.
+        emit({"stage": "checkpoint", "key": "reproduction", "value": {k: v for k, v in repro.items() if k != "transcript"}})
+    elif repro is not None:
+        emit({"stage": "reproduce", "type": "finish", "outcome": repro.get("outcome"), "restored": True,
+              "bundle": (repro.get("bundle_verification") or {}).get("verdict")})
 
     evidence = {"claims": claims, "ref": ref, "code_checks": code, "web_checks": web, "static_analysis": analysis,
                 "reproduction": {k: v for k, v in (repro or {}).items() if k != "transcript"} or "not run"}
@@ -103,6 +119,19 @@ def triage(title: str, body: str, repo_url: str, created_at: str | None = None,
               "seconds": round(time.time() - t0, 1)}
     emit({"stage": "verdict", "verdict": verdict, "cost": result["cost"], "seconds": result["seconds"]})
     return result
+
+
+def resume_from_events(events: list[dict]) -> dict:
+    """The finished steps of an earlier run, read back from its saved events."""
+    fields = {"claims": "claims", "ref": "ref", "code": "code", "web": "web", "screen": "screen",
+              "search": "found", "analysis": "analysis", "scope": "scope"}
+    done = {}
+    for ev in events:
+        if ev.get("stage") in fields and fields[ev["stage"]] in ev:
+            done[ev["stage"]] = ev[fields[ev["stage"]]]
+        if ev.get("stage") == "checkpoint" and ev.get("key") == "reproduction":
+            done["reproduction"] = ev["value"]
+    return done
 
 
 def _settled(future, fallback):

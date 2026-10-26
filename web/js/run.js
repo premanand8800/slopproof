@@ -65,6 +65,7 @@ class Run {
             <div class="clock" id="r-clock">${this.recorded ? "–" : "0:00"}</div>
             <div class="now" id="r-now"></div>
             <dl id="r-facts"></dl>
+            <div id="r-actions"></div>
           </div>
           <div class="card report-card"><div class="kicker">Report</div>
             <div id="r-repo" class="muted" style="font-size:13px;margin-top:6px;word-break:break-all"></div>
@@ -142,6 +143,12 @@ class Run {
         this.now = ev.message;
         break;
     }
+    const restoredStage = { claims: "claims", code: "code", web: "web", screen: "screen", search: "search", analysis: "analysis", scope: "policy", reproduce: "reproduce" }[ev.stage];
+    if (ev.restored && restoredStage) {
+      const x = this.s[restoredStage];
+      x.sum = `${x.sum ? `${x.sum} · ` : ""}reused from the earlier run`;
+      x.start = x.end = null;
+    }
     if (ts) this.lastTs = ts;
     this.advance(ts);
   }
@@ -157,7 +164,45 @@ class Run {
     el.className = `status ${this.status}`;
     el.innerHTML = `${this.status === "running" || this.status === "queued" ? '<span class="pulse"></span>' : ""}${label}`;
     $("#r-now", this.root).textContent = this.now;
+    if (this.status !== this.shownActions) this.renderActions();
     this.tick();
+  }
+
+  // Resume or re-run, for runs on this server (not recorded benchmark runs).
+  async renderActions() {
+    this.shownActions = this.status;
+    const box = $("#r-actions", this.root);
+    if (!box || this.recorded || !this.id || STATIC) return;
+    if (!["error", "interrupted", "done"].includes(this.status)) { box.innerHTML = ""; return; }
+    const health = await loadHealth();
+    const stopped = this.status !== "done";
+    const needPass = this.sandbox && health.sandbox_passcode;
+    const stoppedAt = STAGES.find((st) => this.s[st.id].state === "failed");
+    box.innerHTML = `<div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line)">
+      ${stopped ? `<p style="margin:0 0 10px;font-size:13px">Stopped${stoppedAt ? ` at <b>${esc(stoppedAt.title)}</b>` : ""}. Finished steps are kept, so resuming only runs what is left.</p>` : ""}
+      ${needPass ? `<input id="r-pass" type="password" placeholder="sandbox passcode" style="height:38px;margin-bottom:8px">` : ""}
+      <div class="row wrap">
+        ${stopped ? `<button class="btn small primary" id="r-resume">Resume from where it stopped</button>` : ""}
+        <button class="btn small" id="r-fresh">${stopped ? "Start over" : "Run again"}</button></div>
+      <div class="form-msg err" id="r-retry-msg"></div></div>`;
+    const go = async (fresh) => {
+      const msg = $("#r-retry-msg", box);
+      msg.textContent = "";
+      $$("button", box).forEach((b) => (b.disabled = true));
+      try {
+        const r = await fetch(`/api/jobs/${encodeURIComponent(this.id)}/retry`, { method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ fresh, passcode: needPass ? $("#r-pass", box).value : null }) });
+        const j = await r.json();
+        if (!r.ok) throw new Error(j.detail || "Could not start the run.");
+        rememberRun({ id: j.job, title: $("#r-title", this.root).textContent, ts: Date.now() / 1000 });
+        location.hash = `#/run/${j.job}`;
+      } catch (e) {
+        msg.textContent = e.message;
+        $$("button", box).forEach((b) => (b.disabled = false));
+      }
+    };
+    if ($("#r-resume", box)) $("#r-resume", box).onclick = () => go(false);
+    $("#r-fresh", box).onclick = () => go(true);
   }
 
   renderStage(id) {
@@ -372,6 +417,9 @@ ROUTES.run = async ([id]) => {
   }
   const run = new Run(app, { title: (meta.meta && meta.meta.title) || "Report", sandbox: meta.meta ? meta.meta.sandbox !== false : true });
   run.id = id;
+  if (meta.meta && meta.meta.retry_of) {
+    $("#r-meta", app).insertAdjacentHTML("afterend", `<span>· continues <a href="#/run/${esc(meta.meta.retry_of)}">an earlier run</a>${meta.meta.resumed_steps && meta.meta.resumed_steps.length ? `, reusing ${meta.meta.resumed_steps.length} finished steps` : ""}</span>`);
+  }
   rememberRun({ id, title: (meta.meta && meta.meta.title) || "Report", ts: (meta.meta && meta.meta.ts) || Date.now() / 1000 });
   const es = new EventSource(`/api/jobs/${encodeURIComponent(id)}/events`);
   let finished = false, queued = [], frame = null;
