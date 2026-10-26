@@ -8,6 +8,7 @@ import secrets
 import threading
 import time
 import uuid
+from collections.abc import Callable
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
@@ -30,6 +31,39 @@ SANDBOX_KEY = os.environ.get("SLOPPROOF_SANDBOX_KEY", "")
 
 app = FastAPI(title="SlopProof")
 jobs: dict[str, dict] = {}
+JOBS_DIR = ROOT / ".cache" / "jobs"
+
+
+def new_job(kind: str, meta: dict) -> tuple[str, Callable[[dict], None]]:
+    """A job whose events are kept in memory for streaming and appended to disk, so a page reload or a server
+    restart can show the run again (a run cut off by a restart is reported as interrupted)."""
+    JOBS_DIR.mkdir(parents=True, exist_ok=True)
+    job_id = uuid.uuid4().hex[:12]
+    q: queue.Queue = queue.Queue()
+    jobs[job_id] = {"queue": q, "events": [], "result": None}
+    path = JOBS_DIR / f"{job_id}.jsonl"
+    path.write_text(json.dumps({"stage": "meta", "kind": kind, "ts": time.time(), **meta}, default=str) + "\n")
+    lock = threading.Lock()
+
+    def emit(ev: dict) -> None:
+        ev = {**ev, "ts": round(time.time(), 2)}
+        with lock:
+            jobs[job_id]["events"].append(ev)
+            with path.open("a") as f:
+                f.write(json.dumps(ev, default=str) + "\n")
+        q.put(ev)
+
+    emit({"stage": "queued"})
+    return job_id, emit
+
+
+def stored_events(job_id: str) -> list[dict] | None:
+    if not re.fullmatch(r"[0-9a-f]{12}", job_id):
+        return None
+    path = JOBS_DIR / f"{job_id}.jsonl"
+    if not path.exists():
+        return None
+    return [json.loads(line) for line in path.read_text().splitlines() if line.strip()]
 _runs_today = {"day": "", "n": 0}
 _lock = threading.Lock()
 
@@ -76,13 +110,8 @@ def start(req: TriageRequest):
             raise HTTPException(429, "The public demo hit today's budget. Browse the recorded runs, or run SlopProof locally.")
         _runs_today["n"] += 1
 
-    job_id = uuid.uuid4().hex[:12]
-    q: queue.Queue = queue.Queue()
-    jobs[job_id] = {"queue": q, "events": [], "result": None}
-
-    def emit(ev: dict) -> None:
-        jobs[job_id]["events"].append(ev)
-        q.put(ev)
+    job_id, emit = new_job("triage", {"title": rep["title"], "url": req.url, "repo": repo,
+                                      "sandbox": bool(req.sandbox and SANDBOX_ENABLED)})
 
     def work() -> None:
         try:
@@ -127,13 +156,7 @@ def verify_example(name: str, passcode: str | None = None):
     against = json.loads(recorded.read_text()).get("at_against", {}).get("commit") if recorded.exists() else None
     from .bundle import verify
 
-    job_id = uuid.uuid4().hex[:12]
-    q: queue.Queue = queue.Queue()
-    jobs[job_id] = {"queue": q, "events": [], "result": None}
-
-    def emit(ev: dict) -> None:
-        jobs[job_id]["events"].append(ev)
-        q.put(ev)
+    job_id, emit = new_job("verify", {"title": bundle.get("claim", name)})
 
     def work() -> None:
         try:
@@ -148,11 +171,39 @@ def verify_example(name: str, passcode: str | None = None):
     return {"job": job_id}
 
 
+@app.get("/api/jobs/{job_id}")
+def job_summary(job_id: str):
+    evs = jobs[job_id]["events"] if job_id in jobs else (stored_events(job_id) or [])
+    if not evs:
+        raise HTTPException(404, "unknown run")
+    disk = stored_events(job_id) or []
+    meta = next((e for e in disk if e["stage"] == "meta"), {})
+    last = evs[-1]["stage"]
+    status = "done" if last == "done" else "error" if last == "error" else \
+        "running" if job_id in jobs else "interrupted"
+    verdict = next((e.get("verdict") for e in reversed(evs) if e["stage"] == "verdict"), None)
+    return {"id": job_id, "status": status, "meta": meta, "verdict": verdict}
+
+
 @app.get("/api/jobs/{job_id}/events")
 def events(job_id: str):
     job = jobs.get(job_id)
     if not job:
-        raise HTTPException(404, "unknown job")
+        # Not running in this process: replay what was saved. If it never finished, the server restarted.
+        saved = stored_events(job_id)
+        if saved is None:
+            raise HTTPException(404, "unknown run")
+
+        def replay_saved():
+            for ev in saved:
+                if ev["stage"] != "meta":
+                    yield f"data: {json.dumps(ev, default=str)}\n\n"
+            if saved[-1]["stage"] not in ("done", "error"):
+                gone = {"stage": "error", "interrupted": True,
+                        "message": "This run was cut off when the server restarted. Start it again to finish it."}
+                yield f"data: {json.dumps(gone)}\n\n"
+
+        return StreamingResponse(replay_saved(), media_type="text/event-stream")
 
     def stream():
         sent = 0
