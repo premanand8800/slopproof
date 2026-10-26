@@ -28,6 +28,14 @@ ENTRY_POINTS = {
              re.compile(r"\b(?:clang|gcc|cc)\b[^\n]*(?:libcurl\.a|-lcurl)")),
 }
 
+GENERIC_RECIPE = (
+    "No build recipe is known for this project. Do NOT start by building the whole project: large projects have "
+    "many optional dependencies and that can use up the whole budget. First compile only what the bug needs: the "
+    "cited source files plus the few files they depend on, with clang -fsanitize=address,undefined -g, into a small "
+    "harness that calls the vulnerable code the way its real caller does. Build the full project only if the "
+    "harness cannot be made to link, and then turn optional features off rather than fixing each dependency."
+)
+
 RECIPES = {
     "curl": (
         "An ASan+UBSan build of curl was started in the background with:\n  " + BUILDS["curl"] + "\n"
@@ -65,7 +73,10 @@ Rules:
 8. Never modify the project's source files: you test the code as reported, you do not fix it. One build is
    enough; do not rebuild in other configurations unless the first build cannot reach the code path.
 9. Call finish as soon as a sanitizer report, assertion or crash in project code shows the bug.
-10. Impact, not just behaviour. Behaviour that looks wrong is only a vulnerability if it gives an attacker something
+10. Feed input the way the real caller does: read the caller first (how buffers grow between reads, whether it
+   NUL-terminates or bounds them). A test that skips what every real caller does proves nothing.
+11. Read files by line range (grep -n, sed -n 'A,Bp'); long outputs are cut in the middle.
+12. Impact, not just behaviour. Behaviour that looks wrong is only a vulnerability if it gives an attacker something
    the intended use does not. Before calling it reproduced, run the plain, intended way to reach the same effect
    (for example the same request without the encoding trick, or the same option used directly). If the
    plain way already gives the same result, the behaviour is by design: the outcome is not_reproduced.
@@ -113,7 +124,7 @@ TOOLS = [
 def reproduce(tree: Path, project: str, report: str, claims: dict, analysis: dict, context: str,
               ledger: Ledger, emit: Callable[[dict], None], repo_url: str | None = None, sha: str | None = None) -> dict:
     proj = project.split("/")[-1]
-    recipe = RECIPES.get(proj, "Find the build instructions in the repository (README, INSTALL, CI files).")
+    recipe = RECIPES.get(proj, GENERIC_RECIPE)
     messages = [
         {"role": "system", "content": SYSTEM},
         {"role": "user", "content": (

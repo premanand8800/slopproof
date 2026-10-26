@@ -88,6 +88,12 @@ def triage(title: str, body: str, repo_url: str, created_at: str | None = None,
         found = step("search", "search", "found", lambda: f_search.result())
 
     context = codecheck.code_context(tree, code, found)
+    # The callers of the code in question: whether they bound lengths or NUL-terminate decides many reports.
+    keys = list(dict.fromkeys([f["name"] for f in code.get("functions", []) if f.get("exists")][:2]
+                              + [h["name"] for h in (found or [])[:1]]))
+    reach = codesearch.callers(bare, ref["sha"], keys) if keys else ""
+    if reach:
+        context += f"\n\n=== Who calls this code (lines around each call, up to three levels)\n{reach}"
     analysis = step("analysis", "analysis", "analysis", lambda: analyze_deep(
         title, body, claims, context, ledger, lambda names: codesearch.definitions(bare, ref["sha"], names)))
 

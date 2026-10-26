@@ -27,6 +27,8 @@ Important: AI-assisted writing style is NOT evidence either way. Many real vulne
 Judge only verifiable facts. Never mark a report FABRICATED or NOT_REPRODUCED unless specific evidence supports it;
 when in doubt choose PLAUSIBLE, because closing a real vulnerability is far worse than spending a maintainer's time.
 
+Confidence must match the evidence: without a sandbox reproduction, a bug that depends on what callers pass or
+what lies past a buffer is at most "plausible", never "confirmed" or "sound", and the reply says what is still open.
 The maintainer_comment is posted by the maintainer, so it states only what the evidence shows and what is still
 needed from the reporter. Never promise fixes, tests, releases, timelines or any other action on the maintainer's
 behalf. Mention a CVE only if it appears in the report or in a verified check in the evidence.
@@ -67,7 +69,7 @@ def scrub_cves(verdict: dict, allowed: set[str]) -> dict:
     dropped = [c for c in CVE_RE.findall(json.dumps(verdict)) if c.upper() not in allowed]
     v["findings"] = [f for f in v.get("findings", []) if not bad(f.get("text", ""))]
     # The reply is the maintainer's to send: no promises of fixes, tests or timelines made on their behalf.
-    promise = re.compile(r"^(we|we'll|we're|i|i'll|our team)\b[^.]*\b(will|'ll|plan to|intend to|going to|aim to)\b", re.I)
+    promise = re.compile(r"\b(we|i|our team|the team|maintainers)\s*('ll|will|shall|plan to|intend to|are going to|aim to)\b", re.I)
     v["maintainer_comment"] = " ".join(x for x in re.split(r"(?<=[.!?])\s+", clean(v.get("maintainer_comment", "")))
                                        if not promise.search(x.strip()))
     if bad(v.get("headline", "")):

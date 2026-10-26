@@ -30,9 +30,12 @@ class Sandbox:
             "-v", f"{self.workdir}:/work", "-w", "/work/repo", IMAGE, "sleep", "infinity",
         ], check=True, capture_output=True)
 
-    def run(self, cmd: str, timeout: int = 300) -> dict:
+    def run(self, cmd: str, timeout: int = 300, pipefail: bool = True) -> dict:
         try:
-            p = subprocess.run(["docker", "exec", self.name, "timeout", "-k", "5", str(timeout), "bash", "-lc", cmd],
+            # pipefail: "make | tail" must report make's failure, not tail's success. Proof-bundle checks run
+            # without it, so "poc | grep -q" keeps meaning "grep found it".
+            p = subprocess.run(["docker", "exec", self.name, "timeout", "-k", "5", str(timeout), "bash", "-lc",
+                                f"set -o pipefail; {cmd}" if pipefail else cmd],
                                capture_output=True, text=True, timeout=timeout + 30)
             out = (p.stdout + p.stderr)
             code = p.returncode
@@ -40,6 +43,8 @@ class Sandbox:
             out, code = "host timeout", 124
         if code == 124:
             out += f"\n[command timed out after {timeout}s]"
+        elif code == 141 and pipefail:
+            out += "\n[exit 141: a later command in the pipe (head, grep -q) stopped reading early; not a failure]"
         if len(out) > OUTPUT_LIMIT:
             # Keep a sanitizer report intact from its header: it is the evidence that matters.
             m = re.search(r"==\d+==\s*(ERROR|WARNING): \w+Sanitizer|runtime error:|SUMMARY: \w+Sanitizer", out)
@@ -47,7 +52,8 @@ class Sandbox:
                 start = max(0, m.start() - 300)
                 out = out[:800] + "\n... [cut] ...\n" + out[start:start + OUTPUT_LIMIT - 800]
             else:
-                out = out[:1500] + f"\n... [{len(out) - OUTPUT_LIMIT} chars cut] ...\n" + out[-(OUTPUT_LIMIT - 1500):]
+                out = (out[:1500] + f"\n... [{len(out) - OUTPUT_LIMIT} chars cut: read specific lines with "
+                       "grep -n or sed -n 'A,Bp' instead of whole files] ...\n" + out[-(OUTPUT_LIMIT - 1500):])
         return {"exit_code": code, "output": out}
 
     def background(self, cmd: str) -> None:

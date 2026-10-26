@@ -105,12 +105,11 @@ def _blobs(bare: Path, sha: str) -> list[tuple[str, str]]:
         meta, path = line.split("\t", 1)
         if path.endswith((".c", ".h")):
             rows.append((path, meta.split()[2]))
-    # curl-style layouts keep product code in lib/, src/ and include/. Use them only if they hold C sources;
-    # otherwise (libevent keeps .c files at the top level) take everything except tests and samples.
-    main = [r for r in rows if r[0].startswith(SEARCH_DIRS)]
-    if any(path.endswith(".c") for path, _ in main):
-        return main
-    return [r for r in rows if not re.match(r"(tests?|testing|test-export|sample|examples?|fuzz)/", r[0])]
+    # Everything that ships, wherever a project keeps it (lib/, src/, plugins/, the top level); not tests,
+    # fuzzers, docs, examples or per-platform packaging.
+    skip = re.compile(r"(?:^|/)(tests?|testing|test-export|unittests?|fuzz\w*|docs?|examples?|samples?|"
+                      r"packages|projects|winbuild|vms)/")
+    return [r for r in rows if not skip.search(r[0])]
 
 
 def load_functions(bare: Path, sha: str) -> list[Func]:
@@ -223,4 +222,38 @@ def definitions(bare: Path, sha: str, names: list[str], budget: int = 20000) -> 
             total += len(block)
             if f.end - f.start < 15:
                 queue += [c for c in f.calls if c in by_name]
+    return "\n\n".join(parts)
+
+
+def callers(bare: Path, sha: str, names: list[str], depth: int = 3, per_level: int = 6, budget: int = 15000) -> str:
+    """Who calls the named functions, and who calls them, with their source. Many reports hinge on what callers
+    pass in (lengths, NUL terminators, validation), which the vulnerable function alone does not show."""
+    funcs = load_functions(bare, sha)
+    called_by: dict[str, list[Func]] = {}
+    for f in funcs:
+        for c in f.calls:
+            called_by.setdefault(c, []).append(f)
+    level = [re.sub(r"[^\w]", "", n.split("(")[0]) for n in names]
+    seen, parts, total = set(level), [], 0
+    for d in range(1, depth + 1):
+        nxt = []
+        for name in level:
+            # Product code first: tests and fuzzers also call it, but they are not the attack surface.
+            cands = sorted(called_by.get(name, []), key=lambda f: re.match(r"(tests?|fuzz)", f.file) is not None)
+            for f in cands[:per_level]:
+                if f.name in seen:
+                    continue
+                seen.add(f.name)
+                nxt.append(f.name)
+                body = f.text.splitlines()
+                # Only the lines around the call: what the caller does to the data just before passing it on.
+                hit = next((i for i, line in enumerate(body) if re.search(rf"\b{re.escape(name)}\s*\(", line)), 0)
+                lo, hi = max(0, hit - 18), min(len(body), hit + 6)
+                shown = "\n".join(f"{f.start + i:5d}  {body[i]}" for i in range(lo, hi))
+                block = f"=== caller (level {d}) of {name}: {f.file}:{f.start + hit} in {f.name}\n{shown}"
+                if total + len(block) > budget:
+                    return "\n\n".join(parts)
+                parts.append(block)
+                total += len(block)
+        level = nxt
     return "\n\n".join(parts)

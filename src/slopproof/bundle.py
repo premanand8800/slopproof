@@ -73,7 +73,7 @@ def _run_at(bundle: dict, ref: str, emit: Callable[[str], None], patch: str | No
         if bundle.get("setup"):
             sb.run(bundle["setup"], timeout=600)
         emit("running the check ...")
-        res = sb.run(bundle["check"], timeout=300)
+        res = sb.run(bundle["check"], timeout=300, pipefail=False)
         matched = bool(re.search(bundle["expect_output"], res["output"], re.M)) if bundle.get("expect_output") else True
         return {"commit": sha, "built": True, "exit_code": res["exit_code"], "output": res["output"][-3000:],
                 "bug_present": res["exit_code"] == 0 and matched, "seconds": round(time.time() - t0)}
