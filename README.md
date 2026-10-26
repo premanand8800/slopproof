@@ -205,6 +205,13 @@ uv run slopproof-web                                                # web app on
 The CLI also accepts GitHub issue URLs (`https://github.com/<owner>/<repo>/issues/<n>`) and `--repo` for any
 GitHub project. Build recipes are tuned for curl; for other projects the agent reads the build files itself.
 
+### Hosted demo
+
+The public demo is a static Hugging Face Space (`deploy/hf_space.sh`, built by `deploy/build_static.py`): the same
+UI replaying every recorded benchmark run, with no keys and no running cost, so it stays up through judging.
+Triaging a new report needs your own Token Factory and Tavily keys: run it locally as above, or deploy the full app
+anywhere that runs a container (`docker build .`, port 7860).
+
 ## Project layout
 
 ```

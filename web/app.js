@@ -1,4 +1,7 @@
 const $ = (s, el = document) => el.querySelector(s);
+// The static build (no server) sets SLOPPROOF_STATIC: the benchmark and recorded runs come from JSON files.
+const STATIC = window.SLOPPROOF_STATIC === true;
+const runUrl = (mode, id) => (STATIC ? `data/runs/${mode}/${id}.json` : `/api/bench/${mode}/${id}`);
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 
 const STAGES = [
@@ -26,7 +29,17 @@ function showTab(name) {
   if (name === "bench") loadBench();
 }
 
-document.querySelectorAll(".examples a").forEach((a) => a.addEventListener("click", () => { $("#url").value = a.dataset.url; }));
+document.querySelectorAll(".examples a").forEach((a) => a.addEventListener("click", async () => {
+  if (!STATIC) { $("#url").value = a.dataset.url; return; }
+  // Without a server, the examples replay recorded runs.
+  replay(await (await fetch(runUrl(a.dataset.mode, a.dataset.url.split("/").pop()))).json());
+}));
+if (STATIC) {
+  $("#form").querySelectorAll("input, textarea, button").forEach((x) => (x.disabled = true));
+  $("#formerr").className = "muted";
+  $("#formerr").innerHTML = 'This hosted demo replays recorded runs: pick an example above or open the Benchmark tab. ' +
+    'To triage a new report, run SlopProof from <a href="https://github.com/premanand8800/slopproof">GitHub</a> with your own keys.';
+}
 
 // Live triage
 $("#form").addEventListener("submit", async (e) => {
@@ -268,7 +281,7 @@ function replay(res) {
 // Benchmark
 let bench = null, filter = "all";
 async function loadBench() {
-  if (!bench) bench = await (await fetch("/api/bench")).json();
+  if (!bench) bench = await (await fetch(STATIC ? "data/bench.json" : "/api/bench")).json();
   const mode = bench.sandbox.rows.length ? "sandbox" : "static";
   const s = bench.static.score, b = bench.baseline.score, fc = bench.baseline.factcheck, sb = bench.sandbox.score;
   if (s) {
@@ -318,7 +331,7 @@ function drawRows() {
       <td class="mono">$${r.usd.toFixed(3)}</td>
     </tr>`).join("");
   document.querySelectorAll("#bench-rows tr").forEach((tr) => (tr.onclick = async () => {
-    const res = await (await fetch(`/api/bench/${tr.dataset.mode}/${tr.dataset.id}`)).json();
+    const res = await (await fetch(runUrl(tr.dataset.mode, tr.dataset.id))).json();
     showTab("triage");
     replay(res);
     window.scrollTo({ top: 0, behavior: "smooth" });

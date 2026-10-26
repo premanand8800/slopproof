@@ -139,11 +139,23 @@ def bench():
     return out
 
 
+def stored_run(r: dict, bodies: dict[str, str]) -> dict:
+    """A stored benchmark run with the report text and date, so a replay shows what was triaged."""
+    return {**r["full"], "report_body": bodies.get(r["id"], ""), "created_at": r.get("created_at")}
+
+
+def report_bodies(bench_dir: Path = BENCH) -> dict[str, str]:
+    path = bench_dir / "dataset.jsonl"
+    if not path.exists():
+        return {}
+    return {d["id"]: d["body"] for d in map(json.loads, path.read_text().splitlines()) if d}
+
+
 @app.get("/api/bench/{mode}/{report_id}")
 def bench_run(mode: str, report_id: str):
     for r in _bench_rows(mode):
         if r["id"] == report_id:
-            return r["full"]
+            return stored_run(r, report_bodies())
     raise HTTPException(404, "no such run")
 
 

@@ -6,7 +6,7 @@
 <title>SlopProof</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/static/app.css">
+<link rel="stylesheet" href="static/app.css">
 </head>
 <body>
 <header class="top">
@@ -48,9 +48,9 @@
         <button id="go" type="submit">Triage</button>
       </div>
       <div class="examples">Try:
-        <a data-url="https://hackerone.com/reports/2298307">WebSocket "strcpy overflow"</a>
-        <a data-url="https://hackerone.com/reports/3117697">cookie "double free"</a>
-        <a data-url="https://hackerone.com/reports/2187833">SOCKS5 heap overflow (real CVE)</a>
+        <a data-mode="sandbox" data-url="https://hackerone.com/reports/2298307">WebSocket "strcpy overflow" (slop)</a>
+        <a data-mode="sandbox" data-url="https://hackerone.com/reports/3117697">cookie "double free" (slop)</a>
+        <a data-mode="sandbox" data-url="https://hackerone.com/reports/3735184">.netrc password leak (real CVE, reproduced)</a>
       </div>
       <p id="formerr" class="err"></p>
     </form>
@@ -129,6 +129,6 @@
 </main>
 
 <footer>Runs on NVIDIA Nemotron via Nebius Token Factory · web evidence by Tavily · MIT licensed</footer>
-<script src="/static/app.js"></script>
+<script src="static/app.js"></script>
 </body>
 </html>
