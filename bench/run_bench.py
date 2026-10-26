@@ -44,13 +44,15 @@ def main() -> None:
     ap.add_argument("--ids", help="comma-separated report ids")
     ap.add_argument("--workers", type=int, default=4)
     ap.add_argument("--score", action="store_true")
+    ap.add_argument("--dataset", default="dataset", help="dataset name in bench/, e.g. holdout")
     a = ap.parse_args()
-    out = ROOT / f"results_{a.mode}.jsonl"
+    prefix = "" if a.dataset == "dataset" else f"{a.dataset}_"
+    out = ROOT / f"results_{prefix}{a.mode}.jsonl"
     if a.score:
         print(json.dumps(score([{k: v for k, v in r.items() if k != "full"} for r in load(out)]), indent=1))
         return
     done = {r["id"] for r in load(out)}
-    rows = [r for r in load(ROOT / "dataset.jsonl") if r["id"] not in done]
+    rows = [r for r in load(ROOT / f"{a.dataset}.jsonl") if r["id"] not in done]
     if a.ids:
         rows = [r for r in rows if r["id"] in set(a.ids.split(","))]
     print(f"{len(rows)} to run, {len(done)} already done", file=sys.stderr)

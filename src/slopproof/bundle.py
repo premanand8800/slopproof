@@ -50,14 +50,21 @@ def make_bundle(repo: str, commit: str, build: str, files: dict[str, str], check
     return bundle
 
 
-def _run_at(bundle: dict, ref: str, emit: Callable[[str], None]) -> dict:
-    """Build the project at ref in a fresh sandbox, install the PoC files, run the check once."""
+def _run_at(bundle: dict, ref: str, emit: Callable[[str], None], patch: str | None = None) -> dict:
+    """Build the project at ref in a fresh sandbox (with an optional patch applied), install the PoC files,
+    run the check once."""
     bare = codecheck.ensure_repo(bundle["repo"])
     sha = codecheck.git(bare, "rev-parse", "--verify", f"{ref}^{{commit}}").strip()
     sb = Sandbox(codecheck.export_tree(bare, sha))
     t0 = time.time()
     try:
-        emit(f"building {sha[:12]} ...")
+        if patch:
+            sb.write("/work/fix.patch", patch)
+            applied = sb.run("patch -p1 --forward < /work/fix.patch", timeout=60)
+            if applied["exit_code"] != 0:
+                return {"commit": sha, "built": False, "output": "patch did not apply:\n" + applied["output"][-1500:],
+                        "seconds": round(time.time() - t0)}
+        emit(f"building {sha[:12]}{' with the patch' if patch else ''} ...")
         built = sb.run(bundle["build"], timeout=1500)
         if built["exit_code"] != 0:
             return {"commit": sha, "built": False, "output": built["output"][-2000:], "seconds": round(time.time() - t0)}
@@ -97,6 +104,14 @@ def verify(bundle: dict, against: str | None = None, emit: Callable[[str], None]
         if later.get("built") and not later["bug_present"]:
             out["verdict"] = "VERIFIED_AND_FIXED"
     return out
+
+
+def verify_patch(bundle: dict, patch: str, emit: Callable[[str], None] = lambda m: None) -> dict:
+    """FIX_VERIFIED when the bundle's check stops passing once the patch is applied at the bundle's commit."""
+    res = _run_at(bundle, bundle["commit"], emit, patch=patch)
+    if not res["built"]:
+        return {"verdict": "FIX_BUILD_FAILED", "with_patch": res}
+    return {"verdict": "FIX_VERIFIED" if not res["bug_present"] else "FIX_INEFFECTIVE", "with_patch": res}
 
 
 def load(path: str | Path) -> dict:

@@ -4,7 +4,8 @@ CLOSE = {"NOT_REPRODUCED", "FABRICATED"}
 
 
 def score(rows: list[dict]) -> dict:
-    slop = [r for r in rows if r["label"] == "slop"]
+    # "invalid" (held-out reports curl closed as not applicable) is scored like slop: it should not stay on top.
+    slop = [r for r in rows if r["label"] in ("slop", "invalid")]
     real = [r for r in rows if r["label"] == "real"]
     caught = [r for r in slop if r["verdict"] in CLOSE]
     wrongly_closed = [r for r in real if r["verdict"] in CLOSE]
