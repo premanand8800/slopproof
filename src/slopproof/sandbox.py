@@ -1,5 +1,6 @@
 """Docker sandbox: no network, capped CPU, memory and processes."""
 
+import os
 import re
 import shutil
 import subprocess
@@ -19,10 +20,13 @@ class Sandbox:
         self.workdir = CACHE / "runs" / self.name
         self.workdir.parent.mkdir(parents=True, exist_ok=True)
         shutil.copytree(tree, self.workdir / "repo", symlinks=True)
+        # SLOPPROOF_RUNTIME=runsc runs the container under gVisor, which gives it its own kernel.
+        runtime = os.environ.get("SLOPPROOF_RUNTIME")
         subprocess.run([
-            "docker", "run", "-d", "--rm", "--name", self.name,
+            "docker", "run", "-d", "--rm", "--name", self.name, *(["--runtime", runtime] if runtime else []),
             "--network", "none", "--memory", memory, "--cpus", cpus, "--pids-limit", "1024",
             "--security-opt", "no-new-privileges", "--cap-drop", "ALL",
+            "--read-only", "--tmpfs", "/tmp:rw,exec,size=1g",
             "-v", f"{self.workdir}:/work", "-w", "/work/repo", IMAGE, "sleep", "infinity",
         ], check=True, capture_output=True)
 
@@ -41,7 +45,7 @@ class Sandbox:
             m = re.search(r"==\d+==\s*(ERROR|WARNING): \w+Sanitizer|runtime error:|SUMMARY: \w+Sanitizer", out)
             if m and m.start() > 1500:
                 start = max(0, m.start() - 300)
-                out = out[:800] + f"\n... [cut] ...\n" + out[start:start + OUTPUT_LIMIT - 800]
+                out = out[:800] + "\n... [cut] ...\n" + out[start:start + OUTPUT_LIMIT - 800]
             else:
                 out = out[:1500] + f"\n... [{len(out) - OUTPUT_LIMIT} chars cut] ...\n" + out[-(OUTPUT_LIMIT - 1500):]
         return {"exit_code": code, "output": out}

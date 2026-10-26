@@ -31,7 +31,8 @@ def run_one(row: dict, sandbox: bool) -> dict:
                  run_sandbox=sandbox, replay=True)
     repro = res.get("reproduction") or {}
     return {"id": row["id"], "label": row["label"], "title": title, "created_at": row["created_at"],
-            "verdict": res["verdict"].get("verdict"), "confidence": res["verdict"].get("confidence"),
+            "verdict": res["verdict"].get("verdict"), "priority": res["verdict"].get("priority"),
+            "confidence": res["verdict"].get("confidence"),
             "headline": res["verdict"].get("headline"), "repro_outcome": repro.get("outcome"),
             "usd": res["cost"]["total_usd"], "seconds": res["seconds"], "full": res}
 

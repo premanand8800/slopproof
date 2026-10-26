@@ -131,9 +131,11 @@ def _bench_rows(mode: str) -> list[dict]:
 @app.get("/api/bench")
 def bench():
     out = {}
-    for mode in ("static", "sandbox"):
+    for mode in ("static", "sandbox", "baseline"):
         rows = [{k: v for k, v in r.items() if k != "full"} for r in _bench_rows(mode)]
         out[mode] = {"score": score(rows) if rows else None, "rows": rows}
+    factcheck = BENCH / "baseline_factcheck.json"
+    out["baseline"]["factcheck"] = json.loads(factcheck.read_text()) if factcheck.exists() else None
     return out
 
 

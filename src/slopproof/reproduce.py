@@ -27,7 +27,7 @@ RECIPES = {
         "The CLI is src/curl and the static library is lib/.libs/libcurl.a.\n"
         "Link a libcurl test program with: clang -fsanitize=address,undefined -g poc.c -Iinclude lib/.libs/libcurl.a "
         "$(pkg-config --libs openssl libpsl libnghttp2 zlib libbrotlidec libzstd 2>/dev/null) -lpthread -o poc\n"
-        "Use timeout 900 for any rebuild."
+        "Use timeout 600 for any rebuild. Never write wait loops on files you did not create; for your own background jobs, redirect output and poll with a bounded loop."
     ),
 }
 
@@ -64,7 +64,7 @@ TOOLS = [
         "name": "run", "description": "Run a bash command in /work/repo inside the sandbox. Returns exit code and output.",
         "parameters": {"type": "object", "properties": {
             "cmd": {"type": "string"},
-            "timeout": {"type": "integer", "description": "seconds, max 900", "default": 300}},
+            "timeout": {"type": "integer", "description": "seconds, max 600", "default": 300}},
             "required": ["cmd"]}}},
     {"type": "function", "function": {
         "name": "write_file", "description": "Write a file inside /work (for example /work/poc.c).",
@@ -130,7 +130,7 @@ def reproduce(tree: Path, project: str, report: str, claims: dict, analysis: dic
                     return result
                 if name == "run":
                     cmd = str(args.get("cmd", ""))
-                    timeout = min(int(args.get("timeout", 300) or 300), 900)
+                    timeout = min(int(args.get("timeout", 300) or 300), 600)
                     emit({"stage": "reproduce", "type": "run", "step": step + 1, "cmd": cmd[:400]})
                     out = sb.run(cmd, timeout)
                     emit({"stage": "reproduce", "type": "output", "step": step + 1,

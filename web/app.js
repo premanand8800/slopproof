@@ -4,7 +4,9 @@ const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<
 const STAGES = [
   ["claims", "Extract claims", "Nemotron 3.5 Lightning"],
   ["code", "Check claims against the real code", "git · fuzzy match"],
+  ["search", "Find the code the report is about", "tree-sitter · BM25"],
   ["web", "Check references and prior art", "Tavily · Nemotron 3 Super"],
+  ["screen", "Text screen (a vote, never evidence)", "Nemotron 3 Ultra"],
   ["analysis", "Static analysis of the real code", "Nemotron 3 Ultra"],
   ["reproduce", "Reproduce in sandbox", "Nemotron 3 Ultra agent · Docker"],
   ["verdict", "Verdict", "Nemotron 3 Ultra"],
@@ -102,8 +104,22 @@ function handle(ev) {
       break;
     case "web":
       setStage("web", "done", renderWeb(ev.web));
+      setStage("screen", "running");
+      break;
+    case "search":
+      setStage("search", "done", ev.found.length ? `<div class="facts">${ev.found.slice(0, 6).map((h) =>
+        fact("meh", `<code>${esc(h.name)}</code> in <code>${esc(h.file)}:${h.start}</code>`, esc(h.why))).join("")}</div>
+        <div class="sub muted">${ev.found[0].backfilled ? "Computed after this stored run: its static analysis did not see these." : "These functions go to the static analysis along with any code the report cites."}</div>`
+        : `<div class="muted">No C functions indexed for this project.</div>`);
+      break;
+    case "screen": {
+      const sc = ev.screen;
+      setStage("screen", "done", `<div class="facts">${fact(sc.close ? "bad" : "good",
+        sc.close ? "<b>Votes to close as slop</b>" : "<b>Votes to keep</b>",
+        `Judged from the wording alone, so its reason is not shown as evidence and can itself be wrong: ${esc(sc.reason)}`)}</div>`);
       setStage("analysis", "running");
       break;
+    }
     case "analysis": {
       const a = ev.analysis;
       const kind = a.claim_holds === "yes" ? "bad" : a.claim_holds === "no" ? "good" : "meh";
@@ -196,7 +212,7 @@ function renderVerdict(v, cost, seconds) {
   el.innerHTML = `
     <span class="badge">${esc(v.verdict)}</span> <span class="muted">confidence ${Math.round((v.confidence || 0) * 100)}%</span>
     <h2>${esc(v.headline)}</h2>
-    <div class="action">${ACTIONS[v.verdict] || ""}</div>
+    <div class="action">${v.priority === "low" ? "Not disproved, but low priority: handle after the rest of the queue." : ACTIONS[v.verdict] || ""}</div>
     <div class="facts">${(v.findings || []).map((f) => fact(f.kind === "confirmation" ? "good" : f.kind === "contradiction" ? "bad" : "meh", esc(f.text))).join("")}</div>
     <div class="kicker" style="margin-top:14px">Suggested reply to the reporter</div>
     <div class="comment"><pre id="mcomment">${esc(v.maintainer_comment)}</pre><button id="copy">Copy</button></div>
@@ -213,6 +229,10 @@ function replay(res) {
   handle({ stage: "ref", ref: res.ref });
   handle({ stage: "code", code: res.code });
   handle({ stage: "web", web: res.web });
+  if (res.search) handle({ stage: "search", found: res.search });
+  else setStage("search", "done", `<div class="muted">Not run for this stored result (added after the benchmark run).</div>`);
+  if (res.screen) handle({ stage: "screen", screen: res.screen });
+  else setStage("screen", "done", `<div class="muted">Not stored for this run.</div>`);
   if (res.analysis) handle({ stage: "analysis", analysis: res.analysis });
   if (res.reproduction) {
     handle({ stage: "reproduce", type: "begin" });
@@ -234,13 +254,30 @@ let bench = null, filter = "all";
 async function loadBench() {
   if (!bench) bench = await (await fetch("/api/bench")).json();
   const mode = bench.sandbox.rows.length ? "sandbox" : "static";
-  const s = bench.static.score;
+  const s = bench.static.score, b = bench.baseline.score, fc = bench.baseline.factcheck, sb = bench.sandbox.score;
   if (s) {
     $("#bench-head").innerHTML = `
-      <div class="stat good"><div class="n">${s.slop_auto_closed_pct}%</div><div class="l">of AI-slop reports closed with evidence (${s.slop_auto_closed})</div></div>
       <div class="stat good"><div class="n">${s.real_kept_pct}%</div><div class="l">of real CVE reports kept open (${s.real_wrongly_closed} wrongly closed)</div></div>
-      <div class="stat"><div class="n">$${s.avg_usd.toFixed(3)}</div><div class="l">average cost per report, ${s.avg_seconds}s, static checks</div></div>
-      <div class="stat"><div class="n">${s.reports}</div><div class="l">public curl HackerOne reports replayed</div></div>`;
+      <div class="stat good"><div class="n">${s.slop_auto_closed_pct}%</div><div class="l">of AI-slop reports closed, each with checked evidence (${s.slop_auto_closed})</div></div>
+      <div class="stat"><div class="n">${s.slop_closed_or_low}</div><div class="l">slop closed or sent to the bottom of the queue, vs ${s.real_closed_or_low} real reports</div></div>
+      <div class="stat"><div class="n">$${s.avg_usd.toFixed(3)}</div><div class="l">average cost per report, ${s.avg_seconds}s, static checks</div></div>`;
+  }
+  if (b && fc) {
+    $("#bench-compare").innerHTML = `
+      <h3>Why not just ask a model "is this slop?"</h3>
+      <p class="muted">We ran that baseline: the same Nemotron 3 Ultra, the same reports, text only. It closes more slop,
+      but <b>${fc.closes_with_false_reason} of its ${fc.baseline_closes} closing reasons state something false</b>, checked
+      against curl's git tree on the report's date. A maintainer who posts those replies is answering slop with slop.
+      SlopProof uses the same call only as a vote and cites only checked facts.</p>
+      <table class="ledger">
+        <tr><th></th><th>Slop closed</th><th>Real CVEs closed</th><th>Closes with a false reason</th><th>Cost per report</th></tr>
+        <tr><td>Text-only baseline</td><td>${b.slop_auto_closed}</td><td>${b.real_wrongly_closed}</td><td>${fc.closes_with_false_reason} of ${fc.baseline_closes}</td><td>$${b.avg_usd.toFixed(4)}</td></tr>
+        <tr><td><b>SlopProof, static</b></td><td>${s.slop_auto_closed}</td><td>${s.real_wrongly_closed}</td><td>reasons cite file:line or a source</td><td>$${s.avg_usd.toFixed(3)}</td></tr>
+        ${sb ? `<tr><td><b>SlopProof + sandbox</b> (sample)</td><td>${sb.slop_auto_closed}</td><td>${sb.real_wrongly_closed}</td><td>reproduced ${sb.verdicts.real?.CONFIRMED || 0} real CVE</td><td>$${sb.avg_usd.toFixed(2)}</td></tr>` : ""}
+      </table>
+      <details><summary>The baseline's false statements</summary><div class="facts">
+        ${fc.claims.map((c) => fact("bad", `#${esc(c.id)}: baseline said “${esc(c.baseline_said)}”`, `Fact: ${esc(c.fact)}`)).join("")}
+      </div></details>`;
   }
   drawRows();
   document.querySelectorAll(".chip").forEach((c) => (c.onclick = () => {
@@ -252,6 +289,7 @@ async function loadBench() {
 
 function drawRows() {
   const sandboxIds = new Set(bench.sandbox.rows.map((r) => r.id));
+  const base = Object.fromEntries(bench.baseline.rows.map((r) => [r.id, r.verdict === "FABRICATED" ? "close" : "keep"]));
   const rows = bench.static.rows.filter((r) => filter === "all" || r.label === filter)
     .sort((a, b) => b.created_at.localeCompare(a.created_at));
   $("#bench-count").textContent = `${rows.length} reports · click a row to replay it`;
@@ -259,7 +297,8 @@ function drawRows() {
     <tr data-id="${r.id}" data-mode="${sandboxIds.has(r.id) ? "sandbox" : "static"}">
       <td><div>${esc(r.title)}</div><div class="muted mono" style="font-size:12px">#${r.id} · ${r.created_at.slice(0, 10)}${sandboxIds.has(r.id) ? " · sandbox run" : ""}</div></td>
       <td><span class="pill ${r.label}">${r.label === "slop" ? "AI slop" : "real CVE"}</span></td>
-      <td><span class="vt ${r.verdict}">${r.verdict}</span></td>
+      <td><span class="vt ${r.verdict}">${r.verdict}</span>${r.priority === "low" ? ' <span class="muted">low priority</span>' : ""}</td>
+      <td class="muted">${base[r.id] || "-"}</td>
       <td class="mono">$${r.usd.toFixed(3)}</td>
     </tr>`).join("");
   document.querySelectorAll("#bench-rows tr").forEach((tr) => (tr.onclick = async () => {

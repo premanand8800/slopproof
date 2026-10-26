@@ -30,6 +30,7 @@ def main() -> None:
     ap.add_argument("--repo", help="GitHub repo URL, if it cannot be inferred")
     ap.add_argument("--no-sandbox", action="store_true", help="skip the reproduction step")
     ap.add_argument("--out", help="write the full result JSON here")
+    ap.add_argument("--markdown", help="write a Markdown triage summary here (for an issue comment)")
     a = ap.parse_args()
     rep = fetch_report(a.url)
     repo = a.repo or rep["repo"]
@@ -39,7 +40,30 @@ def main() -> None:
     if a.out:
         with open(a.out, "w") as f:
             json.dump(result, f, indent=1, default=str)
+    if a.markdown:
+        with open(a.markdown, "w") as f:
+            f.write(to_markdown(result))
     print(json.dumps(result["verdict"], indent=1))
+
+
+def to_markdown(r: dict) -> str:
+    v = r["verdict"]
+    icon = {"CONFIRMED": "🔴", "PLAUSIBLE": "🟡", "NOT_REPRODUCED": "🟢", "FABRICATED": "🟣"}.get(v["verdict"], "")
+    lines = [f"### {icon} SlopProof: {v['verdict']} ({round(100 * (v.get('confidence') or 0))}% confidence)", "",
+             f"**{v.get('headline', '')}**", ""]
+    for f in v.get("findings", []):
+        mark = {"confirmation": "✅", "contradiction": "❌"}.get(f.get("kind"), "❔")
+        lines.append(f"- {mark} {f.get('text', '')}")
+    repro = r.get("reproduction") or {}
+    if repro:
+        lines += ["", f"<details><summary>Sandbox reproduction: {repro.get('outcome')} "
+                      f"({repro.get('steps')} steps, {repro.get('seconds')}s)</summary>", "",
+                  repro.get("explanation", ""), "", "```", (repro.get("evidence") or "")[:3000], "```", "</details>"]
+    lines += ["", "<details><summary>Suggested reply to the reporter</summary>", "", v.get("maintainer_comment", ""),
+              "</details>", "",
+              f"<sub>Source tree {r['ref']['sha'][:12]} · cost ${r['cost']['total_usd']:.3f} · "
+              f"NVIDIA Nemotron on Nebius Token Factory · Tavily</sub>"]
+    return "\n".join(lines) + "\n"
 
 
 if __name__ == "__main__":

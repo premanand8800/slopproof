@@ -1,0 +1,96 @@
+{
+ "baseline_closes": 31,
+ "closes_with_false_reason": 13,
+ "claims": [
+  {
+   "id": "2298307",
+   "baseline_said": "lib/ws.c does not exist",
+   "fact": "lib/ws.c exists at e251e858b941",
+   "baseline_reason": "The report references a non-existent file (lib/ws.c) and function (strcpy at line 581) in the curl codebase, indicating fabricated vulnerability details."
+  },
+  {
+   "id": "3392174",
+   "baseline_said": "curl has no lib/ws.c",
+   "fact": "lib/ws.c exists at b4f57c804573",
+   "baseline_reason": "The report claims a buffer overflow in lib/ws.c at line 1287, but curl's source tree has no lib/ws.c file and the WebSocket implementation lives in lib/vwebsocket.c with a different handshake flow; the cited code snippet, version string (8.7.1), and exploit do not match the real codebase."
+  },
+  {
+   "id": "2199174",
+   "baseline_said": "curl_easy_setopt does not exist in curl",
+   "fact": "curl_easy_setopt appears in 11 files at f64ecb2bc0db, e.g. include/curl/curl.h",
+   "baseline_reason": "The report describes a non-existent CVE (CVE-2023-38545), invents a function `curl_easy_setopt` that does not exist in curl, cites a fake commit hash and version 8.4.0, and claims an LLM disclosed secret fix details, all hallmarks of AI-generated fabrication."
+  },
+  {
+   "id": "2199174",
+   "baseline_said": "CVE-2023-38545 does not exist",
+   "fact": "CVE-2023-38545 is a real curl SOCKS5 heap overflow (https://curl.se/docs/CVE-2023-38545.html)",
+   "baseline_reason": "The report describes a non-existent CVE (CVE-2023-38545), invents a function `curl_easy_setopt` that does not exist in curl, cites a fake commit hash and version 8.4.0, and claims an LLM disclosed secret fix details, all hallmarks of AI-generated fabrication."
+  },
+  {
+   "id": "2887487",
+   "baseline_said": "inet_ntop4 does not exist",
+   "fact": "inet_ntop4 appears in 1 files at 59fec5ac43ad, e.g. lib/inet_ntop.c",
+   "baseline_reason": "The report invents a non-existent `inet_ntop4` function and misrepresents `Curl_inet_ntop`; the real code uses `curlx_inet_ntop` which already validates buffer size and uses safe string functions."
+  },
+  {
+   "id": "3462525",
+   "baseline_said": "curl_msprintf does not exist",
+   "fact": "curl_msprintf appears in 3 files at fe8393d7db8c, e.g. include/curl/mprintf.h",
+   "baseline_reason": "The report describes a non-existent function curl_msprintf in lib/mprintf.c; the actual code uses curl_mprintf with a size parameter and bounds-checked callbacks, making the described overflow impossible."
+  },
+  {
+   "id": "3466896",
+   "baseline_said": "Curl_ipv4_resolve_r does not exist",
+   "fact": "Curl_ipv4_resolve_r appears in 4 files at 7b2783496ce7, e.g. lib/amigaos.c",
+   "baseline_reason": "The report invents a non-existent function `Curl_ipv4_resolve_r` and file `amigaos.c`; curl's AmigaOS code lives in `lib/amiga.c` and uses `Curl_getaddrinfo_ex` with `getaddrinfo`, not the described `gethostbyname_r` API, making the entire technical analysis fabricated."
+  },
+  {
+   "id": "3466896",
+   "baseline_said": "amigaos.c does not exist",
+   "fact": "lib/amigaos.c exists at 7b2783496ce7",
+   "baseline_reason": "The report invents a non-existent function `Curl_ipv4_resolve_r` and file `amigaos.c`; curl's AmigaOS code lives in `lib/amiga.c` and uses `Curl_getaddrinfo_ex` with `getaddrinfo`, not the described `gethostbyname_r` API, making the entire technical analysis fabricated."
+  },
+  {
+   "id": "3466883",
+   "baseline_said": "curl has no Alt-Svc header parser",
+   "fact": "lib/altsvc.c exists at 7b2783496ce7",
+   "baseline_reason": "The report invents a non-existent 'Alt-Svc' header parser, fake CVE details, impossible version ranges (7.64.0-7.89.0), and includes a full ROP exploit payload, all of which are fabrications that do not exist in the curl codebase."
+  },
+  {
+   "id": "3249936",
+   "baseline_said": "the Transfer-Encoding header is invented",
+   "fact": "Transfer-Encoding appears in 8 files at 9bdd08b3b22a, e.g. lib/cf-h1-proxy.c",
+   "baseline_reason": "The report invents a non-existent 'Transfer-Encoding' header and 'http_req_set_reader()' function, misstates the cURL version as 8.4.0, and describes a client-side request smuggling scenario that is not a vulnerability in cURL itself."
+  },
+  {
+   "id": "3125832",
+   "baseline_said": "ngtcp2 is a fake library",
+   "fact": "ngtcp2 appears in 8 files at e1f87a093b71, e.g. lib/Makefile.inc",
+   "baseline_reason": "The report invents a non-existent HTTP/3 protocol, a fake ngtcp2 library, and a patched aioquic server to claim a cyclic stream dependency crash in curl, none of which exist in the real codebase."
+  },
+  {
+   "id": "2823554",
+   "baseline_said": "__strcpy_evex and CRYPTO_strdup are invented names",
+   "fact": "CRYPTO_strdup is a documented OpenSSL function (https://docs.openssl.org/master/man3/OPENSSL_malloc/)",
+   "baseline_reason": "The report describes a generic buffer overflow in OpenSSL's libcrypto.so with invented function names like __strcpy_evex and CRYPTO_strdup, contains no curl-specific code paths, and reads like a textbook exploit tutorial rather than a genuine vulnerability in curl."
+  },
+  {
+   "id": "2871792",
+   "baseline_said": "__strcpy_evex and CRYPTO_strdup are impossible function names",
+   "fact": "CRYPTO_strdup is a documented OpenSSL function (https://docs.openssl.org/master/man3/OPENSSL_malloc/)",
+   "baseline_reason": "The report contains a fabricated stack trace with impossible function names like __strcpy_evex and CRYPTO_strdup, references non-existent curl functions and memory addresses, and describes a generic textbook buffer overflow exploit that does not correspond to any actual curl codebase."
+  },
+  {
+   "id": "3335085",
+   "baseline_said": "http.server and ssl.SSLContext are imaginary Python modules",
+   "fact": "http.server is in the Python standard library (https://docs.python.org/3/library/http.server.html)",
+   "baseline_reason": "The PoC uses non-existent OpenSSL subcommands (genrsa, req -x509) and imaginary Python modules (http.server, ssl.SSLContext), proving the exploit code is AI-hallucinated and cannot execute."
+  },
+  {
+   "id": "3158093",
+   "baseline_said": "libnghttp3-dev and libpsl-dev are fake package names",
+   "fact": "both are Debian packages (https://packages.debian.org/search?keywords=libpsl-dev)",
+   "baseline_reason": "The report contains multiple fabrications including a non-existent curl version 8.14.0-DEV, fake package names like libnghttp3-dev and libpsl-dev, an invalid HTTP 302 status code, a non-existent --location flag, and references to source files that do not handle Location headers in the described manner."
+  }
+ ]
+}

@@ -77,6 +77,7 @@
       source tree from that day, and web evidence published before it.</p>
     </div>
     <div id="bench-head" class="stats"></div>
+    <div id="bench-compare" class="card"></div>
     <div class="card">
       <div class="row between">
         <div class="filters">
@@ -87,7 +88,7 @@
         <span class="muted" id="bench-count"></span>
       </div>
       <table class="bench">
-        <thead><tr><th>Report</th><th>Ground truth</th><th>SlopProof verdict</th><th>Cost</th></tr></thead>
+        <thead><tr><th>Report</th><th>Ground truth</th><th>SlopProof verdict</th><th>Text-only baseline</th><th>Cost</th></tr></thead>
         <tbody id="bench-rows"></tbody>
       </table>
     </div>
@@ -102,8 +103,14 @@
           Files, functions, line numbers, quoted code, CVEs, URLs, attack surface.</li>
         <li><b>Check the code</b> <span class="model">git + fuzzy match</span>
           The tree at the commit the reporter saw. Do the files and functions exist? Is the quoted code real or invented?</li>
+        <li><b>Find the code</b> <span class="model">tree-sitter + BM25</span>
+          Splits the project into functions and ranks them against the report's own words and the identifiers it mentions.
+          Works even when a report names no file or function.</li>
         <li><b>Check the references</b> <span class="model">Tavily search + extract · Nemotron 3 Super</span>
           Does each cited CVE exist and match? Do cited pages say what the report says? Is this a known, fixed or documented issue?</li>
+        <li><b>Text screen</b> <span class="model">Nemotron 3 Ultra</span>
+          One call judges the wording alone. It is a vote, never evidence: it can lower a report's priority, or let a close
+          through when the evidence-based verdict also wants to close.</li>
         <li><b>Static analysis</b> <span class="model">Nemotron 3 Ultra</span>
           Reads the real code and traces sizes, bounds and ownership to decide if the claimed condition can happen.</li>
         <li><b>Reproduce</b> <span class="model">Nemotron 3 Ultra agent · Docker sandbox</span>
@@ -113,7 +120,7 @@
       </ol>
       <h2>Rules we hold ourselves to</h2>
       <ul>
-        <li>Writing style is never evidence. Many real 2026 curl CVEs were found with AI tools.</li>
+        <li>Wording is never evidence. The text screen may vote, but every reason we show is a checked fact. Many real 2026 curl CVEs were found with AI tools.</li>
         <li>Closing a real vulnerability is far worse than wasting a maintainer's minute, so doubt means PLAUSIBLE.</li>
         <li>A PoC that is itself buggy proves nothing about the project.</li>
       </ul>

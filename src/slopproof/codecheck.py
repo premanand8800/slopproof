@@ -84,27 +84,35 @@ def _norm(code: str) -> str:
     return re.sub(r"\s+", " ", code).strip()
 
 
+PARTIAL_CANDIDATES = 25
+
+
 def best_match(quote: str, files: list[Path], tree: Path, texts: dict[Path, str] | None = None) -> dict:
     """Find where a quoted snippet best matches real code, sliding a window over each file.
 
-    Only windows that share an identifier with the quote are scored, which keeps this fast on big trees.
+    Only windows that share an identifier with the quote are scored. Every candidate gets the fast
+    fuzz.ratio; the slower partial_ratio (which matters when the quote is a fragment of a longer window)
+    runs only on the best candidates, which keeps long quotes over many files from taking tens of seconds.
     """
     q = _norm(quote)
     n_lines = max(1, quote.strip().count("\n") + 1)
     idents = set(re.findall(r"[A-Za-z_]\w{2,}", quote))
     best = {"score": 0.0, "file": None, "line": None}
+    scored = []
     for f in files:
         text = texts[f] if texts and f in texts else f.read_text(errors="replace")
         lines = text.splitlines()
         hits = [i for i, line in enumerate(lines) if any(t in line for t in idents)] if idents else range(len(lines))
-        starts = sorted({max(0, h - k) for h in hits for k in range(n_lines)})
-        for i in starts:
+        for i in sorted({max(0, h - k) for h in hits for k in range(n_lines)}):
             window = _norm("\n".join(lines[i:i + n_lines]))
-            if not window:
-                continue
-            score = fuzz.ratio(q, window)
-            if len(q) <= len(window):
-                score = max(score, fuzz.partial_ratio(q, window))
+            if window:
+                scored.append((fuzz.ratio(q, window), f, i, window))
+                if scored[-1][0] > best["score"]:
+                    best = {"score": round(scored[-1][0], 1), "file": str(f.relative_to(tree)), "line": i + 1}
+    scored.sort(key=lambda x: -x[0])
+    for _, f, i, window in scored[:PARTIAL_CANDIDATES]:
+        if len(q) <= len(window):
+            score = fuzz.partial_ratio(q, window)
             if score > best["score"]:
                 best = {"score": round(score, 1), "file": str(f.relative_to(tree)), "line": i + 1}
     return best
@@ -128,8 +136,9 @@ def _function_span(tree: Path, rel: str, line: int, cap: int = 220) -> tuple[int
     return line, min(len(lines), line + 120)
 
 
-def code_context(tree: Path, code: dict, budget: int = 40000) -> str:
-    """Source excerpts the reasoning model needs: cited lines and definitions of cited functions."""
+def code_context(tree: Path, code: dict, found: list[dict] | None = None, budget: int = 40000) -> str:
+    """Source excerpts the reasoning model needs: cited lines, definitions of cited functions, then the
+    functions code search ranked highest (these fill whatever budget the cited code leaves)."""
     parts, seen = [], set()
     for ref in code["line_refs"]:
         f, n = str(ref.get("file") or "").lstrip("/"), ref.get("line")
@@ -143,10 +152,15 @@ def code_context(tree: Path, code: dict, budget: int = 40000) -> str:
                 seen.add((f, int(n)))
                 s, e = _function_span(tree, f, int(n))
                 parts.append(f"=== {f}:{s}-{e} definition of {fn['name']}\n{_excerpt(tree, f, s, e)}")
+    for h in found or []:
+        if (h["file"], h["start"]) not in seen and (tree / h["file"]).is_file():
+            seen.add((h["file"], h["start"]))
+            parts.append(f"=== {h['file']}:{h['start']}-{h['end']} {h['name']} (found by code search: {h['why']})\n"
+                         f"{_excerpt(tree, h['file'], h['start'], min(h['end'], h['start'] + 200))}")
     out, total = [], 0
     for p in parts:
         if total + len(p) > budget:
-            break
+            continue  # a smaller excerpt further down may still fit
         out.append(p)
         total += len(p)
     return "\n\n".join(out)

@@ -36,8 +36,8 @@ def cve_reports() -> dict[str, dict]:
         m = re.search(r"hackerone\.com/reports/(\d+)", db.get("issue", "") or "")
         if not m:
             continue
-        fixed = [e["fixed"] for a in v.get("affected", []) if a.get("type") == "GIT"
-                 for e in a["events"] if "fixed" in e]
+        fixed = [e["fixed"] for a in v.get("affected", []) for r in a.get("ranges", []) if r.get("type") == "GIT"
+                 for e in r["events"] if "fixed" in e]
         out[m.group(1)] = {
             "cve": v["aliases"][0] if v.get("aliases") else v["id"],
             "summary": v.get("summary"),

@@ -1,0 +1,8510 @@
+{
+ "summary": {
+  "all": {
+   "cited": {
+    "fn@1": "45/139",
+    "fn@5": "70/139",
+    "fn@10": "74/139",
+    "file@1": "79/139",
+    "file@5": "102/139",
+    "file@10": "103/139"
+   },
+   "bm25": {
+    "fn@1": "61/139",
+    "fn@5": "104/139",
+    "fn@10": "113/139",
+    "file@1": "91/139",
+    "file@5": "126/139",
+    "file@10": "132/139"
+   }
+  },
+  "no_code_cited": {
+   "cited": {
+    "fn@1": "0/16",
+    "fn@5": "0/16",
+    "fn@10": "0/16",
+    "file@1": "0/16",
+    "file@5": "0/16",
+    "file@10": "0/16"
+   },
+   "bm25": {
+    "fn@1": "5/16",
+    "fn@5": "10/16",
+    "fn@10": "10/16",
+    "file@1": "8/16",
+    "file@5": "12/16",
+    "file@10": "13/16"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "3150884",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/vquic/vquic-tls.c",
+     "Curl_vquic_tls_verify_peer"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/vquic/vquic-tls.c",
+     "Curl_vquic_tls_verify_peer"
+    ],
+    [
+     "lib/vtls/openssl.c",
+     "ossl_verifyhost"
+    ],
+    [
+     "lib/vtls/wolfssl.c",
+     "wssl_handshake"
+    ],
+    [
+     "lib/vtls/wolfssl.c",
+     "Curl_wssl_ctx_init"
+    ],
+    [
+     "lib/vtls/wolfssl.c",
+     "wssl_connect_step1"
+    ]
+   ],
+   "cited": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "2559516",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/vtls/x509asn1.c",
+     "utf8asn1str"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/vtls/x509asn1.c",
+     "utf8asn1str"
+    ],
+    [
+     "lib/vtls/openssl.c",
+     "Curl_ossl_verifyhost"
+    ],
+    [
+     "lib/smtp.c",
+     "smtp_parse_address"
+    ],
+    [
+     "lib/smtp.c",
+     "smtp_perform_mail"
+    ],
+    [
+     "lib/vtls/x509asn1.c",
+     "ASN1tostr"
+    ]
+   ],
+   "cited": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "4023192",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "src/tool_cb_hdr.c",
+     "content_disposition"
+    ],
+    [
+     "src/tool_cb_hdr.c",
+     "tool_header_cb"
+    ]
+   ],
+   "top5": [
+    [
+     "src/tool_cb_hdr.c",
+     "tool_header_cb"
+    ],
+    [
+     "src/tool_cb_hdr.c",
+     "content_disposition"
+    ],
+    [
+     "src/tool_operate.c",
+     "setup_header_cb"
+    ],
+    [
+     "src/tool_operate.c",
+     "etag_store"
+    ],
+    [
+     "src/tool_cb_hdr.c",
+     "save_etag"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": false,
+    "file@5": false,
+    "file@10": false
+   },
+   "bm25": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "686823",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/security.c",
+     "read_data"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/security.c",
+     "read_data"
+    ],
+    [
+     "lib/strdup.c",
+     "Curl_saferealloc"
+    ],
+    [
+     "lib/vtls/darwinssl.c",
+     "read_cert"
+    ],
+    [
+     "lib/curl_ntlm_wb.c",
+     "ntlm_wb_response"
+    ],
+    [
+     "lib/escape.c",
+     "curl_easy_escape"
+    ]
+   ],
+   "cited": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "684603",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/tftp.c",
+     "tftp_connect"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/tftp.c",
+     "tftp_parse_option_ack"
+    ],
+    [
+     "lib/tftp.c",
+     "tftp_tx"
+    ],
+    [
+     "lib/tftp.c",
+     "tftp_send_first"
+    ],
+    [
+     "lib/tftp.c",
+     "tftp_connect"
+    ],
+    [
+     "lib/tftp.c",
+     "tftp_rx"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "3459417",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/curl_sasl.c",
+     "sasl_choose_oauth"
+    ],
+    [
+     "lib/curl_sasl.c",
+     "sasl_choose_oauth2"
+    ]
+   ],
+   "top5": [
+    [
+     "src/config2setopts.c",
+     "http_setopts"
+    ],
+    [
+     "lib/http.c",
+     "Curl_http_follow"
+    ],
+    [
+     "src/config2setopts.c",
+     "config2setopts"
+    ],
+    [
+     "lib/doh.c",
+     "doh_probe_run"
+    ],
+    [
+     "lib/curl_sasl.c",
+     "Curl_sasl_is_blocked"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": false,
+    "file@5": false,
+    "file@10": false
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": false,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "3330839",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/ws.c",
+     "Curl_ws_accept"
+    ],
+    [
+     "lib/ws.c",
+     "ws_enc_add_frame"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/ws.c",
+     "Curl_ws_accept"
+    ],
+    [
+     "lib/ws.c",
+     "ws_enc_write_head"
+    ],
+    [
+     "lib/ws.c",
+     "Curl_ws_request"
+    ],
+    [
+     "lib/ws.c",
+     "ws_enc_add_pending"
+    ],
+    [
+     "lib/ws.c",
+     "ws_enc_add_frame"
+    ]
+   ],
+   "cited": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "1590071",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/krb5.c",
+     "krb5_decode"
+    ],
+    [
+     "lib/krb5.c",
+     "read_data"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/krb5.c",
+     "krb5_decode"
+    ],
+    [
+     "lib/krb5.c",
+     "read_data"
+    ],
+    [
+     "lib/vauth/krb5_gssapi.c",
+     "Curl_auth_create_gssapi_security_message"
+    ],
+    [
+     "lib/vauth/krb5_gssapi.c",
+     "Curl_auth_create_gssapi_user_message"
+    ],
+    [
+     "lib/krb5.c",
+     "krb5_auth"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "3788931",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/ws.c",
+     "ws_cw_write"
+    ],
+    [
+     "lib/ws.c",
+     "ws_enc_add_cntrl"
+    ],
+    [
+     "lib/ws.c",
+     "ws_flush"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/ws.c",
+     "Curl_ws_accept"
+    ],
+    [
+     "lib/ws.c",
+     "ws_enc_add_frame"
+    ],
+    [
+     "lib/ws.c",
+     "ws_enc_add_cntrl"
+    ],
+    [
+     "lib/ws.c",
+     "ws_cw_dec_next"
+    ],
+    [
+     "lib/ws.c",
+     "ws_dec_read_head"
+    ]
+   ],
+   "cited": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "3972357",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/hsts.c",
+     "hsts_add_host_expire"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/hsts.c",
+     "hsts_add_host_expire"
+    ],
+    [
+     "lib/hsts.c",
+     "Curl_hsts_parse"
+    ],
+    [
+     "lib/hsts.c",
+     "hsts_push"
+    ],
+    [
+     "lib/hsts.c",
+     "hsts_out"
+    ],
+    [
+     "lib/hsts.c",
+     "hsts_pull"
+    ]
+   ],
+   "cited": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "2212193",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/cookie.c",
+     "Curl_cookie_add"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/cookie.c",
+     "Curl_cookie_add"
+    ],
+    [
+     "lib/cookie.c",
+     "Curl_cookie_getlist"
+    ],
+    [
+     "lib/cookie.c",
+     "get_netscape_format"
+    ],
+    [
+     "lib/cookie.c",
+     "cookie_output"
+    ],
+    [
+     "lib/cookie.c",
+     "freecookie"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "3972373",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/hsts.c",
+     "Curl_hsts_parse"
+    ],
+    [
+     "lib/hsts.c",
+     "Curl_hsts_save"
+    ],
+    [
+     "lib/hsts.c",
+     "hsts_out"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/hsts.c",
+     "Curl_hsts_save"
+    ],
+    [
+     "lib/hsts.c",
+     "Curl_hsts_parse"
+    ],
+    [
+     "lib/hsts.c",
+     "hsts_load"
+    ],
+    [
+     "lib/url.c",
+     "Curl_close"
+    ],
+    [
+     "lib/altsvc.c",
+     "Curl_altsvc_save"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": false,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "1557449",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/hsts.c",
+     "Curl_hsts"
+    ],
+    [
+     "lib/hsts.c",
+     "hsts_create"
+    ],
+    [
+     "lib/hsts.c",
+     "hsts_pull"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/hsts.c",
+     "hsts_load"
+    ],
+    [
+     "lib/easy.c",
+     "curl_easy_duphandle"
+    ],
+    [
+     "lib/hsts.c",
+     "Curl_hsts_save"
+    ],
+    [
+     "lib/cookie.c",
+     "get_netscape_format"
+    ],
+    [
+     "lib/hsts.c",
+     "hsts_pull"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": false,
+    "file@5": false,
+    "file@10": false
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "1040166",
+   "no_code_cited": true,
+   "gold": [
+    [
+     "lib/url.c",
+     "Curl_init_userdefined"
+    ],
+    [
+     "src/tool_cfgable.c",
+     "config_init"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/ftp.c",
+     "ftp_state_pasv_resp"
+    ],
+    [
+     "lib/ftp.c",
+     "ftp_state_prepare_transfer"
+    ],
+    [
+     "lib/ftp.c",
+     "ftp_statemach_act"
+    ],
+    [
+     "lib/strerror.c",
+     "curl_easy_strerror"
+    ],
+    [
+     "lib/ftp.c",
+     "ftp_perform"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": false,
+    "file@5": false,
+    "file@10": false
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": false,
+    "file@5": false,
+    "file@10": false
+   }
+  },
+  {
+   "id": "3973090",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/vtls/wolfssl.c",
+     "Curl_wssl_setup_x509_store"
+    ],
+    [
+     "lib/vtls/wolfssl.c",
+     "wssl_init_ech"
+    ],
+    [
+     "lib/vtls/wolfssl.c",
+     "wssl_populate_x509_store"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/vtls/wolfssl.c",
+     "Curl_wssl_setup_x509_store"
+    ],
+    [
+     "lib/vtls/wolfssl.c",
+     "populate_x509_store"
+    ],
+    [
+     "lib/vtls/openssl.c",
+     "populate_x509_store"
+    ],
+    [
+     "lib/vquic/vquic-tls.c",
+     "Curl_wssl_init_ctx"
+    ],
+    [
+     "lib/vtls/openssl.c",
+     "Curl_ssl_setup_x509_store"
+    ]
+   ],
+   "cited": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "3168039",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/ws.c",
+     "curl_ws_send"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/ws.c",
+     "curl_ws_send"
+    ],
+    [
+     "lib/ws.c",
+     "curl_ws_recv"
+    ],
+    [
+     "lib/ws.c",
+     "ws_frame_flags2firstbyte"
+    ],
+    [
+     "lib/ws.c",
+     "ws_client_collect"
+    ],
+    [
+     "lib/ws.c",
+     "ws_cw_dec_next"
+    ]
+   ],
+   "cited": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "3721183",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/creds.c",
+     "Curl_creds_create"
+    ],
+    [
+     "lib/creds.c",
+     "Curl_creds_merge"
+    ],
+    [
+     "lib/creds.c",
+     "Curl_creds_same"
+    ],
+    [
+     "lib/curl_sasl.c",
+     "Curl_sasl_continue"
+    ],
+    [
+     "lib/curl_sasl.c",
+     "sasl_choose_krb5"
+    ],
+    [
+     "lib/curl_sasl.c",
+     "sasl_choose_ntlm"
+    ],
+    [
+     "lib/http_negotiate.c",
+     "Curl_input_negotiate"
+    ],
+    [
+     "lib/http_ntlm.c",
+     "Curl_output_ntlm"
+    ],
+    [
+     "lib/imap.c",
+     "imap_perform_login"
+    ],
+    [
+     "lib/netrc.c",
+     "netrc_finalize"
+    ],
+    [
+     "lib/openldap.c",
+     "oldap_perform_bind"
+    ],
+    [
+     "lib/pop3.c",
+     "pop3_perform_user"
+    ],
+    [
+     "lib/socks.c",
+     "socks5_connect"
+    ],
+    [
+     "lib/socks_gssapi.c",
+     "Curl_SOCKS5_gssapi_negotiate"
+    ],
+    [
+     "lib/socks_sspi.c",
+     "Curl_SOCKS5_gssapi_negotiate"
+    ],
+    [
+     "lib/socks_sspi.c",
+     "socks5_sspi_setup"
+    ],
+    [
+     "lib/url.c",
+     "override_login"
+    ],
+    [
+     "lib/url.c",
+     "parse_proxy"
+    ],
+    [
+     "lib/url.c",
+     "url_set_conn_login"
+    ],
+    [
+     "lib/url.c",
+     "url_set_data_creds"
+    ],
+    [
+     "lib/vauth/digest.c",
+     "Curl_auth_create_digest_md5_message"
+    ],
+    [
+     "lib/vauth/digest_sspi.c",
+     "Curl_auth_create_digest_md5_message"
+    ],
+    [
+     "lib/vauth/krb5_gssapi.c",
+     "Curl_auth_create_gssapi_user_message"
+    ],
+    [
+     "lib/vauth/krb5_sspi.c",
+     "Curl_auth_create_gssapi_user_message"
+    ],
+    [
+     "lib/vauth/ntlm.c",
+     "Curl_auth_create_ntlm_type1_message"
+    ],
+    [
+     "lib/vauth/ntlm_sspi.c",
+     "Curl_auth_create_ntlm_type1_message"
+    ],
+    [
+     "lib/vauth/spnego_gssapi.c",
+     "Curl_auth_decode_spnego_message"
+    ],
+    [
+     "lib/vauth/spnego_sspi.c",
+     "Curl_auth_decode_spnego_message"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/http_negotiate.c",
+     "Curl_input_negotiate"
+    ],
+    [
+     "lib/setopt.c",
+     "setopt_long_bool"
+    ],
+    [
+     "lib/http_negotiate.c",
+     "Curl_output_negotiate"
+    ],
+    [
+     "lib/multi.c",
+     "multi_conn_should_close"
+    ],
+    [
+     "lib/url.c",
+     "url_match_auth_nego"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "3972395",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/cookie.c",
+     "parse_cookie_header"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/cookie.c",
+     "parse_cookie_header"
+    ],
+    [
+     "lib/cookie.c",
+     "Curl_cookie_add"
+    ],
+    [
+     "lib/cookie.c",
+     "parse_netscape"
+    ],
+    [
+     "lib/http.c",
+     "http_cookies"
+    ],
+    [
+     "lib/http.c",
+     "http_header"
+    ]
+   ],
+   "cited": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "1213175",
+   "no_code_cited": true,
+   "gold": [
+    [
+     "src/tool_getparam.c",
+     "getparameter"
+    ],
+    [
+     "src/tool_help.c",
+     "metalnk_version"
+    ],
+    [
+     "src/tool_help.c",
+     "tool_version_info"
+    ],
+    [
+     "src/tool_main.c",
+     "main_free"
+    ],
+    [
+     "src/tool_metalink.c",
+     "MD5_Final"
+    ],
+    [
+     "src/tool_metalink.c",
+     "MD5_Init"
+    ],
+    [
+     "src/tool_metalink.c",
+     "MD5_Update"
+    ],
+    [
+     "src/tool_metalink.c",
+     "SHA1_Final"
+    ],
+    [
+     "src/tool_metalink.c",
+     "SHA1_Init"
+    ],
+    [
+     "src/tool_metalink.c",
+     "SHA1_Update"
+    ],
+    [
+     "src/tool_metalink.c",
+     "SHA256_Final"
+    ],
+    [
+     "src/tool_metalink.c",
+     "SHA256_Init"
+    ],
+    [
+     "src/tool_metalink.c",
+     "SHA256_Update"
+    ],
+    [
+     "src/tool_metalink.c",
+     "check_content_type"
+    ],
+    [
+     "src/tool_metalink.c",
+     "check_hash"
+    ],
+    [
+     "src/tool_metalink.c",
+     "check_hex_digest"
+    ],
+    [
+     "src/tool_metalink.c",
+     "check_metalink_content_type"
+    ],
+    [
+     "src/tool_metalink.c",
+     "checksum_from_hex_digest"
+    ],
+    [
+     "src/tool_metalink.c",
+     "clean_metalink"
+    ],
+    [
+     "src/tool_metalink.c",
+     "count_next_metalink_resource"
+    ],
+    [
+     "src/tool_metalink.c",
+     "delete_metalink_checksum"
+    ],
+    [
+     "src/tool_metalink.c",
+     "delete_metalink_resource"
+    ],
+    [
+     "src/tool_metalink.c",
+     "delete_metalinkfile"
+    ],
+    [
+     "src/tool_metalink.c",
+     "digest_final"
+    ],
+    [
+     "src/tool_metalink.c",
+     "digest_init"
+    ],
+    [
+     "src/tool_metalink.c",
+     "digest_update"
+    ],
+    [
+     "src/tool_metalink.c",
+     "hex_to_uint"
+    ],
+    [
+     "src/tool_metalink.c",
+     "metalink_check_hash"
+    ],
+    [
+     "src/tool_metalink.c",
+     "metalink_cleanup"
+    ],
+    [
+     "src/tool_metalink.c",
+     "metalink_write_cb"
+    ],
+    [
+     "src/tool_metalink.c",
+     "new_metalink_resource"
+    ],
+    [
+     "src/tool_metalink.c",
+     "new_metalinkfile"
+    ],
+    [
+     "src/tool_metalink.c",
+     "nss_hash_final"
+    ],
+    [
+     "src/tool_metalink.c",
+     "nss_hash_init"
+    ],
+    [
+     "src/tool_metalink.c",
+     "parse_metalink"
+    ],
+    [
+     "src/tool_metalink.c",
+     "win32_crypto_final"
+    ],
+    [
+     "src/tool_operate.c",
+     "post_per_transfer"
+    ],
+    [
+     "src/tool_operate.c",
+     "run_all_transfers"
+    ],
+    [
+     "src/tool_operate.c",
+     "serial_transfers"
+    ],
+    [
+     "src/tool_operate.c",
+     "single_transfer"
+    ]
+   ],
+   "top5": [
+    [
+     "src/tool_metalink.c",
+     "check_metalink_content_type"
+    ],
+    [
+     "src/tool_metalink.c",
+     "parse_metalink"
+    ],
+    [
+     "src/tool_metalink.c",
+     "new_metalinkfile"
+    ],
+    [
+     "src/tool_operate.c",
+     "post_per_transfer"
+    ],
+    [
+     "src/tool_help.c",
+     "metalnk_version"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": false,
+    "file@5": false,
+    "file@10": false
+   },
+   "bm25": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "1213181",
+   "no_code_cited": true,
+   "gold": [
+    [
+     "src/tool_getparam.c",
+     "getparameter"
+    ],
+    [
+     "src/tool_help.c",
+     "metalnk_version"
+    ],
+    [
+     "src/tool_help.c",
+     "tool_version_info"
+    ],
+    [
+     "src/tool_main.c",
+     "main_free"
+    ],
+    [
+     "src/tool_metalink.c",
+     "MD5_Final"
+    ],
+    [
+     "src/tool_metalink.c",
+     "MD5_Init"
+    ],
+    [
+     "src/tool_metalink.c",
+     "MD5_Update"
+    ],
+    [
+     "src/tool_metalink.c",
+     "SHA1_Final"
+    ],
+    [
+     "src/tool_metalink.c",
+     "SHA1_Init"
+    ],
+    [
+     "src/tool_metalink.c",
+     "SHA1_Update"
+    ],
+    [
+     "src/tool_metalink.c",
+     "SHA256_Final"
+    ],
+    [
+     "src/tool_metalink.c",
+     "SHA256_Init"
+    ],
+    [
+     "src/tool_metalink.c",
+     "SHA256_Update"
+    ],
+    [
+     "src/tool_metalink.c",
+     "check_content_type"
+    ],
+    [
+     "src/tool_metalink.c",
+     "check_hash"
+    ],
+    [
+     "src/tool_metalink.c",
+     "check_hex_digest"
+    ],
+    [
+     "src/tool_metalink.c",
+     "check_metalink_content_type"
+    ],
+    [
+     "src/tool_metalink.c",
+     "checksum_from_hex_digest"
+    ],
+    [
+     "src/tool_metalink.c",
+     "clean_metalink"
+    ],
+    [
+     "src/tool_metalink.c",
+     "count_next_metalink_resource"
+    ],
+    [
+     "src/tool_metalink.c",
+     "delete_metalink_checksum"
+    ],
+    [
+     "src/tool_metalink.c",
+     "delete_metalink_resource"
+    ],
+    [
+     "src/tool_metalink.c",
+     "delete_metalinkfile"
+    ],
+    [
+     "src/tool_metalink.c",
+     "digest_final"
+    ],
+    [
+     "src/tool_metalink.c",
+     "digest_init"
+    ],
+    [
+     "src/tool_metalink.c",
+     "digest_update"
+    ],
+    [
+     "src/tool_metalink.c",
+     "hex_to_uint"
+    ],
+    [
+     "src/tool_metalink.c",
+     "metalink_check_hash"
+    ],
+    [
+     "src/tool_metalink.c",
+     "metalink_cleanup"
+    ],
+    [
+     "src/tool_metalink.c",
+     "metalink_write_cb"
+    ],
+    [
+     "src/tool_metalink.c",
+     "new_metalink_resource"
+    ],
+    [
+     "src/tool_metalink.c",
+     "new_metalinkfile"
+    ],
+    [
+     "src/tool_metalink.c",
+     "nss_hash_final"
+    ],
+    [
+     "src/tool_metalink.c",
+     "nss_hash_init"
+    ],
+    [
+     "src/tool_metalink.c",
+     "parse_metalink"
+    ],
+    [
+     "src/tool_metalink.c",
+     "win32_crypto_final"
+    ],
+    [
+     "src/tool_operate.c",
+     "post_per_transfer"
+    ],
+    [
+     "src/tool_operate.c",
+     "run_all_transfers"
+    ],
+    [
+     "src/tool_operate.c",
+     "serial_transfers"
+    ],
+    [
+     "src/tool_operate.c",
+     "single_transfer"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/url.c",
+     "ConnectionExists"
+    ],
+    [
+     "src/tool_metalink.c",
+     "metalink_write_cb"
+    ],
+    [
+     "src/tool_operate.c",
+     "single_transfer"
+    ],
+    [
+     "src/tool_operate.c",
+     "post_per_transfer"
+    ],
+    [
+     "src/tool_getparam.c",
+     "getparameter"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": false,
+    "file@5": false,
+    "file@10": false
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": false,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "2829063",
+   "no_code_cited": true,
+   "gold": [
+    [
+     "lib/netrc.c",
+     "parsenetrc"
+    ],
+    [
+     "lib/url.c",
+     "override_login"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/netrc.c",
+     "parsenetrc"
+    ],
+    [
+     "lib/url.c",
+     "override_login"
+    ],
+    [
+     "lib/netrc.c",
+     "Curl_parsenetrc"
+    ],
+    [
+     "lib/http.c",
+     "Curl_http_host"
+    ],
+    [
+     "src/tool_cb_hdr.c",
+     "write_linked_location"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": false,
+    "file@5": false,
+    "file@10": false
+   },
+   "bm25": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "1334763",
+   "no_code_cited": true,
+   "gold": [
+    [
+     "lib/ftp.c",
+     "ftp_statemachine"
+    ],
+    [
+     "lib/imap.c",
+     "imap_state_starttls_resp"
+    ],
+    [
+     "lib/pop3.c",
+     "pop3_state_starttls_resp"
+    ],
+    [
+     "lib/smtp.c",
+     "smtp_state_starttls_resp"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/imap.c",
+     "imap_state_capability_resp"
+    ],
+    [
+     "lib/pop3.c",
+     "pop3_state_capa_resp"
+    ],
+    [
+     "lib/smtp.c",
+     "smtp_state_ehlo_resp"
+    ],
+    [
+     "lib/imap.c",
+     "imap_state_starttls_resp"
+    ],
+    [
+     "lib/imap.c",
+     "imap_statemachine"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": false,
+    "file@5": false,
+    "file@10": false
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "3916059",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/http2.c",
+     "h2_duphandle"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/conncache.c",
+     "Curl_conn_terminate"
+    ],
+    [
+     "lib/conncache.c",
+     "cpool_evict_conn"
+    ],
+    [
+     "lib/curl_share.c",
+     "share_destroy"
+    ],
+    [
+     "lib/conncache.c",
+     "cpool_discard_conn"
+    ],
+    [
+     "lib/http2.c",
+     "push_promise"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": true,
+    "file@1": false,
+    "file@5": false,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": false,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "1223565",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/url.c",
+     "create_conn"
+    ],
+    [
+     "lib/vtls/gtls.c",
+     "gtls_connect_step3"
+    ],
+    [
+     "lib/vtls/nss.c",
+     "nss_do_connect"
+    ],
+    [
+     "lib/vtls/openssl.c",
+     "servercert"
+    ],
+    [
+     "lib/vtls/vtls.c",
+     "Curl_clone_primary_ssl_config"
+    ],
+    [
+     "lib/vtls/vtls.c",
+     "Curl_free_primary_ssl_config"
+    ],
+    [
+     "lib/vtls/vtls.c",
+     "Curl_ssl_config_matches"
+    ]
+   ],
+   "top5": [
+    [
+     "src/tool_operate.c",
+     "transfer_per_config"
+    ],
+    [
+     "lib/vtls/vtls.c",
+     "Curl_ssl_config_matches"
+    ],
+    [
+     "lib/url.c",
+     "create_conn"
+    ],
+    [
+     "lib/vtls/openssl.c",
+     "ossl_connect_step1"
+    ],
+    [
+     "lib/vtls/mbedtls.c",
+     "mbed_connect_step1"
+    ]
+   ],
+   "cited": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": false,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "3744543",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/url.c",
+     "Curl_close"
+    ],
+    [
+     "lib/url.c",
+     "url_set_conn_proxies"
+    ]
+   ],
+   "top5": [
+    [
+     "src/config2setopts.c",
+     "proxy_setopts"
+    ],
+    [
+     "lib/url.c",
+     "url_detect_proxy"
+    ],
+    [
+     "lib/http.c",
+     "output_auth_headers"
+    ],
+    [
+     "lib/http_digest.c",
+     "Curl_output_digest"
+    ],
+    [
+     "lib/doh.c",
+     "doh_probe_run"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": false,
+    "file@5": false,
+    "file@10": false
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": false,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "2148242",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/cookie.c",
+     "Curl_cookie_add"
+    ],
+    [
+     "lib/cookie.c",
+     "Curl_cookie_cleanup"
+    ],
+    [
+     "lib/cookie.c",
+     "Curl_cookie_init"
+    ],
+    [
+     "lib/cookie.c",
+     "dup_cookie"
+    ],
+    [
+     "lib/cookie.c",
+     "freecookie"
+    ],
+    [
+     "lib/easy.c",
+     "curl_easy_duphandle"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/cookie.c",
+     "Curl_cookie_init"
+    ],
+    [
+     "lib/easy.c",
+     "curl_easy_duphandle"
+    ],
+    [
+     "lib/asyn-ares.c",
+     "Curl_resolver_duphandle"
+    ],
+    [
+     "lib/asyn-thread.c",
+     "Curl_resolver_duphandle"
+    ],
+    [
+     "lib/http2.c",
+     "h2_duphandle"
+    ]
+   ],
+   "cited": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "1898475",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/url.c",
+     "ConnectionExists"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/transfer.c",
+     "data_pending"
+    ],
+    [
+     "lib/url.c",
+     "ConnectionExists"
+    ],
+    [
+     "lib/vssh/wolfssh.c",
+     "wssh_connect"
+    ],
+    [
+     "lib/vssh/libssh2.c",
+     "ssh_do"
+    ],
+    [
+     "lib/vssh/libssh.c",
+     "myssh_do_it"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": false,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "1730660",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/url.c",
+     "create_conn"
+    ],
+    [
+     "lib/url.c",
+     "parseurlandfillconn"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/smtp.c",
+     "smtp_parse_address"
+    ],
+    [
+     "lib/url.c",
+     "Curl_idnconvert_hostname"
+    ],
+    [
+     "lib/hsts.c",
+     "Curl_hsts_save"
+    ],
+    [
+     "lib/hsts.c",
+     "hsts_create"
+    ],
+    [
+     "lib/hsts.c",
+     "hsts_load"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": false,
+    "file@5": false,
+    "file@10": false
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": false,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "2629968",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/vtls/x509asn1.c",
+     "GTime2str"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/vtls/x509asn1.c",
+     "Curl_extract_certinfo"
+    ],
+    [
+     "lib/vtls/x509asn1.c",
+     "GTime2str"
+    ],
+    [
+     "lib/vtls/x509asn1.c",
+     "UTime2str"
+    ],
+    [
+     "lib/vtls/sectransp.c",
+     "add_cert_to_certinfo"
+    ],
+    [
+     "lib/vtls/x509asn1.c",
+     "do_pubkey_field"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": false,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "3923520",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/conncache.c",
+     "Curl_conn_terminate"
+    ],
+    [
+     "lib/conncache.c",
+     "Curl_cpool_check_limits"
+    ],
+    [
+     "lib/conncache.c",
+     "Curl_cpool_conn_now_idle"
+    ],
+    [
+     "lib/conncache.c",
+     "Curl_cpool_conn_seems_healthy"
+    ],
+    [
+     "lib/conncache.c",
+     "Curl_cpool_destroy"
+    ],
+    [
+     "lib/conncache.c",
+     "Curl_cpool_init"
+    ],
+    [
+     "lib/conncache.c",
+     "Curl_cpool_nw_changed"
+    ],
+    [
+     "lib/conncache.c",
+     "Curl_cpool_prune_dead"
+    ],
+    [
+     "lib/conncache.c",
+     "Curl_cpool_upkeep"
+    ],
+    [
+     "lib/conncache.c",
+     "conn_upkeep"
+    ],
+    [
+     "lib/conncache.c",
+     "cpool_discard_conn"
+    ],
+    [
+     "lib/conncache.c",
+     "cpool_evict_conn"
+    ],
+    [
+     "lib/conncache.c",
+     "cpool_find_conn"
+    ],
+    [
+     "lib/conncache.c",
+     "cpool_foreach"
+    ],
+    [
+     "lib/conncache.c",
+     "cpool_get_instance"
+    ],
+    [
+     "lib/conncache.c",
+     "cpool_mark_stale"
+    ],
+    [
+     "lib/conncache.c",
+     "cpool_reap_dead_cb"
+    ],
+    [
+     "lib/conncache.c",
+     "cpool_reap_no_reuse"
+    ],
+    [
+     "lib/cshutdn.c",
+     "Curl_cshutdn_add"
+    ],
+    [
+     "lib/cshutdn.c",
+     "Curl_cshutdn_add_pollfds"
+    ],
+    [
+     "lib/cshutdn.c",
+     "Curl_cshutdn_add_waitfds"
+    ],
+    [
+     "lib/cshutdn.c",
+     "Curl_cshutdn_close_oldest"
+    ],
+    [
+     "lib/cshutdn.c",
+     "Curl_cshutdn_count"
+    ],
+    [
+     "lib/cshutdn.c",
+     "Curl_cshutdn_dest_count"
+    ],
+    [
+     "lib/cshutdn.c",
+     "Curl_cshutdn_destroy"
+    ],
+    [
+     "lib/cshutdn.c",
+     "Curl_cshutdn_perform"
+    ],
+    [
+     "lib/cshutdn.c",
+     "Curl_cshutdn_run_once"
+    ],
+    [
+     "lib/cshutdn.c",
+     "Curl_cshutdn_setfds"
+    ],
+    [
+     "lib/cshutdn.c",
+     "Curl_cshutdn_terminate"
+    ],
+    [
+     "lib/cshutdn.c",
+     "cshutdn_destroy_oldest"
+    ],
+    [
+     "lib/cshutdn.c",
+     "cshutdn_perform"
+    ],
+    [
+     "lib/cshutdn.c",
+     "cshutdn_terminate_all"
+    ],
+    [
+     "lib/cshutdn.c",
+     "cshutdn_update_ev"
+    ],
+    [
+     "lib/cshutdn.c",
+     "cshutdn_wait"
+    ],
+    [
+     "lib/curl_share.c",
+     "Curl_share_lock"
+    ],
+    [
+     "lib/curl_share.c",
+     "Curl_share_unlock"
+    ],
+    [
+     "lib/curl_share.c",
+     "curl_share_setopt"
+    ],
+    [
+     "lib/curl_share.c",
+     "share_destroy"
+    ],
+    [
+     "lib/curl_trc.c",
+     "trc_print_ids"
+    ],
+    [
+     "lib/easy.c",
+     "Curl_connect_only_attach"
+    ],
+    [
+     "lib/easy.c",
+     "Curl_easy_recv"
+    ],
+    [
+     "lib/easy.c",
+     "Curl_senddata"
+    ],
+    [
+     "lib/easy.c",
+     "curl_easy_duphandle"
+    ],
+    [
+     "lib/easy.c",
+     "curl_easy_reset"
+    ],
+    [
+     "lib/easy.c",
+     "easy_perform"
+    ],
+    [
+     "lib/getinfo.c",
+     "getinfo_offt"
+    ],
+    [
+     "lib/multi.c",
+     "Curl_attach_connection"
+    ],
+    [
+     "lib/multi.c",
+     "Curl_multi_add_perform"
+    ],
+    [
+     "lib/multi.c",
+     "Curl_multi_handle"
+    ],
+    [
+     "lib/multi.c",
+     "Curl_multi_remove_handle"
+    ],
+    [
+     "lib/multi.c",
+     "curl_multi_cleanup"
+    ],
+    [
+     "lib/multi.c",
+     "curl_multi_fdset"
+    ],
+    [
+     "lib/multi.c",
+     "curl_multi_setopt"
+    ],
+    [
+     "lib/multi.c",
+     "curl_multi_waitfds"
+    ],
+    [
+     "lib/multi.c",
+     "is_finished"
+    ],
+    [
+     "lib/multi.c",
+     "multi_done_locked"
+    ],
+    [
+     "lib/multi.c",
+     "multi_runsingle"
+    ],
+    [
+     "lib/multi.c",
+     "multi_wait"
+    ],
+    [
+     "lib/url.c",
+     "Curl_connect"
+    ],
+    [
+     "lib/url.c",
+     "Curl_open"
+    ],
+    [
+     "lib/url.c",
+     "url_allow_sspi_empty_creds"
+    ],
+    [
+     "lib/url.c",
+     "url_attach_existing"
+    ],
+    [
+     "lib/url.c",
+     "url_find_or_create_conn"
+    ],
+    [
+     "lib/url.c",
+     "url_match_conn"
+    ],
+    [
+     "lib/url.c",
+     "url_match_result"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/url.c",
+     "url_match_auth_nego"
+    ],
+    [
+     "lib/url.c",
+     "url_match_auth_ntlm"
+    ],
+    [
+     "lib/http_negotiate.c",
+     "Curl_input_negotiate"
+    ],
+    [
+     "lib/url.c",
+     "url_conn_reuse_adjust"
+    ],
+    [
+     "lib/url.c",
+     "url_match_auth"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": false,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "3642555",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/url.c",
+     "url_match_auth_ntlm"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/url.c",
+     "url_match_auth_nego"
+    ],
+    [
+     "src/tool_ssls.c",
+     "tool_ssls_easy"
+    ],
+    [
+     "lib/doh.c",
+     "doh_probe_run"
+    ],
+    [
+     "lib/url.c",
+     "url_attach_existing"
+    ],
+    [
+     "src/tool_operate.c",
+     "add_parallel_transfers"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "1176461",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/telnet.c",
+     "suboption"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/telnet.c",
+     "suboption"
+    ],
+    [
+     "lib/telnet.c",
+     "printsub"
+    ],
+    [
+     "lib/telnet.c",
+     "init_telnet"
+    ],
+    [
+     "lib/telnet.c",
+     "check_telnet_options"
+    ],
+    [
+     "lib/url.c",
+     "detect_proxy"
+    ]
+   ],
+   "cited": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "3993549",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/url.c",
+     "url_attach_existing"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/http.c",
+     "output_auth_headers"
+    ],
+    [
+     "lib/url.c",
+     "url_set_data_creds"
+    ],
+    [
+     "lib/vauth/vauth.c",
+     "Curl_auth_allowed_to_host"
+    ],
+    [
+     "lib/http_negotiate.c",
+     "Curl_input_negotiate"
+    ],
+    [
+     "lib/vauth/vauth.c",
+     "Curl_auth_allowed_to_origin"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": false,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": false,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "3584903",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/url.c",
+     "proxy_info_matches"
+    ],
+    [
+     "lib/url.c",
+     "socks_proxy_info_matches"
+    ],
+    [
+     "lib/url.c",
+     "url_match_proxy_use"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/url.c",
+     "url_match_proxy_use"
+    ],
+    [
+     "lib/curl_share.c",
+     "curl_share_setopt"
+    ],
+    [
+     "lib/url.c",
+     "url_find_or_create_conn"
+    ],
+    [
+     "lib/url.c",
+     "url_match_auth_ntlm"
+    ],
+    [
+     "lib/url.c",
+     "url_match_auth_nego"
+    ]
+   ],
+   "cited": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "1223882",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/telnet.c",
+     "suboption"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/telnet.c",
+     "check_telnet_options"
+    ],
+    [
+     "lib/telnet.c",
+     "suboption"
+    ],
+    [
+     "lib/telnet.c",
+     "init_telnet"
+    ],
+    [
+     "lib/telnet.c",
+     "printsub"
+    ],
+    [
+     "lib/telnet.c",
+     "telnet_do"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "3783438",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/vquic/vquic.c",
+     "recvmmsg_packets"
+    ],
+    [
+     "lib/vquic/vquic.c",
+     "recvmsg_packets"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/vquic/vquic.c",
+     "vquic_recv_packets"
+    ],
+    [
+     "lib/vquic/vquic.c",
+     "recvmmsg_packets"
+    ],
+    [
+     "lib/vquic/vquic.c",
+     "recvmsg_packets"
+    ],
+    [
+     "src/tool_operate.c",
+     "parallel_event"
+    ],
+    [
+     "lib/vquic/cf-ngtcp2.c",
+     "cf_progress_egress"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "1553301",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/cookie.c",
+     "bad_domain"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/cookie.c",
+     "Curl_cookie_add"
+    ],
+    [
+     "lib/cookie.c",
+     "Curl_cookie_getlist"
+    ],
+    [
+     "lib/cookie.c",
+     "cookie_output"
+    ],
+    [
+     "lib/http.c",
+     "Curl_http_header"
+    ],
+    [
+     "lib/cookie.c",
+     "bad_domain"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "1553598",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "src/tool_operate.c",
+     "post_per_transfer"
+    ]
+   ],
+   "top5": [
+    [
+     "src/tool_cb_wrt.c",
+     "tool_create_output_file"
+    ],
+    [
+     "src/tool_doswin.c",
+     "sanitize_file_name"
+    ],
+    [
+     "src/tool_cb_wrt.c",
+     "tool_write_cb"
+    ],
+    [
+     "lib/cookie.c",
+     "cookie_output"
+    ],
+    [
+     "src/tool_operate.c",
+     "post_per_transfer"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": false,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": false,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "3153497",
+   "no_code_cited": true,
+   "gold": [
+    [
+     "lib/vquic/vquic-tls.c",
+     "Curl_vquic_tls_verify_peer"
+    ],
+    [
+     "lib/vtls/wolfssl.c",
+     "wssl_connect"
+    ],
+    [
+     "lib/vtls/wolfssl.c",
+     "wssl_verify_pinned"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/vtls/wolfssl.c",
+     "wssl_verify_pinned"
+    ],
+    [
+     "lib/vtls/wolfssl.c",
+     "wssl_handshake"
+    ],
+    [
+     "lib/vtls/openssl.c",
+     "ossl_pkp_pin_peer_pubkey"
+    ],
+    [
+     "lib/vtls/wolfssl.c",
+     "Curl_wssl_ctx_init"
+    ],
+    [
+     "lib/vtls/wolfssl.c",
+     "wssl_log_tls12_secret"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": false,
+    "file@5": false,
+    "file@10": false
+   },
+   "bm25": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "4099194",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/vtls/gtls.c",
+     "gtls_send"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/vtls/gtls.c",
+     "gtls_send_earlydata"
+    ],
+    [
+     "lib/vtls/gtls.c",
+     "gtls_send"
+    ],
+    [
+     "lib/ws.c",
+     "ws_flush"
+    ],
+    [
+     "lib/vtls/gtls.c",
+     "gtls_client_init"
+    ],
+    [
+     "lib/http.c",
+     "http_on_101_upgrade"
+    ]
+   ],
+   "cited": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "3718195",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/url.c",
+     "url_attach_existing"
+    ],
+    [
+     "lib/url.c",
+     "url_match_ssl_config"
+    ],
+    [
+     "lib/url.c",
+     "url_match_ssl_use"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/url.c",
+     "url_match_ssl_config"
+    ],
+    [
+     "lib/url.c",
+     "url_match_ssl_use"
+    ],
+    [
+     "src/config2setopts.c",
+     "ssl_setopts"
+    ],
+    [
+     "lib/setopt.c",
+     "setopt_long_bool"
+    ],
+    [
+     "lib/url.c",
+     "url_match_proxy_use"
+    ]
+   ],
+   "cited": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "3973190",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/url.c",
+     "url_match_ssl_use"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/setopt.c",
+     "setopt_long_bool"
+    ],
+    [
+     "lib/url.c",
+     "url_attach_existing"
+    ],
+    [
+     "lib/url.c",
+     "url_find_or_create_conn"
+    ],
+    [
+     "lib/ftp.c",
+     "ftp_pp_statemachine"
+    ],
+    [
+     "lib/ftp.c",
+     "ftp_wait_resp"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": false,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "3751712",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/vssh/libssh.c",
+     "myssh_is_known"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/vssh/libssh.c",
+     "myssh_is_known"
+    ],
+    [
+     "lib/vssh/libssh2.c",
+     "ssh_knownhost"
+    ],
+    [
+     "lib/vssh/libssh2.c",
+     "sshkeycallback"
+    ],
+    [
+     "lib/vssh/libssh2.c",
+     "ssh_force_knownhost_key_type"
+    ],
+    [
+     "src/tool_operate.c",
+     "single_transfer"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "3993566",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/cf-h1-proxy.c",
+     "on_resp_header"
+    ],
+    [
+     "lib/cf-h1-proxy.c",
+     "on_resp_header_udp"
+    ],
+    [
+     "lib/http_proxy.c",
+     "Curl_http_proxy_inspect_tunnel_response"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/http.c",
+     "http_auth_headers"
+    ],
+    [
+     "lib/http.c",
+     "Curl_http_auth"
+    ],
+    [
+     "lib/http.c",
+     "Curl_ConnectHTTPProxyTunnel"
+    ],
+    [
+     "lib/http.c",
+     "Curl_http_connect"
+    ],
+    [
+     "lib/url.c",
+     "Curl_setopt"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": false,
+    "file@5": false,
+    "file@10": false
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": false,
+    "file@5": false,
+    "file@10": false
+   }
+  },
+  {
+   "id": "3477116",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/vssh/libssh.c",
+     "myssh_connect"
+    ]
+   ],
+   "top5": [
+    [
+     "src/config2setopts.c",
+     "ssh_setopts"
+    ],
+    [
+     "lib/vssh/libssh2.c",
+     "ssh_knownhost"
+    ],
+    [
+     "lib/vssh/libssh.c",
+     "myssh_connect"
+    ],
+    [
+     "lib/vssh/libssh.c",
+     "myssh_is_known"
+    ],
+    [
+     "lib/vssh/libssh2.c",
+     "ssh_force_knownhost_key_type"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": false,
+    "file@5": false,
+    "file@10": false
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": false,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "1129529",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/vtls/bearssl.c",
+     "bearssl_connect_step1"
+    ],
+    [
+     "lib/vtls/bearssl.c",
+     "bearssl_connect_step3"
+    ],
+    [
+     "lib/vtls/gtls.c",
+     "gtls_connect_step3"
+    ],
+    [
+     "lib/vtls/mbedtls.c",
+     "mbed_connect_step1"
+    ],
+    [
+     "lib/vtls/mbedtls.c",
+     "mbed_connect_step3"
+    ],
+    [
+     "lib/vtls/mesalink.c",
+     "mesalink_connect_step1"
+    ],
+    [
+     "lib/vtls/mesalink.c",
+     "mesalink_connect_step3"
+    ],
+    [
+     "lib/vtls/openssl.c",
+     "ossl_connect_step1"
+    ],
+    [
+     "lib/vtls/openssl.c",
+     "ossl_get_ssl_sockindex_index"
+    ],
+    [
+     "lib/vtls/openssl.c",
+     "ossl_init"
+    ],
+    [
+     "lib/vtls/openssl.c",
+     "ossl_new_session_cb"
+    ],
+    [
+     "lib/vtls/schannel.c",
+     "schannel_connect_step1"
+    ],
+    [
+     "lib/vtls/schannel.c",
+     "schannel_connect_step3"
+    ],
+    [
+     "lib/vtls/vtls.c",
+     "Curl_ssl_addsessionid"
+    ],
+    [
+     "lib/vtls/vtls.c",
+     "Curl_ssl_getsessionid"
+    ],
+    [
+     "lib/vtls/wolfssl.c",
+     "wolfssl_connect_step1"
+    ],
+    [
+     "lib/vtls/wolfssl.c",
+     "wolfssl_connect_step3"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/vtls/openssl.c",
+     "ossl_connect_step1"
+    ],
+    [
+     "lib/vtls/vtls.c",
+     "Curl_ssl_addsessionid"
+    ],
+    [
+     "lib/vtls/gtls.c",
+     "gtls_connect_step1"
+    ],
+    [
+     "lib/vtls/mbedtls.c",
+     "mbed_connect_step1"
+    ],
+    [
+     "lib/vtls/darwinssl.c",
+     "darwinssl_connect_step2"
+    ]
+   ],
+   "cited": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "1826048",
+   "no_code_cited": true,
+   "gold": [
+    [
+     "lib/content_encoding.c",
+     "Curl_build_unencoding_stack"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/http_proxy.c",
+     "on_resp_header"
+    ],
+    [
+     "lib/http.c",
+     "Curl_add_custom_headers"
+    ],
+    [
+     "lib/http.c",
+     "Curl_http_size"
+    ],
+    [
+     "lib/c-hyper.c",
+     "Curl_http"
+    ],
+    [
+     "lib/content_encoding.c",
+     "Curl_build_unencoding_stack"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": false,
+    "file@5": false,
+    "file@10": false
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": false,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "3989514",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/vtls/gtls.c",
+     "Curl_gtls_verifyserver"
+    ],
+    [
+     "lib/vtls/mbedtls.c",
+     "mbed_extract_certinfo"
+    ],
+    [
+     "lib/vtls/rustls.c",
+     "cr_connect"
+    ],
+    [
+     "lib/vtls/schannel.c",
+     "add_cert_to_certinfo"
+    ],
+    [
+     "lib/vtls/schannel.c",
+     "schannel_pkp_pin_peer_pubkey"
+    ],
+    [
+     "lib/vtls/wolfssl.c",
+     "Curl_wssl_verify_pinned"
+    ],
+    [
+     "lib/vtls/x509asn1.c",
+     "ASN1tostr"
+    ],
+    [
+     "lib/vtls/x509asn1.c",
+     "Curl_extract_certinfo"
+    ],
+    [
+     "lib/vtls/x509asn1.c",
+     "Curl_parseX509"
+    ],
+    [
+     "lib/vtls/x509asn1.c",
+     "OID2str"
+    ],
+    [
+     "lib/vtls/x509asn1.c",
+     "bit2str"
+    ],
+    [
+     "lib/vtls/x509asn1.c",
+     "bool2str"
+    ],
+    [
+     "lib/vtls/x509asn1.c",
+     "do_pubkey"
+    ],
+    [
+     "lib/vtls/x509asn1.c",
+     "dumpAlgo"
+    ],
+    [
+     "lib/vtls/x509asn1.c",
+     "encodeDN"
+    ],
+    [
+     "lib/vtls/x509asn1.c",
+     "encodeOID"
+    ],
+    [
+     "lib/vtls/x509asn1.c",
+     "getASN1Element"
+    ],
+    [
+     "lib/vtls/x509asn1.c",
+     "getASN1Element_"
+    ],
+    [
+     "lib/vtls/x509asn1.c",
+     "int2str"
+    ],
+    [
+     "lib/vtls/x509asn1.c",
+     "octet2str"
+    ],
+    [
+     "lib/vtls/x509asn1.c",
+     "utf8asn1str"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/vtls/wolfssl.c",
+     "Curl_wssl_verify_pinned"
+    ],
+    [
+     "lib/vtls/schannel.c",
+     "schannel_pkp_pin_peer_pubkey"
+    ],
+    [
+     "lib/vtls/wolfssl.c",
+     "wssl_log_tls12_secret"
+    ],
+    [
+     "lib/vquic/vquic-tls.c",
+     "Curl_vquic_tls_verify_peer"
+    ],
+    [
+     "lib/vtls/vtls.c",
+     "Curl_pin_peer_pubkey"
+    ]
+   ],
+   "cited": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "3480925",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/vssh/libssh.c",
+     "myssh_in_AUTHLIST"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/vssh/libssh2.c",
+     "ssh_state_auth_agent_init"
+    ],
+    [
+     "lib/vssh/libssh.c",
+     "myssh_in_AUTH_PKEY_INIT"
+    ],
+    [
+     "lib/vssh/libssh2.c",
+     "ssh_state_pkey_init"
+    ],
+    [
+     "lib/vssh/libssh2.c",
+     "ssh_state_auth_host_init"
+    ],
+    [
+     "lib/vssh/libssh.c",
+     "myssh_in_AUTH_KEY_INIT"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": false,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "1895135",
+   "no_code_cited": true,
+   "gold": [
+    [
+     "lib/url.c",
+     "ConnectionExists"
+    ],
+    [
+     "lib/url.c",
+     "allocate_conn"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/curl_gssapi.c",
+     "Curl_gss_init_sec_context"
+    ],
+    [
+     "src/tool_paramhlp.c",
+     "delegation"
+    ],
+    [
+     "lib/http_negotiate.c",
+     "Curl_output_negotiate"
+    ],
+    [
+     "lib/setopt.c",
+     "Curl_vsetopt"
+    ],
+    [
+     "lib/multi.c",
+     "multi_done"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": false,
+    "file@5": false,
+    "file@10": false
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": false,
+    "file@5": false,
+    "file@10": true
+   }
+  },
+  {
+   "id": "3355218",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/url.c",
+     "Curl_getn_scheme_handler"
+    ],
+    [
+     "lib/vssh/wolfssh.c",
+     "Curl_ssh_cleanup"
+    ],
+    [
+     "lib/vssh/wolfssh.c",
+     "Curl_ssh_init"
+    ],
+    [
+     "lib/vssh/wolfssh.c",
+     "Curl_ssh_version"
+    ],
+    [
+     "lib/vssh/wolfssh.c",
+     "userauth"
+    ],
+    [
+     "lib/vssh/wolfssh.c",
+     "wscp_disconnect"
+    ],
+    [
+     "lib/vssh/wolfssh.c",
+     "wscp_doing"
+    ],
+    [
+     "lib/vssh/wolfssh.c",
+     "wscp_done"
+    ],
+    [
+     "lib/vssh/wolfssh.c",
+     "wscp_perform"
+    ],
+    [
+     "lib/vssh/wolfssh.c",
+     "wscp_recv"
+    ],
+    [
+     "lib/vssh/wolfssh.c",
+     "wscp_send"
+    ],
+    [
+     "lib/vssh/wolfssh.c",
+     "wsftp_disconnect"
+    ],
+    [
+     "lib/vssh/wolfssh.c",
+     "wsftp_doing"
+    ],
+    [
+     "lib/vssh/wolfssh.c",
+     "wsftp_done"
+    ],
+    [
+     "lib/vssh/wolfssh.c",
+     "wsftp_perform"
+    ],
+    [
+     "lib/vssh/wolfssh.c",
+     "wsftp_recv"
+    ],
+    [
+     "lib/vssh/wolfssh.c",
+     "wsftp_send"
+    ],
+    [
+     "lib/vssh/wolfssh.c",
+     "wssh_block_statemach"
+    ],
+    [
+     "lib/vssh/wolfssh.c",
+     "wssh_conn_dtor"
+    ],
+    [
+     "lib/vssh/wolfssh.c",
+     "wssh_connect"
+    ],
+    [
+     "lib/vssh/wolfssh.c",
+     "wssh_do"
+    ],
+    [
+     "lib/vssh/wolfssh.c",
+     "wssh_done"
+    ],
+    [
+     "lib/vssh/wolfssh.c",
+     "wssh_easy_dtor"
+    ],
+    [
+     "lib/vssh/wolfssh.c",
+     "wssh_multi_statemach"
+    ],
+    [
+     "lib/vssh/wolfssh.c",
+     "wssh_pollset"
+    ],
+    [
+     "lib/vssh/wolfssh.c",
+     "wssh_setup_connection"
+    ],
+    [
+     "lib/vssh/wolfssh.c",
+     "wssh_sftp_upload_init"
+    ],
+    [
+     "lib/vssh/wolfssh.c",
+     "wssh_sshc_cleanup"
+    ],
+    [
+     "lib/vssh/wolfssh.c",
+     "wssh_state"
+    ],
+    [
+     "lib/vssh/wolfssh.c",
+     "wssh_statemach_act"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/vssh/wolfssh.c",
+     "wssh_connect"
+    ],
+    [
+     "lib/vssh/libssh.c",
+     "myssh_connect"
+    ],
+    [
+     "lib/vssh/wolfssh.c",
+     "wssh_statemach_act"
+    ],
+    [
+     "src/config2setopts.c",
+     "ssh_setopts"
+    ],
+    [
+     "lib/vssh/wolfssh.c",
+     "wssh_do"
+    ]
+   ],
+   "cited": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "3822248",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/openldap.c",
+     "oldap_state_sasl_resp"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/curl_sasl.c",
+     "Curl_sasl_continue"
+    ],
+    [
+     "lib/openldap.c",
+     "oldap_state_sasl_resp"
+    ],
+    [
+     "lib/smtp.c",
+     "smtp_state_auth_resp"
+    ],
+    [
+     "lib/imap.c",
+     "imap_state_auth_resp"
+    ],
+    [
+     "lib/openldap.c",
+     "oldap_state_mechs_resp"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": false,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": false,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "3975408",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/vssh/libssh2.c",
+     "ssh_force_knownhost_key_type"
+    ]
+   ],
+   "top5": [
+    [
+     "src/config2setopts.c",
+     "ssh_setopts"
+    ],
+    [
+     "lib/vssh/libssh.c",
+     "myssh_is_known"
+    ],
+    [
+     "lib/vssh/libssh2.c",
+     "ssh_knownhost"
+    ],
+    [
+     "lib/setopt.c",
+     "setopt_cptr_ssh"
+    ],
+    [
+     "lib/vssh/libssh.c",
+     "myssh_SESSION_DISCONNECT"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": true,
+    "file@1": false,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "2298922",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/vtls/openssl.c",
+     "servercert"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/vtls/gtls.c",
+     "Curl_gtls_verifyserver"
+    ],
+    [
+     "lib/vtls/openssl.c",
+     "verifystatus"
+    ],
+    [
+     "lib/vtls/sectransp.c",
+     "sectransp_connect_step2"
+    ],
+    [
+     "lib/vtls/schannel_verify.c",
+     "Curl_verify_certificate"
+    ],
+    [
+     "lib/vtls/openssl.c",
+     "ossl_connect_step1"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": false,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": true,
+    "file@1": false,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "1954658",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/curl_rtmp.c",
+     "rtmp_connect"
+    ],
+    [
+     "lib/curl_rtmp.c",
+     "rtmp_do"
+    ],
+    [
+     "lib/file.c",
+     "file_connect"
+    ],
+    [
+     "lib/file.c",
+     "file_do"
+    ],
+    [
+     "lib/ftp.c",
+     "ftp_do_more"
+    ],
+    [
+     "lib/ftp.c",
+     "ftp_done"
+    ],
+    [
+     "lib/ftp.c",
+     "ftp_parse_url_path"
+    ],
+    [
+     "lib/ftp.c",
+     "ftp_state_prepare_transfer"
+    ],
+    [
+     "lib/http.c",
+     "Curl_http_body"
+    ],
+    [
+     "lib/http.c",
+     "Curl_http_method"
+    ],
+    [
+     "lib/imap.c",
+     "imap_done"
+    ],
+    [
+     "lib/imap.c",
+     "imap_perform"
+    ],
+    [
+     "lib/rtsp.c",
+     "rtsp_do"
+    ],
+    [
+     "lib/setopt.c",
+     "Curl_vsetopt"
+    ],
+    [
+     "lib/smb.c",
+     "smb_request_state"
+    ],
+    [
+     "lib/smb.c",
+     "smb_send_open"
+    ],
+    [
+     "lib/smtp.c",
+     "smtp_done"
+    ],
+    [
+     "lib/smtp.c",
+     "smtp_perform"
+    ],
+    [
+     "lib/tftp.c",
+     "tftp_parse_option_ack"
+    ],
+    [
+     "lib/tftp.c",
+     "tftp_send_first"
+    ],
+    [
+     "lib/transfer.c",
+     "Curl_follow"
+    ],
+    [
+     "lib/transfer.c",
+     "Curl_init_CONNECT"
+    ],
+    [
+     "lib/transfer.c",
+     "Curl_retry_request"
+    ],
+    [
+     "lib/vssh/libssh.c",
+     "myssh_statemach_act"
+    ],
+    [
+     "lib/vssh/libssh2.c",
+     "ssh_statemach_act"
+    ],
+    [
+     "lib/vssh/wolfssh.c",
+     "wssh_statemach_act"
+    ]
+   ],
+   "top5": [
+    [
+     "src/tool_setopt.c",
+     "tool_setopt_mimepost"
+    ],
+    [
+     "lib/doh.c",
+     "dohprobe"
+    ],
+    [
+     "src/tool_operate.c",
+     "single_transfer"
+    ],
+    [
+     "src/tool_setopt.c",
+     "tool_setopt"
+    ],
+    [
+     "lib/multi.c",
+     "readrewind"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": false,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": true,
+    "file@1": false,
+    "file@5": false,
+    "file@10": true
+   }
+  },
+  {
+   "id": "1269242",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/mqtt.c",
+     "mqtt_send"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/mqtt.c",
+     "mqtt_doing"
+    ],
+    [
+     "lib/mqtt.c",
+     "mqtt_send"
+    ],
+    [
+     "lib/sendf.c",
+     "Curl_write"
+    ],
+    [
+     "lib/gopher.c",
+     "gopher_do"
+    ],
+    [
+     "lib/easy.c",
+     "curl_easy_send"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "2402845",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/http2.c",
+     "http2_data_done"
+    ],
+    [
+     "lib/http2.c",
+     "on_header"
+    ],
+    [
+     "lib/http2.c",
+     "push_promise"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/http2.c",
+     "on_header"
+    ],
+    [
+     "lib/http2.c",
+     "push_promise"
+    ],
+    [
+     "lib/http2.c",
+     "on_stream_frame"
+    ],
+    [
+     "lib/mprintf.c",
+     "curl_maprintf"
+    ],
+    [
+     "lib/http2.c",
+     "http2_data_done"
+    ]
+   ],
+   "cited": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "1555441",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/vtls/nss.c",
+     "display_conn_info"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/vtls/nss.c",
+     "display_conn_info"
+    ],
+    [
+     "lib/vtls/gskit.c",
+     "gskit_connect_step3"
+    ],
+    [
+     "lib/vtls/nss.c",
+     "check_issuer_cert"
+    ],
+    [
+     "lib/vtls/nss.c",
+     "nss_do_connect"
+    ],
+    [
+     "lib/vtls/nss.c",
+     "BadCertHandler"
+    ]
+   ],
+   "cited": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "1704017",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/setopt.c",
+     "Curl_vsetopt"
+    ]
+   ],
+   "top5": [
+    [
+     "src/tool_operate.c",
+     "single_transfer"
+    ],
+    [
+     "lib/doh.c",
+     "dohprobe"
+    ],
+    [
+     "src/tool_setopt.c",
+     "tool_setopt"
+    ],
+    [
+     "lib/transfer.c",
+     "Curl_readrewind"
+    ],
+    [
+     "src/tool_operate.c",
+     "add_parallel_transfers"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": false,
+    "file@5": false,
+    "file@10": false
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": true,
+    "file@1": false,
+    "file@5": false,
+    "file@10": true
+   }
+  },
+  {
+   "id": "3751697",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/http2.c",
+     "h2_pri_spec"
+    ],
+    [
+     "lib/http2.c",
+     "h2_progress_egress"
+    ],
+    [
+     "lib/http2.c",
+     "h2_submit"
+    ],
+    [
+     "lib/setopt.c",
+     "setopt_pointers"
+    ],
+    [
+     "lib/url.c",
+     "Curl_close"
+    ],
+    [
+     "lib/url.c",
+     "Curl_data_priority_add_child"
+    ],
+    [
+     "lib/url.c",
+     "data_priority_cleanup"
+    ],
+    [
+     "lib/url.c",
+     "priority_remove_child"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/easy.c",
+     "curl_easy_reset"
+    ],
+    [
+     "lib/url.c",
+     "Curl_data_priority_cleanup"
+    ],
+    [
+     "lib/easy.c",
+     "curl_easy_init"
+    ],
+    [
+     "lib/url.c",
+     "Curl_close"
+    ],
+    [
+     "src/tool_operate.c",
+     "transfer_per_config"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": false,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": false,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "1334111",
+   "no_code_cited": true,
+   "gold": [
+    [
+     "lib/ftp.c",
+     "ftp_statemachine"
+    ],
+    [
+     "lib/imap.c",
+     "imap_state_capability_resp"
+    ],
+    [
+     "lib/pop3.c",
+     "pop3_state_capa_resp"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/ftp.c",
+     "ftp_statemachine"
+    ],
+    [
+     "lib/imap.c",
+     "imap_state_capability_resp"
+    ],
+    [
+     "lib/imap.c",
+     "imap_perform_capability"
+    ],
+    [
+     "lib/pop3.c",
+     "pop3_state_servergreet_resp"
+    ],
+    [
+     "lib/pop3.c",
+     "pop3_state_capa_resp"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": false,
+    "file@5": false,
+    "file@10": false
+   },
+   "bm25": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "1613943",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/cookie.c",
+     "Curl_cookie_add"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/cookie.c",
+     "Curl_cookie_add"
+    ],
+    [
+     "lib/cookie.c",
+     "Curl_cookie_init"
+    ],
+    [
+     "lib/http.c",
+     "Curl_http_header"
+    ],
+    [
+     "lib/http.c",
+     "Curl_http_cookies"
+    ],
+    [
+     "lib/cookie.c",
+     "Curl_flush_cookies"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": false,
+    "file@5": false,
+    "file@10": false
+   },
+   "bm25": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "4022070",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/cw-out.c",
+     "cw_get_writefunc"
+    ],
+    [
+     "lib/ftp.c",
+     "init_wc_data"
+    ],
+    [
+     "lib/ftp.c",
+     "wc_statemach"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/ftp.c",
+     "wc_statemach"
+    ],
+    [
+     "lib/ftp.c",
+     "init_wc_data"
+    ],
+    [
+     "lib/rtsp.c",
+     "rtp_client_write"
+    ],
+    [
+     "lib/vdns/doh.c",
+     "doh_probe_run"
+    ],
+    [
+     "src/tool_operate.c",
+     "serial_transfers"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": false,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "4022568",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/tftp.c",
+     "tftp_receive_packet"
+    ],
+    [
+     "lib/tftp.c",
+     "tftp_send_first"
+    ],
+    [
+     "lib/tftp.c",
+     "tftp_tx"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/tftp.c",
+     "tftp_send_first"
+    ],
+    [
+     "src/config2setopts.c",
+     "gen_cb_setopts"
+    ],
+    [
+     "lib/tftp.c",
+     "tftp_state_machine"
+    ],
+    [
+     "lib/tftp.c",
+     "tftp_tx"
+    ],
+    [
+     "lib/setopt.c",
+     "setopt_cptr_misc"
+    ]
+   ],
+   "cited": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "948876",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/connect.c",
+     "Curl_getconnectinfo"
+    ],
+    [
+     "lib/connect.c",
+     "conn_is_conn"
+    ],
+    [
+     "lib/easy.c",
+     "curl_easy_duphandle"
+    ],
+    [
+     "lib/multi.c",
+     "close_connect_only"
+    ],
+    [
+     "lib/multi.c",
+     "curl_multi_add_handle"
+    ],
+    [
+     "lib/multi.c",
+     "curl_multi_remove_handle"
+    ],
+    [
+     "lib/url.c",
+     "Curl_open"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/easy.c",
+     "easy_perform"
+    ],
+    [
+     "lib/easy.c",
+     "wait_or_timeout"
+    ],
+    [
+     "lib/doh.c",
+     "dohprobe"
+    ],
+    [
+     "lib/multi.c",
+     "curl_multi_remove_handle"
+    ],
+    [
+     "lib/multi.c",
+     "multi_runsingle"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "3697719",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/setopt.c",
+     "setopt_cptr_proxy"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/http_digest.c",
+     "Curl_output_digest"
+    ],
+    [
+     "lib/http_digest.c",
+     "Curl_input_digest"
+    ],
+    [
+     "lib/http.c",
+     "output_auth_headers"
+    ],
+    [
+     "lib/http.c",
+     "http_output_basic"
+    ],
+    [
+     "lib/http.c",
+     "Curl_http_input_auth"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": false,
+    "file@5": false,
+    "file@10": false
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": false,
+    "file@5": false,
+    "file@10": false
+   }
+  },
+  {
+   "id": "1543773",
+   "no_code_cited": true,
+   "gold": [
+    [
+     "lib/http.c",
+     "Curl_add_custom_headers"
+    ],
+    [
+     "lib/http.c",
+     "Curl_http_output_auth"
+    ],
+    [
+     "lib/http.c",
+     "allow_auth_to_host"
+    ],
+    [
+     "lib/vtls/openssl.c",
+     "ossl_connect_step1"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/transfer.c",
+     "Curl_follow"
+    ],
+    [
+     "src/tool_cb_hdr.c",
+     "write_linked_location"
+    ],
+    [
+     "lib/transfer.c",
+     "Curl_pretransfer"
+    ],
+    [
+     "lib/http.c",
+     "Curl_http_header"
+    ],
+    [
+     "lib/url.c",
+     "ConnectionExists"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": false,
+    "file@5": false,
+    "file@10": false
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": false,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "4024222",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/mime.c",
+     "curl_mime_free"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/mime.c",
+     "curl_mime_free"
+    ],
+    [
+     "lib/mime.c",
+     "Curl_mime_duppart"
+    ],
+    [
+     "lib/formdata.c",
+     "Curl_getformdata"
+    ],
+    [
+     "lib/mime.c",
+     "mime_subparts_free"
+    ],
+    [
+     "lib/mime.c",
+     "Curl_mime_cleanpart"
+    ]
+   ],
+   "cited": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "3969300",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/vtls/openssl.c",
+     "ossl_check_pinned_key"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/vtls/mbedtls.c",
+     "mbed_connect_step2"
+    ],
+    [
+     "lib/vtls/openssl.c",
+     "ossl_pkp_pin_peer_pubkey"
+    ],
+    [
+     "lib/vtls/openssl.c",
+     "ossl_check_pinned_key"
+    ],
+    [
+     "src/config2setopts.c",
+     "ssl_setopts"
+    ],
+    [
+     "lib/vtls/vtls.c",
+     "Curl_pin_peer_pubkey"
+    ]
+   ],
+   "cited": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": false,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "3969368",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/vtls/gtls.c",
+     "Curl_gtls_client_trust_setup"
+    ],
+    [
+     "lib/vtls/gtls.c",
+     "gtls_populate_creds"
+    ],
+    [
+     "lib/vtls/gtls.c",
+     "gtls_verify_cert"
+    ],
+    [
+     "lib/vtls/openssl.c",
+     "Curl_ssl_setup_x509_store"
+    ],
+    [
+     "lib/vtls/openssl.c",
+     "ossl_apply_session"
+    ],
+    [
+     "lib/vtls/openssl.c",
+     "ossl_load_trust_anchors"
+    ],
+    [
+     "lib/vtls/rustls.c",
+     "cr_init_backend"
+    ],
+    [
+     "lib/vtls/vtls_config.c",
+     "Curl_ssl_easy_config_complete"
+    ],
+    [
+     "lib/vtls/vtls_config.c",
+     "clone_ssl_primary_config"
+    ],
+    [
+     "lib/vtls/vtls_config.c",
+     "match_ssl_primary_config"
+    ],
+    [
+     "lib/vtls/vtls_config.c",
+     "ssl_easy_config_compl_options"
+    ],
+    [
+     "lib/vtls/wolfssl.c",
+     "Curl_wssl_setup_x509_store"
+    ],
+    [
+     "lib/vtls/wolfssl.c",
+     "wssl_populate_x509_store"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/vtls/openssl.c",
+     "ossl_load_trust_anchors"
+    ],
+    [
+     "lib/vtls/gtls.c",
+     "gtls_populate_creds"
+    ],
+    [
+     "lib/vtls/vtls_config.c",
+     "Curl_ssl_easy_config_complete"
+    ],
+    [
+     "lib/vtls/wolfssl.c",
+     "wssl_populate_x509_store"
+    ],
+    [
+     "lib/vtls/gtls.c",
+     "gtls_verify_cert"
+    ]
+   ],
+   "cited": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "2956023",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/content_encoding.c",
+     "brotli_do_init"
+    ],
+    [
+     "lib/content_encoding.c",
+     "brotli_do_write"
+    ],
+    [
+     "lib/content_encoding.c",
+     "check_gzip_header"
+    ],
+    [
+     "lib/content_encoding.c",
+     "deflate_do_close"
+    ],
+    [
+     "lib/content_encoding.c",
+     "deflate_do_init"
+    ],
+    [
+     "lib/content_encoding.c",
+     "deflate_do_write"
+    ],
+    [
+     "lib/content_encoding.c",
+     "error_do_init"
+    ],
+    [
+     "lib/content_encoding.c",
+     "error_do_write"
+    ],
+    [
+     "lib/content_encoding.c",
+     "exit_zlib"
+    ],
+    [
+     "lib/content_encoding.c",
+     "gzip_do_init"
+    ],
+    [
+     "lib/content_encoding.c",
+     "gzip_do_write"
+    ],
+    [
+     "lib/content_encoding.c",
+     "inflate_stream"
+    ],
+    [
+     "lib/content_encoding.c",
+     "zstd_do_init"
+    ],
+    [
+     "lib/content_encoding.c",
+     "zstd_do_write"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/content_encoding.c",
+     "gzip_do_write"
+    ],
+    [
+     "lib/content_encoding.c",
+     "process_trailer"
+    ],
+    [
+     "lib/content_encoding.c",
+     "inflate_stream"
+    ],
+    [
+     "lib/content_encoding.c",
+     "check_gzip_header"
+    ],
+    [
+     "lib/http.c",
+     "http_header"
+    ]
+   ],
+   "cited": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "2954286",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/asyn-thread.c",
+     "destroy_thread_sync_data"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/multi.c",
+     "curl_multi_wakeup"
+    ],
+    [
+     "lib/multi.c",
+     "curl_multi_cleanup"
+    ],
+    [
+     "lib/vtls/mbedtls_threadlock.c",
+     "Curl_mbedtlsthreadlock_thread_cleanup"
+    ],
+    [
+     "src/tool_main.c",
+     "main_checkfds"
+    ],
+    [
+     "lib/multi.c",
+     "curl_multi_remove_handle"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": false,
+    "file@5": false,
+    "file@10": false
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": true,
+    "file@1": false,
+    "file@5": false,
+    "file@10": true
+   }
+  },
+  {
+   "id": "3793260",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/http_digest.c",
+     "Curl_output_digest"
+    ],
+    [
+     "lib/vauth/digest.c",
+     "Curl_auth_digest_cleanup"
+    ],
+    [
+     "lib/vauth/digest_sspi.c",
+     "Curl_auth_digest_cleanup"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/transfer.c",
+     "Curl_pretransfer"
+    ],
+    [
+     "src/tool_operate.c",
+     "add_parallel_transfers"
+    ],
+    [
+     "src/tool_operate.c",
+     "serial_transfers"
+    ],
+    [
+     "lib/doh.c",
+     "doh_probe_run"
+    ],
+    [
+     "lib/url.c",
+     "Curl_close"
+    ]
+   ],
+   "cited": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": false,
+    "file@5": false,
+    "file@10": false
+   }
+  },
+  {
+   "id": "3735193",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/vauth/gsasl.c",
+     "Curl_auth_gsasl_is_supported"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/curl_sasl.c",
+     "sasl_choose_gsasl"
+    ],
+    [
+     "lib/vauth/gsasl.c",
+     "Curl_auth_gsasl_is_supported"
+    ],
+    [
+     "lib/vauth/gsasl.c",
+     "Curl_auth_gsasl_cleanup"
+    ],
+    [
+     "lib/vauth/vauth.c",
+     "gsasl_conn_dtor"
+    ],
+    [
+     "lib/curl_sasl.c",
+     "Curl_sasl_is_blocked"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": false,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "3294999",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/cookie.c",
+     "replace_existing"
+    ],
+    [
+     "lib/cookie.c",
+     "sanitize_cookie_path"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/cookie.c",
+     "replace_existing"
+    ],
+    [
+     "lib/cookie.c",
+     "Curl_cookie_add"
+    ],
+    [
+     "lib/cookie.c",
+     "parse_cookie_header"
+    ],
+    [
+     "lib/http.c",
+     "http_cookies"
+    ],
+    [
+     "lib/cookie.c",
+     "Curl_cookie_getlist"
+    ]
+   ],
+   "cited": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "2917232",
+   "no_code_cited": true,
+   "gold": [
+    [
+     "lib/netrc.c",
+     "parsenetrc"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/url.c",
+     "override_login"
+    ],
+    [
+     "lib/netrc.c",
+     "parsenetrc"
+    ],
+    [
+     "lib/http.c",
+     "Curl_http_output_auth"
+    ],
+    [
+     "lib/noproxy.c",
+     "Curl_check_noproxy"
+    ],
+    [
+     "lib/urlapi.c",
+     "parse_hostname_login"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": false,
+    "file@5": false,
+    "file@10": false
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": false,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "1892780",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/ftp.c",
+     "ftp_disconnect"
+    ],
+    [
+     "lib/ftp.c",
+     "ftp_setup_connection"
+    ],
+    [
+     "lib/setopt.c",
+     "Curl_vsetopt"
+    ],
+    [
+     "lib/url.c",
+     "ConnectionExists"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/ftp.c",
+     "ftp_state_user_resp"
+    ],
+    [
+     "lib/ftp.c",
+     "ftp_done"
+    ],
+    [
+     "lib/strerror.c",
+     "curl_easy_strerror"
+    ],
+    [
+     "lib/telnet.c",
+     "init_telnet"
+    ],
+    [
+     "lib/ftp.c",
+     "ftp_statemachine"
+    ]
+   ],
+   "cited": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "874778",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/url.c",
+     "override_login"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/asyn-ares.c",
+     "query_completed_cb"
+    ],
+    [
+     "lib/transfer.c",
+     "Curl_follow"
+    ],
+    [
+     "lib/urlapi.c",
+     "concat_url"
+    ],
+    [
+     "lib/url.c",
+     "resolve_server"
+    ],
+    [
+     "lib/http.c",
+     "Curl_http_readwrite_headers"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": false,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": false,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "3669637",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/http.c",
+     "Curl_http_follow"
+    ],
+    [
+     "lib/transfer.c",
+     "Curl_pretransfer"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/http.c",
+     "Curl_http_follow"
+    ],
+    [
+     "lib/url.c",
+     "url_conn_reuse_adjust"
+    ],
+    [
+     "lib/http.c",
+     "http_output_basic"
+    ],
+    [
+     "lib/url.c",
+     "detect_proxy"
+    ],
+    [
+     "lib/url.c",
+     "url_match_auth_nego"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "1547048",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/http.c",
+     "Curl_add_custom_headers"
+    ],
+    [
+     "lib/http.c",
+     "Curl_http_host"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/http_proxy.c",
+     "CONNECT"
+    ],
+    [
+     "lib/http.c",
+     "Curl_http_header"
+    ],
+    [
+     "lib/http.c",
+     "Curl_add_custom_headers"
+    ],
+    [
+     "lib/transfer.c",
+     "Curl_follow"
+    ],
+    [
+     "lib/http_proxy.c",
+     "CONNECT"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": false,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "3621851",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/url.c",
+     "url_attach_existing"
+    ],
+    [
+     "lib/url.c",
+     "url_match_ssl_use"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/url.c",
+     "url_find_or_create_conn"
+    ],
+    [
+     "lib/setopt.c",
+     "setopt_long_bool"
+    ],
+    [
+     "lib/imap.c",
+     "imap_state_capability_resp"
+    ],
+    [
+     "lib/smtp.c",
+     "smtp_state_ehlo_resp"
+    ],
+    [
+     "lib/url.c",
+     "url_conn_reuse_adjust"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "3591944",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/smb.c",
+     "smb_easy_dtor"
+    ],
+    [
+     "lib/smb.c",
+     "smb_parse_url_path"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/smb.c",
+     "smb_send_open"
+    ],
+    [
+     "lib/smb.c",
+     "smb_parse_url_path"
+    ],
+    [
+     "lib/smb.c",
+     "smb_setup_connection"
+    ],
+    [
+     "lib/smb.c",
+     "smb_conn_dtor"
+    ],
+    [
+     "lib/smb.c",
+     "smb_easy_dtor"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "1172857",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/vtls/schannel.c",
+     "schannel_connect_step1"
+    ],
+    [
+     "lib/vtls/schannel.c",
+     "set_ssl_ciphers"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/vtls/schannel.c",
+     "set_ssl_ciphers"
+    ],
+    [
+     "lib/vtls/nss.c",
+     "set_ciphers"
+    ],
+    [
+     "lib/vtls/gskit.c",
+     "set_ciphers"
+    ],
+    [
+     "lib/vtls/openssl.c",
+     "ossl_connect_step1"
+    ],
+    [
+     "src/tool_operate.c",
+     "operate_do"
+    ]
+   ],
+   "cited": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "3788984",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/doh.c",
+     "doh_probe_run"
+    ],
+    [
+     "lib/setopt.c",
+     "set_ssl_options"
+    ],
+    [
+     "lib/setopt.c",
+     "setopt_long_ssl"
+    ],
+    [
+     "lib/vtls/vtls_config.c",
+     "Curl_ssl_easy_config_complete"
+    ]
+   ],
+   "top5": [
+    [
+     "src/config2setopts.c",
+     "ssl_ca_setopts"
+    ],
+    [
+     "lib/vtls/vtls_config.c",
+     "Curl_ssl_easy_config_complete"
+    ],
+    [
+     "lib/vtls/openssl.c",
+     "ossl_load_trust_anchors"
+    ],
+    [
+     "lib/vtls/wolfssl.c",
+     "wssl_populate_x509_store"
+    ],
+    [
+     "lib/setopt.c",
+     "setopt_blob"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": false,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "550696",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/tftp.c",
+     "tftp_connect"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/tftp.c",
+     "tftp_connect"
+    ],
+    [
+     "lib/tftp.c",
+     "tftp_parse_option_ack"
+    ],
+    [
+     "lib/tftp.c",
+     "tftp_send_first"
+    ],
+    [
+     "lib/tftp.c",
+     "tftp_receive_packet"
+    ],
+    [
+     "lib/tftp.c",
+     "tftp_tx"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "1929597",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/hostip.c",
+     "Curl_resolv"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/hostip.c",
+     "Curl_resolv"
+    ],
+    [
+     "lib/hostip.c",
+     "Curl_hostcache_prune"
+    ],
+    [
+     "lib/hostip.c",
+     "Curl_fetch_addr"
+    ],
+    [
+     "lib/easy_lock.h",
+     "curl_simple_lock_unlock"
+    ],
+    [
+     "lib/multi.c",
+     "curl_multi_add_handle"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": false,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "1722065",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/http_proxy.c",
+     "Curl_connect_done"
+    ],
+    [
+     "lib/url.c",
+     "conn_shutdown"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/http_proxy.c",
+     "connect_init"
+    ],
+    [
+     "lib/url.c",
+     "Curl_disconnect"
+    ],
+    [
+     "lib/http_proxy.c",
+     "Curl_proxyCONNECT"
+    ],
+    [
+     "lib/url.c",
+     "Curl_free_request_state"
+    ],
+    [
+     "lib/url.c",
+     "Curl_close"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "1180380",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/multi.c",
+     "Curl_attach_connnection"
+    ],
+    [
+     "lib/multi.c",
+     "Curl_detach_connnection"
+    ],
+    [
+     "lib/vtls/openssl.c",
+     "ossl_connect_step1"
+    ],
+    [
+     "lib/vtls/schannel.c",
+     "set_ssl_ciphers"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/vtls/openssl.c",
+     "ossl_new_session_cb"
+    ],
+    [
+     "lib/url.c",
+     "extract_if_dead"
+    ],
+    [
+     "lib/url.c",
+     "Curl_disconnect"
+    ],
+    [
+     "lib/multi.c",
+     "Curl_detach_connnection"
+    ],
+    [
+     "lib/multi.c",
+     "Curl_attach_connnection"
+    ]
+   ],
+   "cited": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "1526328",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/url.c",
+     "ConnectionExists"
+    ],
+    [
+     "lib/url.c",
+     "conn_free"
+    ],
+    [
+     "lib/url.c",
+     "create_conn"
+    ],
+    [
+     "lib/vtls/vtls.c",
+     "Curl_ssl_config_matches"
+    ],
+    [
+     "lib/vtls/vtls.c",
+     "safecmp"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/curl_sasl.c",
+     "Curl_sasl_continue"
+    ],
+    [
+     "lib/curl_sasl.c",
+     "Curl_sasl_start"
+    ],
+    [
+     "lib/vauth/oauth2.c",
+     "Curl_auth_create_oauth_bearer_message"
+    ],
+    [
+     "lib/vauth/oauth2.c",
+     "Curl_auth_create_xoauth_bearer_message"
+    ],
+    [
+     "lib/curl_sasl.c",
+     "Curl_sasl_init"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": false,
+    "file@5": false,
+    "file@10": false
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": false,
+    "file@5": false,
+    "file@10": false
+   }
+  },
+  {
+   "id": "1913733",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/vssh/libssh2.c",
+     "ssh_check_fingerprint"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/vssh/libssh2.c",
+     "ssh_check_fingerprint"
+    ],
+    [
+     "lib/vssh/libssh.c",
+     "myssh_is_known"
+    ],
+    [
+     "lib/vssh/libssh2.c",
+     "ssh_connect"
+    ],
+    [
+     "lib/vssh/libssh2.c",
+     "ssh_knownhost"
+    ],
+    [
+     "lib/vssh/libssh.c",
+     "myssh_connect"
+    ]
+   ],
+   "cited": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "4022003",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/pingpong.c",
+     "Curl_pp_readresp"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/doh.c",
+     "dohprobe"
+    ],
+    [
+     "lib/ftp.c",
+     "Curl_GetFTPResponse"
+    ],
+    [
+     "src/tool_operate.c",
+     "add_parallel_transfers"
+    ],
+    [
+     "lib/ftp.c",
+     "ftp_readresp"
+    ],
+    [
+     "lib/pingpong.c",
+     "Curl_pp_statemach"
+    ]
+   ],
+   "cited": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": true,
+    "file@1": false,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "2764830",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/hsts.c",
+     "Curl_hsts"
+    ],
+    [
+     "lib/hsts.c",
+     "hsts_add"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/hsts.c",
+     "hsts_add"
+    ],
+    [
+     "lib/hsts.c",
+     "Curl_hsts_save"
+    ],
+    [
+     "lib/hsts.c",
+     "Curl_hsts"
+    ],
+    [
+     "lib/hsts.c",
+     "Curl_hsts_loadfile"
+    ],
+    [
+     "lib/hsts.c",
+     "hsts_load"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "1555796",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/url.c",
+     "ConnectionExists"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/doh.c",
+     "dohprobe"
+    ],
+    [
+     "lib/vtls/openssl.c",
+     "ossl_connect_step1"
+    ],
+    [
+     "lib/setopt.c",
+     "Curl_vsetopt"
+    ],
+    [
+     "lib/url.c",
+     "ConnectionExists"
+    ],
+    [
+     "src/tool_operate.c",
+     "single_transfer"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": false,
+    "file@5": false,
+    "file@10": false
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": false,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "1891474",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/telnet.c",
+     "check_telnet_options"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/telnet.c",
+     "init_telnet"
+    ],
+    [
+     "lib/telnet.c",
+     "check_telnet_options"
+    ],
+    [
+     "lib/telnet.c",
+     "suboption"
+    ],
+    [
+     "lib/telnet.c",
+     "printsub"
+    ],
+    [
+     "lib/telnet.c",
+     "sendsuboption"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": false,
+    "file@5": false,
+    "file@10": false
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "3694390",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/vtls/openssl.c",
+     "ossl_apple_verify"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/vtls/openssl.c",
+     "ossl_load_trust_anchors"
+    ],
+    [
+     "lib/vtls/openssl.c",
+     "ossl_apple_verify"
+    ],
+    [
+     "lib/vtls/openssl.c",
+     "verifystatus"
+    ],
+    [
+     "lib/vtls/gtls.c",
+     "Curl_gtls_verifyserver"
+    ],
+    [
+     "lib/vtls/gtls.c",
+     "gtls_populate_creds"
+    ]
+   ],
+   "cited": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "3973201",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/cookie.c",
+     "cookie_load"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/cookie.c",
+     "parse_netscape"
+    ],
+    [
+     "lib/cookie.c",
+     "Curl_cookie_add"
+    ],
+    [
+     "lib/cookie.c",
+     "get_netscape_format"
+    ],
+    [
+     "lib/cookie.c",
+     "cookie_output"
+    ],
+    [
+     "lib/cookie.c",
+     "cookie_load"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "1573634",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/cookie.c",
+     "cookie_output"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/cookie.c",
+     "Curl_flush_cookies"
+    ],
+    [
+     "src/tool_setopt.c",
+     "tool_setopt_skip"
+    ],
+    [
+     "lib/setopt.c",
+     "Curl_vsetopt"
+    ],
+    [
+     "src/tool_operate.c",
+     "single_transfer"
+    ],
+    [
+     "lib/doh.c",
+     "dohprobe"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": false,
+    "file@5": false,
+    "file@10": false
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "3671818",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/http.c",
+     "http_cookies"
+    ],
+    [
+     "lib/http.c",
+     "http_header_s"
+    ],
+    [
+     "lib/http.c",
+     "http_set_aptr_host"
+    ],
+    [
+     "lib/request.c",
+     "Curl_req_hard_reset"
+    ],
+    [
+     "lib/url.c",
+     "Curl_close"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/http.c",
+     "http_set_aptr_host"
+    ],
+    [
+     "lib/http.c",
+     "http_header_s"
+    ],
+    [
+     "lib/http.c",
+     "http_cookies"
+    ],
+    [
+     "lib/http_proxy.c",
+     "dynhds_add_custom"
+    ],
+    [
+     "lib/http.c",
+     "Curl_add_custom_headers"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": false,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "3972094",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/conncache.c",
+     "Curl_cpool_find"
+    ],
+    [
+     "lib/url.c",
+     "url_match_auth_nego"
+    ],
+    [
+     "lib/url.c",
+     "url_match_auth_ntlm"
+    ],
+    [
+     "lib/url.c",
+     "url_match_conn"
+    ],
+    [
+     "lib/url.c",
+     "url_match_http_multiplex"
+    ],
+    [
+     "lib/url.c",
+     "url_match_result"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/url.c",
+     "url_match_auth_nego"
+    ],
+    [
+     "lib/url.c",
+     "url_match_auth_ntlm"
+    ],
+    [
+     "lib/http_negotiate.c",
+     "Curl_input_negotiate"
+    ],
+    [
+     "lib/http_ntlm.c",
+     "Curl_output_ntlm"
+    ],
+    [
+     "lib/url.c",
+     "url_conn_reuse_adjust"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": false,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "1101882",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/transfer.c",
+     "Curl_follow"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/http.c",
+     "Curl_http_target"
+    ],
+    [
+     "src/tool_xattr.c",
+     "stripcredentials"
+    ],
+    [
+     "lib/urlapi.c",
+     "curl_url_set"
+    ],
+    [
+     "lib/transfer.c",
+     "Curl_follow"
+    ],
+    [
+     "lib/url.c",
+     "parseurlandfillconn"
+    ]
+   ],
+   "cited": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": false,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "1570651",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/content_encoding.c",
+     "Curl_build_unencoding_stack"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/http.c",
+     "Curl_http_header"
+    ],
+    [
+     "lib/c-hyper.c",
+     "Curl_http"
+    ],
+    [
+     "lib/http.c",
+     "Curl_transferencode"
+    ],
+    [
+     "lib/http.c",
+     "Curl_add_custom_headers"
+    ],
+    [
+     "lib/rtsp.c",
+     "rtsp_do"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": false,
+    "file@5": false,
+    "file@10": false
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": false,
+    "file@5": false,
+    "file@10": true
+   }
+  },
+  {
+   "id": "1814333",
+   "no_code_cited": true,
+   "gold": [
+    [
+     "lib/setopt.c",
+     "Curl_vsetopt"
+    ],
+    [
+     "lib/share.c",
+     "curl_share_cleanup"
+    ],
+    [
+     "lib/share.c",
+     "curl_share_setopt"
+    ],
+    [
+     "lib/transfer.c",
+     "Curl_pretransfer"
+    ],
+    [
+     "lib/url.c",
+     "Curl_close"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/hsts.c",
+     "Curl_hsts_save"
+    ],
+    [
+     "lib/hsts.c",
+     "hsts_load"
+    ],
+    [
+     "lib/asyn-ares.c",
+     "query_completed_cb"
+    ],
+    [
+     "lib/hsts.c",
+     "Curl_hsts"
+    ],
+    [
+     "lib/hsts.c",
+     "hsts_entry"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": false,
+    "file@5": false,
+    "file@10": false
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "1813864",
+   "no_code_cited": true,
+   "gold": [
+    [
+     "lib/setopt.c",
+     "Curl_vsetopt"
+    ],
+    [
+     "lib/share.c",
+     "curl_share_cleanup"
+    ],
+    [
+     "lib/share.c",
+     "curl_share_setopt"
+    ],
+    [
+     "lib/transfer.c",
+     "Curl_pretransfer"
+    ],
+    [
+     "lib/url.c",
+     "Curl_close"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/hsts.c",
+     "hsts_add"
+    ],
+    [
+     "lib/cookie.c",
+     "tailmatch"
+    ],
+    [
+     "lib/url.c",
+     "Curl_close"
+    ],
+    [
+     "lib/http.c",
+     "Curl_http_host"
+    ],
+    [
+     "lib/hsts.c",
+     "hsts_out"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": false,
+    "file@5": false,
+    "file@10": false
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "3972385",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/cookie.c",
+     "Curl_cookie_add"
+    ],
+    [
+     "lib/cookie.c",
+     "is_public_suffix"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/cookie.c",
+     "is_public_suffix"
+    ],
+    [
+     "lib/cookie.c",
+     "parse_domain"
+    ],
+    [
+     "lib/cookie.c",
+     "Curl_cookie_add"
+    ],
+    [
+     "lib/cookie.c",
+     "Curl_cookie_getlist"
+    ],
+    [
+     "lib/cookie.c",
+     "cookie_tailmatch"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "3973135",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/setopt.c",
+     "setopt_cptr_http_mqtt"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/setopt.c",
+     "setopt_cptr_http_mqtt"
+    ],
+    [
+     "lib/http_aws_sigv4.c",
+     "Curl_output_aws_sigv4"
+    ],
+    [
+     "lib/http.c",
+     "output_auth_headers"
+    ],
+    [
+     "lib/http.c",
+     "pickoneauth"
+    ],
+    [
+     "lib/setopt.c",
+     "setopt_cptr_misc"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": false,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "3972403",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/imap.c",
+     "imap_perform_append"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/imap.c",
+     "imap_perform_append"
+    ],
+    [
+     "lib/setopt.c",
+     "setopt_long_bool"
+    ],
+    [
+     "lib/imap.c",
+     "imap_state_fetch_resp"
+    ],
+    [
+     "lib/imap.c",
+     "imap_done"
+    ],
+    [
+     "lib/imap.c",
+     "imap_perform"
+    ]
+   ],
+   "cited": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "2669852",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/vtls/gtls.c",
+     "Curl_gtls_verifyserver"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/vtls/gtls.c",
+     "Curl_gtls_verifyserver"
+    ],
+    [
+     "lib/vtls/openssl.c",
+     "verifystatus"
+    ],
+    [
+     "lib/vtls/openssl.c",
+     "ossl_get_channel_binding"
+    ],
+    [
+     "lib/vtls/schannel_verify.c",
+     "Curl_verify_certificate"
+    ],
+    [
+     "lib/vtls/gtls.c",
+     "handshake"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": false,
+    "file@5": false,
+    "file@10": false
+   },
+   "bm25": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "1721098",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/curl_get_line.c",
+     "Curl_get_line"
+    ],
+    [
+     "lib/netrc.c",
+     "parsenetrc"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/url.c",
+     "override_login"
+    ],
+    [
+     "lib/netrc.c",
+     "parsenetrc"
+    ],
+    [
+     "lib/netrc.c",
+     "Curl_parsenetrc"
+    ],
+    [
+     "src/tool_parsecfg.c",
+     "unslashquote"
+    ],
+    [
+     "lib/select.c",
+     "our_select"
+    ]
+   ],
+   "cited": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": false,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "1045844",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/ftp.c",
+     "wc_statemach"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/ftp.c",
+     "wc_statemach"
+    ],
+    [
+     "lib/ftp.c",
+     "ftp_do"
+    ],
+    [
+     "lib/memdebug.c",
+     "curl_dbg_realloc"
+    ],
+    [
+     "lib/ftplistparser.c",
+     "ftp_pl_insert_finfo"
+    ],
+    [
+     "lib/memdebug.c",
+     "countcheck"
+    ]
+   ],
+   "cited": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "3677759",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/http.c",
+     "Curl_http_follow"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/url.c",
+     "url_conn_reuse_adjust"
+    ],
+    [
+     "lib/setopt.c",
+     "setopt_long_bool"
+    ],
+    [
+     "lib/http.c",
+     "Curl_http_follow"
+    ],
+    [
+     "lib/url.c",
+     "url_match_auth_nego"
+    ],
+    [
+     "src/tool_getparam.c",
+     "opt_bool"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": false,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "3749204",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/multi_ev.c",
+     "mev_sh_entry_add"
+    ],
+    [
+     "lib/multi_ev.c",
+     "mev_sh_entry_dtor"
+    ],
+    [
+     "lib/multi_ev.c",
+     "mev_sh_entry_update"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/multi_ev.c",
+     "mev_sh_entry_update"
+    ],
+    [
+     "lib/multi_ev.c",
+     "mev_forget_socket"
+    ],
+    [
+     "lib/easy.c",
+     "events_setup"
+    ],
+    [
+     "lib/multi_ev.c",
+     "mev_pollset_diff"
+    ],
+    [
+     "lib/easy.c",
+     "curl_easy_pause"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": false,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "4040551",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/http.c",
+     "output_auth_headers"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/http.c",
+     "output_auth_headers"
+    ],
+    [
+     "lib/url.c",
+     "url_match_init"
+    ],
+    [
+     "lib/http.c",
+     "Curl_add_custom_headers"
+    ],
+    [
+     "lib/http_proxy.c",
+     "dynhds_add_custom"
+    ],
+    [
+     "lib/http_ntlm.c",
+     "Curl_output_ntlm"
+    ]
+   ],
+   "cited": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "4041053",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/getinfo.c",
+     "Curl_initinfo"
+    ],
+    [
+     "lib/getinfo.c",
+     "getinfo_char"
+    ],
+    [
+     "lib/transfer.c",
+     "Curl_pretransfer"
+    ],
+    [
+     "lib/url.c",
+     "Curl_close"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/url.c",
+     "url_set_data_creds_netrc"
+    ],
+    [
+     "lib/http.c",
+     "Curl_http_follow"
+    ],
+    [
+     "src/tool_cb_hdr.c",
+     "write_linked_location"
+    ],
+    [
+     "lib/http.c",
+     "http_target"
+    ],
+    [
+     "lib/urlapi.c",
+     "curl_url_set"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": false,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "3754343",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/transfer.c",
+     "Curl_pretransfer"
+    ]
+   ],
+   "top5": [
+    [
+     "src/tool_operate.c",
+     "add_parallel_transfers"
+    ],
+    [
+     "lib/transfer.c",
+     "Curl_pretransfer"
+    ],
+    [
+     "lib/setopt.c",
+     "setopt_cptr"
+    ],
+    [
+     "src/tool_operate.c",
+     "serial_transfers"
+    ],
+    [
+     "lib/doh.c",
+     "doh_probe_run"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": false,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": false,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "1569946",
+   "no_code_cited": true,
+   "gold": [
+    [
+     "lib/cookie.c",
+     "Curl_cookie_add"
+    ],
+    [
+     "lib/cookie.c",
+     "Curl_cookie_getlist"
+    ],
+    [
+     "lib/http.c",
+     "Curl_http_cookies"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/cookie.c",
+     "Curl_cookie_add"
+    ],
+    [
+     "lib/http.c",
+     "Curl_http_header"
+    ],
+    [
+     "lib/http_proxy.c",
+     "CONNECT"
+    ],
+    [
+     "lib/cookie.c",
+     "cookie_output"
+    ],
+    [
+     "lib/http.c",
+     "Curl_http_cookies"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": false,
+    "file@5": false,
+    "file@10": false
+   },
+   "bm25": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "3750295",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/setopt.c",
+     "setopt_cptr_proxy"
+    ]
+   ],
+   "top5": [
+    [
+     "src/tool_operate.c",
+     "single_transfer"
+    ],
+    [
+     "lib/setopt.c",
+     "Curl_vsetopt"
+    ],
+    [
+     "lib/setopt.c",
+     "setstropt_userpwd"
+    ],
+    [
+     "lib/doh.c",
+     "dohprobe"
+    ],
+    [
+     "src/tool_paramhlp.c",
+     "get_args"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": false,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": false,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "3993870",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/vtls/schannel.c",
+     "schannel_acquire_credential_handle"
+    ],
+    [
+     "lib/vtls/schannel.c",
+     "schannel_connect_step1"
+    ],
+    [
+     "lib/vtls/vtls_config.c",
+     "clone_ssl_primary_config"
+    ],
+    [
+     "lib/vtls/vtls_config.c",
+     "match_ssl_primary_config"
+    ],
+    [
+     "lib/vtls/vtls_config.c",
+     "ssl_easy_config_compl_options"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/vtls/vtls_config.c",
+     "ssl_easy_config_compl_options"
+    ],
+    [
+     "src/config2setopts.c",
+     "ssl_setopts"
+    ],
+    [
+     "lib/vtls/schannel.c",
+     "schannel_acquire_credential_handle"
+    ],
+    [
+     "lib/vtls/vtls_config.c",
+     "Curl_ssl_easy_config_complete"
+    ],
+    [
+     "lib/vtls/vtls_config.c",
+     "Curl_ssl_conn_config_match"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": false,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "1048457",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/vtls/openssl.c",
+     "verifystatus"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/vtls/openssl.c",
+     "verifystatus"
+    ],
+    [
+     "lib/vtls/gtls.c",
+     "gtls_connect_step3"
+    ],
+    [
+     "lib/vtls/nss.c",
+     "nss_auth_cert_hook"
+    ],
+    [
+     "lib/vtls/openssl.c",
+     "servercert"
+    ],
+    [
+     "lib/vtls/sectransp.c",
+     "sectransp_connect_step2"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "3583983",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/http.c",
+     "output_auth_headers"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/curl_sasl.c",
+     "sasl_choose_oauth"
+    ],
+    [
+     "lib/http.c",
+     "output_auth_headers"
+    ],
+    [
+     "lib/http.c",
+     "Curl_http_output_auth"
+    ],
+    [
+     "lib/curl_sasl.c",
+     "Curl_sasl_continue"
+    ],
+    [
+     "lib/vauth/oauth2.c",
+     "Curl_auth_create_oauth_bearer_message"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": false,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "3733905",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/cookie.c",
+     "is_public_suffix"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/cookie.c",
+     "is_public_suffix"
+    ],
+    [
+     "lib/cookie.c",
+     "Curl_cookie_add"
+    ],
+    [
+     "lib/cookie.c",
+     "parse_cookie_header"
+    ],
+    [
+     "lib/cookie.c",
+     "get_netscape_format"
+    ],
+    [
+     "lib/cookie.c",
+     "Curl_cookie_getlist"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "2236133",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/fopen.c",
+     "Curl_fopen"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/hsts.c",
+     "Curl_hsts_save"
+    ],
+    [
+     "lib/fopen.c",
+     "Curl_fopen"
+    ],
+    [
+     "lib/altsvc.c",
+     "Curl_altsvc_save"
+    ],
+    [
+     "lib/hsts.c",
+     "hsts_load"
+    ],
+    [
+     "lib/cookie.c",
+     "cookie_output"
+    ]
+   ],
+   "cited": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": false,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "1892351",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/curl_path.c",
+     "Curl_getworkingpath"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/curl_path.c",
+     "Curl_getworkingpath"
+    ],
+    [
+     "lib/vssh/libssh2.c",
+     "ssh_statemach_act"
+    ],
+    [
+     "lib/vssh/libssh.c",
+     "sftp_error_to_CURLE"
+    ],
+    [
+     "lib/vssh/libssh2.c",
+     "sftp_libssh2_error_to_CURLE"
+    ],
+    [
+     "lib/vssh/libssh.c",
+     "myssh_statemach_act"
+    ]
+   ],
+   "cited": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "1546268",
+   "no_code_cited": true,
+   "gold": [
+    [
+     "lib/conncache.c",
+     "hashkey"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/urlapi.c",
+     "hostname_check"
+    ],
+    [
+     "lib/connect.c",
+     "Curl_socket"
+    ],
+    [
+     "lib/if2ip.c",
+     "Curl_if2ip"
+    ],
+    [
+     "lib/urlapi.c",
+     "Curl_parse_port"
+    ],
+    [
+     "lib/curl_addrinfo.c",
+     "Curl_str2addr"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": false,
+    "file@5": false,
+    "file@10": false
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": false,
+    "file@5": false,
+    "file@10": false
+   }
+  },
+  {
+   "id": "4021979",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/cookie.c",
+     "cookie_load"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/cookie.c",
+     "Curl_cookie_add"
+    ],
+    [
+     "lib/cookie.c",
+     "parse_cookie_header"
+    ],
+    [
+     "lib/setopt.c",
+     "cookielist"
+    ],
+    [
+     "lib/cookie.c",
+     "parse_first_pair"
+    ],
+    [
+     "lib/cookie.c",
+     "cookie_load"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "2384833",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/setopt.c",
+     "Curl_vsetopt"
+    ],
+    [
+     "lib/setopt.c",
+     "protocol2num"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/setopt.c",
+     "Curl_vsetopt"
+    ],
+    [
+     "src/tool_paramhlp.c",
+     "proto2num"
+    ],
+    [
+     "src/tool_operate.c",
+     "single_transfer"
+    ],
+    [
+     "src/tool_libinfo.c",
+     "get_libcurl_info"
+    ],
+    [
+     "lib/doh.c",
+     "dohprobe"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": false,
+    "file@5": false,
+    "file@10": false
+   },
+   "bm25": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "547630",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/setopt.c",
+     "Curl_setstropt"
+    ],
+    [
+     "lib/urlapi.c",
+     "curl_url_set"
+    ],
+    [
+     "lib/urlapi.c",
+     "seturl"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/urlapi.c",
+     "curl_url_set"
+    ],
+    [
+     "lib/urlapi.c",
+     "seturl"
+    ],
+    [
+     "src/tool_xattr.c",
+     "stripcredentials"
+    ],
+    [
+     "lib/urlapi.c",
+     "parseurl"
+    ],
+    [
+     "lib/urlapi.c",
+     "curl_url_get"
+    ]
+   ],
+   "cited": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "3735184",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/netrc.c",
+     "Curl_netrc_strerror"
+    ],
+    [
+     "lib/netrc.c",
+     "Curl_parsenetrc"
+    ],
+    [
+     "lib/netrc.c",
+     "file2memory"
+    ],
+    [
+     "lib/netrc.c",
+     "netrc_finalize"
+    ],
+    [
+     "lib/netrc.c",
+     "netrc_get_token"
+    ],
+    [
+     "lib/netrc.c",
+     "netrc_handle_token"
+    ],
+    [
+     "lib/netrc.c",
+     "netrc_hostvalid"
+    ],
+    [
+     "lib/netrc.c",
+     "netrc_new_machine"
+    ],
+    [
+     "lib/netrc.c",
+     "netrc_quoted_token"
+    ],
+    [
+     "lib/netrc.c",
+     "parsenetrc"
+    ],
+    [
+     "lib/url.c",
+     "override_login"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/url.c",
+     "override_login"
+    ],
+    [
+     "lib/netrc.c",
+     "parsenetrc"
+    ],
+    [
+     "src/tool_operate.c",
+     "config2setopts"
+    ],
+    [
+     "lib/url.c",
+     "parseurlandfillconn"
+    ],
+    [
+     "lib/url.c",
+     "Curl_parse_login_details"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "2072338",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/c-hyper.c",
+     "hyper_each_header"
+    ],
+    [
+     "lib/c-hyper.c",
+     "status_line"
+    ],
+    [
+     "lib/cf-h1-proxy.c",
+     "recv_CONNECT_resp"
+    ],
+    [
+     "lib/http.c",
+     "Curl_http_readwrite_headers"
+    ],
+    [
+     "lib/pingpong.c",
+     "Curl_pp_readresp"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/http.c",
+     "Curl_http_readwrite_headers"
+    ],
+    [
+     "lib/c-hyper.c",
+     "Curl_http"
+    ],
+    [
+     "lib/transfer.c",
+     "readwrite_data"
+    ],
+    [
+     "lib/http.c",
+     "Curl_add_custom_headers"
+    ],
+    [
+     "lib/http2.c",
+     "on_header"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": false,
+    "file@5": false,
+    "file@10": false
+   },
+   "bm25": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "1764858",
+   "no_code_cited": true,
+   "gold": [
+    [
+     "lib/smb.c",
+     "smb_done"
+    ],
+    [
+     "lib/telnet.c",
+     "telnet_done"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/http_proxy.c",
+     "CONNECT"
+    ],
+    [
+     "lib/sendf.c",
+     "chop_write"
+    ],
+    [
+     "lib/url.c",
+     "create_conn_helper_init_proxy"
+    ],
+    [
+     "lib/multi.c",
+     "multi_done"
+    ],
+    [
+     "lib/url.c",
+     "Curl_init_userdefined"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": false,
+    "file@5": false,
+    "file@10": false
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": false,
+    "file@5": false,
+    "file@10": false
+   }
+  },
+  {
+   "id": "4099618",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/cf-socket.c",
+     "Curl_parse_interface"
+    ],
+    [
+     "lib/cf-socket.c",
+     "bindlocal"
+    ],
+    [
+     "lib/setopt.c",
+     "setstropt_interface"
+    ],
+    [
+     "lib/url.c",
+     "Curl_conn_free"
+    ],
+    [
+     "lib/url.c",
+     "allocate_conn"
+    ],
+    [
+     "lib/url.c",
+     "url_match_connect_config"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/setopt.c",
+     "setopt_cptr_net"
+    ],
+    [
+     "lib/cf-socket.c",
+     "Curl_parse_interface"
+    ],
+    [
+     "lib/setopt.c",
+     "setstropt_interface"
+    ],
+    [
+     "lib/cf-socket.c",
+     "bindlocal"
+    ],
+    [
+     "src/config2setopts.c",
+     "dns_and_network_setopts"
+    ]
+   ],
+   "cited": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "3733910",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/ldap.c",
+     "ldap_do"
+    ],
+    [
+     "lib/vssh/libssh.c",
+     "myssh_in_AUTH_PKEY_INIT"
+    ],
+    [
+     "lib/vssh/libssh2.c",
+     "ssh_state_pkey_init"
+    ],
+    [
+     "lib/vtls/gtls.c",
+     "gtls_client_init"
+    ],
+    [
+     "lib/vtls/mbedtls.c",
+     "mbed_load_cacert"
+    ],
+    [
+     "lib/vtls/mbedtls.c",
+     "mbed_load_clicert"
+    ],
+    [
+     "lib/vtls/mbedtls.c",
+     "mbed_load_privkey"
+    ],
+    [
+     "lib/vtls/rustls.c",
+     "cr_init_backend"
+    ],
+    [
+     "lib/vtls/rustls.c",
+     "init_config_builder_client_auth"
+    ],
+    [
+     "lib/vtls/schannel.c",
+     "get_client_cert"
+    ],
+    [
+     "lib/vtls/vtls.c",
+     "Curl_ssl_easy_config_complete"
+    ],
+    [
+     "lib/vtls/vtls.c",
+     "clone_ssl_primary_config"
+    ],
+    [
+     "lib/vtls/vtls.c",
+     "free_primary_ssl_config"
+    ],
+    [
+     "lib/vtls/vtls.c",
+     "match_ssl_primary_config"
+    ],
+    [
+     "lib/vtls/vtls_scache.c",
+     "Curl_ssl_peer_key_make"
+    ],
+    [
+     "lib/vtls/vtls_scache.c",
+     "Curl_ssl_session_import"
+    ],
+    [
+     "lib/vtls/vtls_scache.c",
+     "cf_ssl_add_peer"
+    ],
+    [
+     "lib/vtls/vtls_scache.c",
+     "cf_ssl_cache_peer_update"
+    ],
+    [
+     "lib/vtls/vtls_scache.c",
+     "cf_ssl_scache_clear_peer"
+    ],
+    [
+     "lib/vtls/vtls_scache.c",
+     "cf_ssl_scache_match_auth"
+    ],
+    [
+     "lib/vtls/vtls_scache.c",
+     "cf_ssl_scache_peer_init"
+    ],
+    [
+     "lib/vtls/wolfssl.c",
+     "wssl_client_cert"
+    ]
+   ],
+   "top5": [
+    [
+     "src/tool_operate.c",
+     "operate"
+    ],
+    [
+     "lib/doh.c",
+     "dohprobe"
+    ],
+    [
+     "src/tool_operate.c",
+     "single_transfer"
+    ],
+    [
+     "src/tool_operate.c",
+     "add_parallel_transfers"
+    ],
+    [
+     "lib/share.c",
+     "curl_share_setopt"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": false,
+    "file@5": false,
+    "file@10": true
+   }
+  },
+  {
+   "id": "3752888",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/vquic/curl_ngtcp2.c",
+     "cf_ngtcp2_connect"
+    ],
+    [
+     "lib/vquic/curl_ngtcp2.c",
+     "cf_ngtcp2_handshake_completed"
+    ],
+    [
+     "lib/vquic/curl_ngtcp2.c",
+     "cf_ngtcp2_recv"
+    ],
+    [
+     "lib/vquic/curl_ngtcp2.c",
+     "cf_ngtcp2_send"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/vquic/curl_ngtcp2.c",
+     "cf_ngtcp2_on_session_reuse"
+    ],
+    [
+     "lib/vquic/curl_ngtcp2.c",
+     "cf_ngtcp2_handshake_completed"
+    ],
+    [
+     "lib/vtls/wolfssl.c",
+     "wssl_handshake"
+    ],
+    [
+     "lib/vtls/gtls.c",
+     "Curl_gtls_ctx_init"
+    ],
+    [
+     "lib/vquic/curl_ngtcp2.c",
+     "cf_ngtcp2_send"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "4030333",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/multi.c",
+     "multi_done"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/multi.c",
+     "multistate_performing"
+    ],
+    [
+     "lib/transfer.c",
+     "Curl_sendrecv"
+    ],
+    [
+     "lib/transfer.c",
+     "sendrecv_dl"
+    ],
+    [
+     "lib/multi.c",
+     "multi_done"
+    ],
+    [
+     "lib/http.c",
+     "http_handle_send_error"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": false,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "3797526",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "src/config2setopts.c",
+     "url_proto_and_rewrite"
+    ]
+   ],
+   "top5": [
+    [
+     "src/config2setopts.c",
+     "ssh_setopts"
+    ],
+    [
+     "src/config2setopts.c",
+     "url_proto_and_rewrite"
+    ],
+    [
+     "lib/vssh/libssh2.c",
+     "ssh_force_knownhost_key_type"
+    ],
+    [
+     "lib/vssh/libssh.c",
+     "myssh_connect"
+    ],
+    [
+     "src/config2setopts.c",
+     "config2setopts"
+    ]
+   ],
+   "cited": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "1553841",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/urlapi.c",
+     "hostname_check"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/http.c",
+     "Curl_http_target"
+    ],
+    [
+     "lib/url.c",
+     "check_noproxy"
+    ],
+    [
+     "lib/cookie.c",
+     "tailmatch"
+    ],
+    [
+     "lib/urlapi.c",
+     "curl_url_set"
+    ],
+    [
+     "lib/urlapi.c",
+     "concat_url"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": false,
+    "file@5": false,
+    "file@10": false
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": false,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "2416725",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/vtls/mbedtls.c",
+     "mbed_connect_step1"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/vtls/openssl.c",
+     "Curl_ossl_verifyhost"
+    ],
+    [
+     "lib/vtls/vtls.c",
+     "Curl_ssl_peer_init"
+    ],
+    [
+     "lib/vtls/vtls.c",
+     "get_peer_type"
+    ],
+    [
+     "lib/vtls/wolfssl.c",
+     "wolfssl_connect_step2"
+    ],
+    [
+     "lib/vtls/mbedtls.c",
+     "mbed_connect_step1"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": false,
+    "fn@10": false,
+    "file@1": false,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": false,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": false,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "1950627",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/vtls/hostcheck.c",
+     "hostmatch"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/vtls/hostcheck.c",
+     "hostmatch"
+    ],
+    [
+     "lib/vtls/openssl.c",
+     "ossl_verifyhost"
+    ],
+    [
+     "lib/smtp.c",
+     "smtp_parse_address"
+    ],
+    [
+     "lib/vtls/hostcheck.c",
+     "Curl_cert_hostcheck"
+    ],
+    [
+     "lib/vtls/x509asn1.c",
+     "Curl_verifyhost"
+    ]
+   ],
+   "cited": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "887462",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "src/tool_cb_hdr.c",
+     "tool_header_cb"
+    ],
+    [
+     "src/tool_getparam.c",
+     "getparameter"
+    ]
+   ],
+   "top5": [
+    [
+     "src/tool_cb_hdr.c",
+     "tool_header_cb"
+    ],
+    [
+     "src/tool_cb_wrt.c",
+     "tool_create_output_file"
+    ],
+    [
+     "lib/mime.c",
+     "Curl_mime_prepare_headers"
+    ],
+    [
+     "src/tool_cb_hdr.c",
+     "parse_filename"
+    ],
+    [
+     "src/tool_formparse.c",
+     "formparse"
+    ]
+   ],
+   "cited": {
+    "fn@1": false,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": false,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  },
+  {
+   "id": "2410774",
+   "no_code_cited": false,
+   "gold": [
+    [
+     "lib/vquic/vquic-tls.c",
+     "curl_wssl_init_ctx"
+    ]
+   ],
+   "top5": [
+    [
+     "lib/vquic/vquic-tls.c",
+     "curl_wssl_init_ctx"
+    ],
+    [
+     "lib/vquic/vquic-tls.c",
+     "Curl_vquic_tls_init"
+    ],
+    [
+     "lib/vquic/vquic-tls.c",
+     "curl_ossl_init_ctx"
+    ],
+    [
+     "lib/vtls/wolfssl.c",
+     "wolfssl_connect_step1"
+    ],
+    [
+     "lib/vquic/vquic-tls.c",
+     "curl_wssl_init_ssl"
+    ]
+   ],
+   "cited": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   },
+   "bm25": {
+    "fn@1": true,
+    "fn@5": true,
+    "fn@10": true,
+    "file@1": true,
+    "file@5": true,
+    "file@10": true
+   }
+  }
+ ]
+}

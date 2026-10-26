@@ -28,7 +28,11 @@ def extract_claims(title: str, body: str, ledger: Ledger) -> dict:
         claims = chat_json("fast", SYSTEM, user, ledger, "extract claims", max_tokens=6000)
     except ValueError:
         # Long reports with big code blocks sometimes break the small model's JSON; Super is steadier.
-        claims = chat_json("mid", SYSTEM, user, ledger, "extract claims (fallback)", max_tokens=10000)
+        try:
+            claims = chat_json("mid", SYSTEM, user, ledger, "extract claims (fallback)", max_tokens=10000)
+        except ValueError:
+            # Carry on with no structured claims: later steps still read the full report.
+            claims = {"summary": title, "extraction_failed": True}
     for key in ("files", "functions", "line_refs", "code_quotes", "cves", "urls", "repro_steps"):
         if not isinstance(claims.get(key), list):
             claims[key] = []

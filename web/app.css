@@ -101,3 +101,8 @@ footer { text-align: center; color: var(--muted); font-size: 13px; padding: 20px
   .top { padding: 14px 16px; }
   table.bench td:nth-child(4), table.bench th:nth-child(4) { display: none; }
 }
+#bench-compare { margin-bottom: 16px; }
+#bench-compare:empty { display: none; }
+#bench-compare h3 { margin: 0 0 6px; font-size: 17px; }
+#bench-compare table { width: 100%; margin: 10px 0; }
+#bench-compare .facts { margin-top: 8px; }
