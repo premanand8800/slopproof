@@ -10,15 +10,18 @@ const EXAMPLES = [
 ROUTES.home = async () => {
   app.innerHTML = `
     <section class="hero">
-      <div>
-        <div class="kicker">Vulnerability report triage for open source maintainers</div>
-        <h1 style="margin-top:10px">Slop is cheap to write.<br><em>Proof</em> is cheap to check.</h1>
+      <div class="retro">
+        <div class="term-line" aria-hidden="true"><span class="prompt">C:\\&gt;</span><span id="h-kicker"></span></div>
+        <h1 class="typed" style="margin-top:10px" aria-label="Slop is cheap to write. Proof is cheap to check.">
+          <span id="h-l1" aria-hidden="true"></span><br><span id="h-l2" aria-hidden="true"></span></h1>
         <p class="lead">SlopProof checks every claim in a security report against the project's real code on the day it was
         filed, checks every reference on the web, and tries to reproduce the bug in a locked-down sandbox. Every verdict
         comes with evidence and a reply you can post.</p>
       </div>
       <div class="kpis" id="kpis">${[1, 2, 3].map(() => `<div class="kpi"><div class="skeleton" style="width:100%"></div></div>`).join("")}</div>
     </section>
+
+    <div class="marquee" aria-hidden="true"><div class="track" id="h-marquee"></div></div>
 
     <form class="card triage-form" id="form" autocomplete="off">
       <label class="kicker" for="url">Report to check</label>
@@ -54,6 +57,7 @@ ROUTES.home = async () => {
         <p>A confirmed bug becomes a proof bundle: one command re-runs it from scratch, and no AI is involved in verifying it.</p></div>
     </div>`;
 
+  typeHero();
   loadBench().then((b) => {
     const s = b.static.score, fc = b.baseline.factcheck, sb = b.sandbox.score;
     const confirmed = (sb && sb.verdicts.real && sb.verdicts.real.CONFIRMED) || 0;
@@ -63,6 +67,11 @@ ROUTES.home = async () => {
       <div class="kpi"><div class="n ok">${esc(s.real_wrongly_closed)}</div><div class="l">real CVE reports wrongly closed, out of ${s.reports} public curl reports replayed as of their filing date</div></div>
       <div class="kpi"><div class="n accent">${confirmed}</div><div class="l">real CVE reproduced in the sandbox, with a proof that re-runs from scratch</div></div>
       <div class="kpi"><div class="n bad">${fc ? `${fc.closes_with_false_reason}/${fc.baseline_closes}` : "–"}</div><div class="l">closes by a plain “is this slop?” model that cite something false. SlopProof cites checked facts.</div></div>`;
+    const items = [`<b>${esc(s.real_wrongly_closed)}</b> real CVE reports wrongly closed`, `<b>${s.reports}</b> curl reports replayed as of their filing date`,
+      `<b>${confirmed}</b> real CVE reproduced and proved`, `<b>${fc ? fc.closes_with_false_reason : "–"}</b> false reasons from a text-only model`,
+      `<b>$${s.avg_usd.toFixed(2)}</b> per report for the static checks`, "<b>0</b> AI involved in verifying a proof bundle", "NVIDIA Nemotron · Nebius Token Factory · Tavily"];
+    const m = $("#h-marquee");
+    if (m) m.innerHTML = [...items, ...items].map((x) => `<span>★ ${x}</span>`).join("");
   }).catch(() => { if ($("#kpis")) $("#kpis").innerHTML = ""; });
 
   const recent = recentRuns();
@@ -114,3 +123,34 @@ ROUTES.home = async () => {
     }
   };
 };
+
+// Type the hero out like a 90s terminal. Skipped (shown at once) for people who prefer reduced motion.
+async function typeHero() {
+  const kicker = "Vulnerability report triage for open source maintainers";
+  const lines = [[["Slop is cheap to write."]], [["Proof", "glitch"], [" is cheap to check."]]];
+  const k = $("#h-kicker"), l1 = $("#h-l1"), l2 = $("#h-l2");
+  if (!k) return;
+  const still = () => document.body.contains(k);
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    k.textContent = kicker;
+    l1.textContent = lines[0][0][0];
+    l2.innerHTML = `<span class="glitch">Proof</span> is cheap to check.<span class="cursor"></span>`;
+    return;
+  }
+  const cursor = document.createElement("span");
+  cursor.className = "cursor";
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  k.after(cursor);
+  for (const ch of kicker) { if (!still()) return; k.textContent += ch; await sleep(22); }
+  await sleep(250);
+  for (const [i, target] of [l1, l2].entries()) {
+    for (const [text, cls] of lines[i]) {
+      const span = document.createElement("span");
+      if (cls) span.className = cls;
+      target.append(span);
+      target.append(cursor);
+      for (const ch of text) { if (!still()) return; span.textContent += ch; await sleep(55); }
+    }
+    await sleep(220);
+  }
+}
