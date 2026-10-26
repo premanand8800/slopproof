@@ -108,8 +108,8 @@ TOOLS = [
 
 def reproduce(tree: Path, project: str, report: str, claims: dict, analysis: dict, context: str,
               ledger: Ledger, emit: Callable[[dict], None], repo_url: str | None = None, sha: str | None = None) -> dict:
-    name = project.split("/")[-1]
-    recipe = RECIPES.get(name, "Find the build instructions in the repository (README, INSTALL, CI files).")
+    proj = project.split("/")[-1]
+    recipe = RECIPES.get(proj, "Find the build instructions in the repository (README, INSTALL, CI files).")
     messages = [
         {"role": "system", "content": SYSTEM},
         {"role": "user", "content": (
@@ -121,8 +121,8 @@ def reproduce(tree: Path, project: str, report: str, claims: dict, analysis: dic
             f"Full report:\n{report[:12000]}")},
     ]
     sb = Sandbox(tree)
-    if name in BUILDS:
-        sb.background(BUILDS[name])
+    if proj in BUILDS:
+        sb.background(BUILDS[proj])
     transcript = []
     t0 = time.time()
     try:
@@ -146,21 +146,21 @@ def reproduce(tree: Path, project: str, report: str, claims: dict, analysis: dic
                     args = json.loads(tc.function.arguments or "{}")
                 except json.JSONDecodeError:
                     args = {}
-                name = tc.function.name
-                if name == "finish":
+                tool = tc.function.name
+                if tool == "finish":
                     result = {"outcome": args.get("outcome", "inconclusive"), "explanation": args.get("explanation", ""),
                               "evidence": args.get("evidence", ""), "poc": args.get("poc", ""),
                               "impact": args.get("impact", "none"), "baseline": args.get("baseline", ""),
                               "steps": step + 1, "seconds": round(time.time() - t0), "transcript": transcript}
                     result["reachable_by_attacker"] = args.get("reachable_by_attacker")
                     result["check_command"] = args.get("check_command", "")
-                    _check_reproduction(result, name, report, ledger)
+                    _check_reproduction(result, proj, report, ledger)
                     if result["outcome"] == "reproduced" and repo_url and sha:
-                        _seal(result, repo_url, sha, name, emit)
+                        _seal(result, repo_url, sha, proj, emit)
                     emit({"stage": "reproduce", "type": "finish", "outcome": result["outcome"],
                           "bundle": (result.get("bundle_verification") or {}).get("verdict")})
                     return result
-                if name == "run":
+                if tool == "run":
                     cmd = str(args.get("cmd", ""))
                     timeout = min(int(args.get("timeout", 300) or 300), 600)
                     emit({"stage": "reproduce", "type": "run", "step": step + 1, "cmd": cmd[:400]})
@@ -169,13 +169,13 @@ def reproduce(tree: Path, project: str, report: str, claims: dict, analysis: dic
                           "exit_code": out["exit_code"], "output": out["output"][-1500:]})
                     content = json.dumps(out)
                     transcript.append({"tool": "run", "cmd": cmd, **out})
-                elif name == "write_file":
+                elif tool == "write_file":
                     path, body = str(args.get("path", "")), str(args.get("content", ""))
                     emit({"stage": "reproduce", "type": "write", "step": step + 1, "path": path, "content": body[:3000]})
                     content = sb.write(path, body)
                     transcript.append({"tool": "write_file", "path": path, "content": body})
                 else:
-                    content = f"unknown tool {name}"
+                    content = f"unknown tool {tool}"
                 messages.append({"role": "tool", "tool_call_id": tc.id, "content": content})
         return {"outcome": "inconclusive", "explanation": "step or time budget exhausted", "evidence": "",
                 "poc": "", "steps": MAX_STEPS, "seconds": round(time.time() - t0), "transcript": transcript}
