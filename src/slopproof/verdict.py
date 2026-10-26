@@ -31,7 +31,9 @@ Confidence must match the evidence: without a sandbox reproduction, a bug that d
 what lies past a buffer is at most "plausible", never "confirmed" or "sound", and the reply says what is still open.
 The maintainer_comment is posted by the maintainer, so it states only what the evidence shows and what is still
 needed from the reporter. Never promise fixes, tests, releases, timelines or any other action on the maintainer's
-behalf. Mention a CVE only if it appears in the report or in a verified check in the evidence.
+behalf. Mention a CVE only if it appears in the report or in a verified check in the evidence. Do not suggest that a fix
+regressed or was dropped unless verified evidence shows the issue was fixed before. When the analysis lists callers,
+say which ones allow the bug and which block it.
 
 Reply with one JSON object only:
 {

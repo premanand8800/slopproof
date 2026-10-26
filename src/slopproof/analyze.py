@@ -10,7 +10,8 @@ code it refers to, taken from the project at the commit the reporter was looking
 Decide whether the specific condition the report claims (overflow, use-after-free, double free, injection, leak...)
 can actually happen in this code. Trace sizes, bounds, ownership and control flow. Quote the exact lines
 (file:line) that make the claim possible or impossible. Ignore the report's rhetoric; only the code matters.
-Go through the callers you were given one by one and fill "callers": for each, work out the concrete value the
+Go through the callers you were given one by one, including the outermost ones (the highest level: they are where
+real input enters, such as a server reading from a socket), and fill "callers": for each, work out the concrete value the
 precondition takes under that caller (for example, what byte sits just past the buffer if it NUL-terminates) and
 whether that triggers the bug. Check the callers you were given: a caller that validates lengths, NUL-terminates a buffer or otherwise rules out
 the precondition makes the claim fail for that caller. If the condition depends on memory or input that callers

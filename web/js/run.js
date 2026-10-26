@@ -334,7 +334,10 @@ function renderAnalysis(run, a, ts) {
   const second = a.second_look ? fact("meh", `Second look after fetching ${a.second_look.asked_for.map((n) => `<code>${esc(n)}</code>`).join(", ")}`,
     `First conclusion: ${esc(a.second_look.first_conclusion)}`) : "";
   run.set("analysis", a.claim_holds === "unclear" ? "warn" : "done", esc(label), `<div class="facts">${fact(kind, `<b>${label}</b>`, esc(a.reasoning))}
-    ${second}${(a.key_lines || []).map((k) => fact("meh", `<code>${esc(k)}</code>`)).join("")}</div>`, ts);
+    ${second}${(a.key_lines || []).map((k) => fact("meh", `<code>${esc(k)}</code>`)).join("")}
+    ${(a.callers || []).length ? `<div class="kicker" style="margin-top:6px">Callers: can real input reach the bug?</div>` : ""}
+    ${(a.callers || []).map((c) => fact(c.allows === "yes" ? "good" : c.allows === "no" ? "bad" : "meh",
+      `<code>${esc(c.caller)}</code>: ${c.allows === "yes" ? "allows it" : c.allows === "no" ? "blocks it" : "unclear"}`, esc(c.why))).join("")}</div>`, ts);
   run.now = run.sandbox ? "Starting the sandbox…" : "Writing the verdict…";
 }
 
