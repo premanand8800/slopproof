@@ -65,9 +65,12 @@ def triage(title: str, body: str, repo_url: str, created_at: str | None = None,
         f_prior = pool.submit(webcheck.prior_art, project, claims, ledger, as_of)
         code = f_code.result()
         emit({"stage": "code", "code": code})
-        web = {"cves": [f.result() for f in f_cves], "urls": f_urls.result(), "prior_art": f_prior.result()}
+        web = {"cves": [_settled(f, {"supported": False, "explanation": "CVE check failed"}) for f in f_cves],
+               "urls": _settled(f_urls, []),
+               "prior_art": _settled(f_prior, {"known_issue": False, "already_fixed": False,
+                                               "documented_behaviour": False, "explanation": "prior-art check failed"})}
         emit({"stage": "web", "web": web})
-        text_screen = f_screen.result()
+        text_screen = _settled(f_screen, {"close": False, "confidence": None, "reason": "screen failed"})
         emit({"stage": "screen", "screen": text_screen})
 
     found = f_search.result()
@@ -91,6 +94,15 @@ def triage(title: str, body: str, repo_url: str, created_at: str | None = None,
               "seconds": round(time.time() - t0, 1)}
     emit({"stage": "verdict", "verdict": verdict, "cost": result["cost"], "seconds": result["seconds"]})
     return result
+
+
+def _settled(future, fallback):
+    """A supporting check that fails (a model that returned no JSON, a search timeout) must not sink the triage:
+    it falls back to a neutral result that can never close a report on its own."""
+    try:
+        return future.result()
+    except Exception as e:  # noqa: BLE001 - any failure of an optional check degrades the same way
+        return fallback | {"error": str(e)[:200]} if isinstance(fallback, dict) else fallback
 
 
 def apply_guards(verdict: dict, analysis: dict | None, repro: dict | None, web: dict | None = None,

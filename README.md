@@ -137,6 +137,10 @@ real reports on its own (about 4 in 10 quotes for both), which is why it only lo
 ### Honest limits
 
 - The guard rules were chosen after error analysis on this same dataset; there is no held-out set yet.
+- Two slop reports were first CONFIRMED by the sandbox: one PoC re-implemented curl's logic in its own program, and
+  one read `/etc/passwd` through an encoded `file://` path, which a plain `file:///etc/passwd` also does. The checks
+  that now catch both (the PoC must run curl's own CLI or library; without a sanitizer report in curl's code, an
+  independent model must see a gain over intended use) were written after seeing these two cases.
 - The sandbox numbers are a small sample (8 reports) because each run costs about $0.44.
 - One report (#2604391) is missing from the static results: claim extraction returned no JSON twice. The pipeline
   now continues without structured claims in that case.

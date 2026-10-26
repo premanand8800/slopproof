@@ -6,7 +6,7 @@ import time
 from collections.abc import Callable
 from pathlib import Path
 
-from .llm import Ledger, chat
+from .llm import Ledger, chat, chat_json
 from .sandbox import Sandbox
 
 MAX_STEPS = 40
@@ -148,7 +148,7 @@ def reproduce(tree: Path, project: str, report: str, claims: dict, analysis: dic
                               "impact": args.get("impact", "none"), "baseline": args.get("baseline", ""),
                               "steps": step + 1, "seconds": round(time.time() - t0), "transcript": transcript}
                     result["reachable_by_attacker"] = args.get("reachable_by_attacker")
-                    _check_reproduction(result, name)
+                    _check_reproduction(result, name, report, ledger)
                     emit({"stage": "reproduce", "type": "finish", "outcome": result["outcome"]})
                     return result
                 if name == "run":
@@ -174,7 +174,30 @@ def reproduce(tree: Path, project: str, report: str, claims: dict, analysis: dic
         sb.close()
 
 
-def _check_reproduction(result: dict, project: str) -> None:
+# Output that proves a memory error or crash in the project itself: a sanitizer report or a fatal signal,
+# with a stack frame in the project's source.
+_SANITIZER = re.compile(r"ERROR: \w+Sanitizer|runtime error:|SUMMARY: \w+Sanitizer|Segmentation fault|Aborted \(core")
+_PROJECT_FRAME = re.compile(r"/work/repo/(?!tests?/)[\w./-]+\.(?:c|h|cc|cpp):\d+")
+
+IMPACT_JUDGE = """You check one claimed vulnerability reproduction. Decide whether it shows a SECURITY impact:
+the attacker gains something that the intended use of the software does not already give them.
+
+Work it out in this order:
+1. Who controls the input in the attack, and what could that same person get by using the software plainly?
+   If the attacker controls a whole URL, path or option, anything they could name directly is already theirs:
+   an unusual spelling that reaches the same thing is not a bypass.
+2. Is there a security boundary the intended behaviour enforces (credentials scoped to a host or user, a
+   sandboxed directory, a size limit, an authentication step), and did the evidence show it being crossed?
+3. Ignore the agent's conclusion and the report's wording; judge the evidence and the baseline.
+
+Not a security impact: reaching a resource the attacker could request directly, behaviour the user explicitly asked
+for, a cosmetic difference, or a problem only in code attacker input cannot reach.
+Reply with one JSON object only:
+{"plain_way": "how the attacker could get the same result with intended use, or 'none'",
+ "boundary": "the boundary crossed, or 'none'", "security_impact": true or false, "reason": "one or two sentences"}"""
+
+
+def _check_reproduction(result: dict, project: str, report: str = "", ledger: Ledger | None = None) -> None:
     """Hard checks on a claimed reproduction; the agent's word is not enough."""
     if result["outcome"] != "reproduced":
         return
@@ -183,18 +206,40 @@ def _check_reproduction(result: dict, project: str) -> None:
         ran = "\n".join(t.get("cmd", "") + "\n" + t.get("content", "") for t in result["transcript"])
         if not any(p.search(ran) for p in patterns):
             # A PoC that re-implements the logic in its own code shows nothing about the project.
-            result["outcome"] = "inconclusive"
-            result["explanation"] = ("The PoC never ran the project's own code (its CLI or library), so it proves "
-                                     "nothing about the project. " + result["explanation"])
+            _demote(result, "inconclusive", "The PoC never ran the project's own code (its CLI or library), so it "
+                                            "proves nothing about the project.")
             return
     if result.get("reachable_by_attacker") is False:
-        result["outcome"] = "not_reproduced"
-        result["explanation"] = "Reproduced only on a path attacker input cannot reach. " + result["explanation"]
-    elif result.get("impact") == "none":
-        # The behaviour happened, but intended use reaches the same effect: no vulnerability.
-        result["outcome"] = "not_reproduced"
-        result["explanation"] = ("Behaviour reproduced, but it gives an attacker nothing the intended use does not. "
-                                 + result["explanation"])
+        _demote(result, "not_reproduced", "Reproduced only on a path attacker input cannot reach.")
+        return
+    if result.get("impact") == "none":
+        _demote(result, "not_reproduced", "Behaviour reproduced, but it gives an attacker nothing the intended use "
+                                          "does not.")
+        return
+    outputs = "\n".join(t.get("output", "") for t in result["transcript"] if t.get("tool") == "run")
+    if _SANITIZER.search(outputs) and _PROJECT_FRAME.search(outputs):
+        result["impact_check"] = "sanitizer or crash report with a frame in project code"
+        return
+    if result.get("impact") in ("memory_safety", "crash_or_hang"):
+        result["impact"] = "unverified"  # claimed a memory error, but no sanitizer or crash output shows one
+    if ledger is None:
+        return
+    # No crash to point at: an independent model judges whether the shown behaviour is a security impact at all.
+    try:
+        verdict = chat_json("big", IMPACT_JUDGE, (
+            f"REPORT (excerpt):\n{report[:4000]}\n\nAGENT EXPLANATION:\n{result['explanation'][:3000]}\n\n"
+            f"EVIDENCE:\n{result['evidence'][:3000]}\n\nBASELINE (intended use):\n{result.get('baseline') or 'none given'}"),
+            ledger, "impact check", max_tokens=6000, think=True)
+    except ValueError:
+        verdict = {"security_impact": False, "reason": "the impact check gave no answer"}
+    result["impact_check"] = verdict.get("reason", "")
+    if not verdict.get("security_impact"):
+        _demote(result, "not_reproduced", f"Behaviour reproduced, but no security impact: {verdict.get('reason', '')}")
+
+
+def _demote(result: dict, outcome: str, why: str) -> None:
+    result["outcome"] = outcome
+    result["explanation"] = f"{why} {result['explanation']}"
 
 
 def _assistant_dict(msg) -> dict:
