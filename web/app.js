@@ -34,6 +34,13 @@ document.querySelectorAll(".examples a").forEach((a) => a.addEventListener("clic
   // Without a server, the examples replay recorded runs.
   replay(await (await fetch(runUrl(a.dataset.mode, a.dataset.url.split("/").pop()))).json());
 }));
+if (!STATIC) {
+  // A public host may protect the sandbox with a passcode; show the field only then.
+  fetch("/api/health").then((r) => r.json()).then((h) => {
+    if (!h.sandbox) { $("#sandbox").checked = false; $("#sandbox").disabled = true; }
+    $("#passcode").hidden = !(h.sandbox && h.sandbox_passcode);
+  }).catch(() => {});
+}
 if (STATIC) {
   $("#form").querySelectorAll("input, textarea, button").forEach((x) => (x.disabled = true));
   $("#formerr").className = "muted";
@@ -45,7 +52,7 @@ if (STATIC) {
 $("#form").addEventListener("submit", async (e) => {
   e.preventDefault();
   $("#formerr").textContent = "";
-  const body = { sandbox: $("#sandbox").checked };
+  const body = { sandbox: $("#sandbox").checked, passcode: $("#passcode").value || null };
   if ($("#url").value.trim()) body.url = $("#url").value.trim();
   else Object.assign(body, { text: $("#text").value, repo: $("#repo").value.trim(), title: $("#ptitle").value });
   $("#go").disabled = true;

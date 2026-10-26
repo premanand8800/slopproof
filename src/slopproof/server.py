@@ -3,6 +3,7 @@
 import json
 import os
 import queue
+import secrets
 import threading
 import time
 import uuid
@@ -23,6 +24,8 @@ BENCH = ROOT / "bench"
 # The public demo can turn the sandbox off and cap spend; locally both default to on and unlimited.
 SANDBOX_ENABLED = os.environ.get("SLOPPROOF_SANDBOX", "1") == "1"
 DAILY_RUNS = int(os.environ.get("SLOPPROOF_DAILY_RUNS", "0"))
+# On a public host, sandbox runs (model-written code on the host) need this passcode; static checks do not.
+SANDBOX_KEY = os.environ.get("SLOPPROOF_SANDBOX_KEY", "")
 
 app = FastAPI(title="SlopProof")
 jobs: dict[str, dict] = {}
@@ -36,16 +39,19 @@ class TriageRequest(BaseModel):
     text: str | None = None
     repo: str | None = None
     sandbox: bool = True
+    passcode: str | None = None
 
 
 @app.get("/api/health")
 def health():
-    return {"ok": True, "sandbox": SANDBOX_ENABLED, "daily_runs": DAILY_RUNS or None,
+    return {"ok": True, "sandbox": SANDBOX_ENABLED, "sandbox_passcode": bool(SANDBOX_KEY), "daily_runs": DAILY_RUNS or None,
             "nebius_key": bool(os.environ.get("NEBIUS_API_KEY")), "tavily_key": bool(os.environ.get("TAVILY_API_KEY"))}
 
 
 @app.post("/api/triage")
 def start(req: TriageRequest):
+    if req.sandbox and SANDBOX_ENABLED and SANDBOX_KEY and not secrets.compare_digest(req.passcode or "", SANDBOX_KEY):
+        raise HTTPException(403, "The sandbox needs the demo passcode. Untick it to run the static checks.")
     if req.url:
         try:
             rep = fetch_report(req.url)

@@ -44,7 +44,8 @@
         <textarea id="text" rows="8" placeholder="Paste the report body"></textarea>
       </details>
       <div class="row between">
-        <label class="check"><input id="sandbox" type="checkbox" checked> Reproduce in sandbox <span class="muted">(Docker, about 5 min)</span></label>
+        <label class="check"><input id="sandbox" type="checkbox" checked> Reproduce in sandbox <span class="muted">(Docker, about 5 min)</span>
+          <input id="passcode" type="password" placeholder="demo passcode" autocomplete="off" hidden></label>
         <button id="go" type="submit">Triage</button>
       </div>
       <div class="examples">Try:

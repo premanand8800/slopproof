@@ -109,3 +109,4 @@ footer { text-align: center; color: var(--muted); font-size: 13px; padding: 20px
 .ldiff pre { font-size: 12px; line-height: 1.45; background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 8px; overflow-x: auto; max-height: 320px; }
 .ldiff .add { color: var(--bad); }
 .ldiff .del { color: var(--ok); }
+#passcode { width: 150px; margin-left: 10px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 8px; font: inherit; background: var(--card); color: inherit; }
