@@ -19,6 +19,8 @@ A similar CVE fixed earlier does not make a report a duplicate: it may be a bypa
 you were given is from the report's date, after the fix. Judge whether the claim holds in THIS code.
 "Documented behaviour" or "known limitation" is not a reason to close a security claim on its own.
 Real reporters often get file or function names slightly wrong; a near-miss name is not fabrication.
+Behaviour the project allows anyway is not a vulnerability: reaching a resource through an unusual spelling is no
+issue if the user could request the same resource directly. Ask what the attacker gains over intended use.
 
 Important: AI-assisted writing style is NOT evidence either way. Many real vulnerabilities are now found with AI tools.
 Judge only verifiable facts. Never mark a report FABRICATED or NOT_REPRODUCED unless specific evidence supports it;

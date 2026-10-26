@@ -52,6 +52,11 @@ Rules:
 7. Stay efficient: you have 40 tool calls in total. The relevant source is already in the prompt: read more only
    if you must, and batch reads into one command (grep -n, sed -n for several ranges). Aim to have a PoC running
    by tool call 10. The build runs in the background, so write the PoC while it builds. Call finish as soon as you have strong evidence either way.
+8. Impact, not just behaviour. Behaviour that looks wrong is only a vulnerability if it gives an attacker something
+   the intended use does not. Before calling it reproduced, run the plain, intended way to reach the same effect
+   (for example the same request without the encoding trick, or the same option used directly). If the
+   plain way already gives the same result, the behaviour is by design: the outcome is not_reproduced.
+   A sanitizer report or crash with its stack in project code always counts as impact.
 
 Call finish with outcome:
 - "reproduced": you triggered the claimed bug through a real code path, with evidence.
@@ -76,8 +81,12 @@ TOOLS = [
             "outcome": {"type": "string", "enum": ["reproduced", "not_reproduced", "inconclusive"]},
             "explanation": {"type": "string", "description": "what you tried and what happened, citing file:line"},
             "evidence": {"type": "string", "description": "the decisive output, e.g. the sanitizer report or test log, verbatim"},
-            "poc": {"type": "string", "description": "the PoC source or command you ran"}},
-            "required": ["outcome", "explanation", "evidence"]}}},
+            "poc": {"type": "string", "description": "the PoC source or command you ran"},
+            "impact": {"type": "string", "enum": ["memory_safety", "crash_or_hang", "boundary_crossed", "none"],
+                       "description": "what the attacker gains; none if the effect is reachable by intended use"},
+            "baseline": {"type": "string",
+                         "description": "the plain, intended-use command you compared against and its result"}},
+            "required": ["outcome", "explanation", "evidence", "impact"]}}},
 ]
 
 
@@ -125,7 +134,13 @@ def reproduce(tree: Path, project: str, report: str, claims: dict, analysis: dic
                 if name == "finish":
                     result = {"outcome": args.get("outcome", "inconclusive"), "explanation": args.get("explanation", ""),
                               "evidence": args.get("evidence", ""), "poc": args.get("poc", ""),
+                              "impact": args.get("impact", "none"), "baseline": args.get("baseline", ""),
                               "steps": step + 1, "seconds": round(time.time() - t0), "transcript": transcript}
+                    if result["outcome"] == "reproduced" and result["impact"] == "none":
+                        # The behaviour happened, but intended use reaches the same effect: no vulnerability.
+                        result["outcome"] = "not_reproduced"
+                        result["explanation"] = ("Behaviour reproduced, but it gives an attacker nothing the intended "
+                                                 "use does not. " + result["explanation"])
                     emit({"stage": "reproduce", "type": "finish", "outcome": result["outcome"]})
                     return result
                 if name == "run":
