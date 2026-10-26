@@ -1,5 +1,6 @@
 """Web app: submit a report, stream the triage live, browse the benchmark."""
 
+import hashlib
 import json
 import os
 import queue
@@ -12,7 +13,7 @@ from collections.abc import Callable
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.responses import HTMLResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
@@ -325,9 +326,22 @@ def bench_run(mode: str, report_id: str):
 app.mount("/static", StaticFiles(directory=WEB), name="static")
 
 
+def _asset_version() -> str:
+    """A hash of the web files, added to their URLs so browsers and CDNs (Cloudflare caches .js and .css for
+    hours) fetch the new files right after a deploy."""
+    h = hashlib.sha256()
+    for f in sorted(WEB.rglob("*")):
+        if f.is_file():
+            h.update(f.read_bytes())
+    return h.hexdigest()[:10]
+
+
 @app.get("/")
 def index():
-    return FileResponse(WEB / "index.html")
+    html = (WEB / "index.html").read_text()
+    v = _asset_version()
+    html = re.sub(r'(src|href)="(static/[^"?]+\.(?:js|css))"', rf'\1="\2?v={v}"', html)
+    return HTMLResponse(html, headers={"Cache-Control": "no-cache"})
 
 
 def main() -> None:
