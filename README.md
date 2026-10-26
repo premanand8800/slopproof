@@ -60,6 +60,15 @@ reporter can ship a bundle with the report; a slop reporter cannot, because ther
 That moves the cost of proof to whoever makes the claim. The live demo re-runs the example bundle on demand
 (*Verify a proof* tab); arbitrary bundles are verified locally, since a bundle is code.
 
+### From proof to fix: and why the agent's patch is never trusted on its word
+
+For a verified bundle, a Nemotron Ultra agent writes a patch with exact edits in the sandbox. SlopProof then
+applies it in a fresh sandbox (the bundle's check must stop passing) and runs the project's own tests for the area
+it touched, before and after. On the `.netrc` CVE the agent's three-line patch stops the leak, but SlopProof's test
+step found it breaks two of curl's 22 netrc tests (680, 1304), so it is reported as `FIX_BREAKS_TESTS`, not as a
+fix. A repair round that feeds the failing tests back to the agent is in progress. curl's own fix was a parser
+rewrite (`4ae1d7cc2643`, 581 lines).
+
 ## How it works
 
 ```
@@ -162,6 +171,11 @@ real reports on its own (about 4 in 10 quotes for both), which is why it only lo
 - The sandbox numbers are a small sample (8 reports) because each run costs about $0.44.
 - One report (#2604391) is missing from the static results: claim extraction returned no JSON twice. The pipeline
   now continues without structured claims in that case.
+- Held-out check: 60 reports curl closed as *not applicable* between May and October 2026, never seen during
+  development. SlopProof closed 2 and sent 3 more to the bottom of the queue. For 51 of the 60, the code does
+  behave as the report says: these are accurate reports that curl judged out of scope, not invented ones.
+  SlopProof checks truth; deciding scope stays with the maintainer, helped by a quote from the project's own
+  policy. (The text-only screen kept 55 of the 60 too.)
 - Build recipes are tuned for curl.
 
 ### Run the benchmark

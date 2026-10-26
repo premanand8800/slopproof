@@ -18,7 +18,7 @@ from .llm import Ledger, chat, chat_json
 from .reproduce import _assistant_dict, _shrink_old_outputs
 from .sandbox import Sandbox
 
-MAX_STEPS = 40
+MAX_STEPS = 50
 WALL_SECONDS = 25 * 60
 
 SYSTEM = """You fix a confirmed security bug in an open source C project. The project source is at /work/repo and is
@@ -34,7 +34,9 @@ Steps:
 Fix the root cause in project code. Never change the PoC, the check, or tests to make the check pass.
 Do not weaken a feature to hide the bug (for example by disabling .netrc support entirely).
 Never use tail -f or other commands that wait forever.
-You have 40 tool calls. Call finish when the check fails with your fix applied; the patch is taken from git diff."""
+If the PoC fails with "Address already in use", its fixed port is still in TIME_WAIT from the last run: change the
+port in your copy of the PoC (sed -i) instead of investigating.
+You have 50 tool calls. Call finish when the check fails with your fix applied; the patch is taken from git diff."""
 
 TOOLS = [
     {"type": "function", "function": {

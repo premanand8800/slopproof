@@ -1,0 +1,66 @@
+{
+ "explanation": "budget ran out; patch taken from the edits made",
+ "check_after": "",
+ "steps": 40,
+ "patch": "diff --git a/lib/netrc.c b/lib/netrc.c\nindex e787a6f..af9ac13 100644\n--- a/lib/netrc.c\n+++ b/lib/netrc.c\n@@ -315,7 +315,7 @@ out:\n     if(!password)\n       retcode = 1; /* out of memory */\n   }\n-  if(!retcode) {\n+  if(!retcode && (!specific_login || our_login)) {\n     /* success */\n     if(!specific_login)\n       *loginp = login;\n@@ -326,6 +326,7 @@ out:\n     if(!specific_login)\n       free(login);\n     free(password);\n+    retcode = NETRC_FILE_MISSING; /* no matching login found */\n   }\n \n   return retcode;\n",
+ "verdict": "FIX_BREAKS_TESTS",
+ "verification": {
+  "commit": "e9b9bbac22c26cf67316fa8e6c6b9e831af31949",
+  "built": true,
+  "exit_code": 1,
+  "output": "",
+  "bug_present": false,
+  "seconds": 127
+ },
+ "seconds": 1035,
+ "comparison": {
+  "same_root_cause": false,
+  "same_location": true,
+  "summary": "The agent patch adds a conditional check to only return success when a specific login is provided or a matching login was found, and sets retcode to NETRC_FILE_MISSING when no matching login exists. The upstream patch completely rewrites the netrc parser with a new lexer-based approach, adding proper tokenization, quoted string handling, and a scanner state machine for more robust parsing.",
+  "agent_patch_risks": "The agent patch only addresses the symptom (returning success when no matching login is found) without fixing the underlying parser issues. It misses the upstream's improvements: proper handling of quoted tokens with escape sequences, case-insensitive keyword matching, default entry support, macdef parsing, file size limits, and comprehensive syntax error detection. The agent patch could also break existing behavior for default entries and macdef sections."
+ },
+ "upstream_fix": "4ae1d7cc2643e4773a136395f12bc02fc6867854",
+ "tests": {
+  "ids": [
+   "130",
+   "131",
+   "132",
+   "133",
+   "134",
+   "257",
+   "380",
+   "381",
+   "478",
+   "479",
+   "480",
+   "494",
+   "495",
+   "679",
+   "680",
+   "682",
+   "683",
+   "684",
+   "685",
+   "1304",
+   "2039",
+   "2309"
+  ],
+  "before": {
+   "ok": 22,
+   "total": 22,
+   "failed": []
+  },
+  "after": {
+   "ok": 20,
+   "total": 22,
+   "failed": [
+    "1304",
+    "680"
+   ]
+  },
+  "new_failures": [
+   "680",
+   "1304"
+  ]
+ }
+}
