@@ -45,7 +45,9 @@ class TriageRequest(BaseModel):
 
 @app.get("/api/health")
 def health():
-    return {"ok": True, "sandbox": SANDBOX_ENABLED, "sandbox_passcode": bool(SANDBOX_KEY), "daily_runs": DAILY_RUNS or None,
+    active = sum(1 for j in jobs.values() if j["result"] is None and not any(
+        e["stage"] in ("done", "error") for e in j["events"]))
+    return {"ok": True, "active_jobs": active, "sandbox": SANDBOX_ENABLED, "sandbox_passcode": bool(SANDBOX_KEY), "daily_runs": DAILY_RUNS or None,
             "nebius_key": bool(os.environ.get("NEBIUS_API_KEY")), "tavily_key": bool(os.environ.get("TAVILY_API_KEY"))}
 
 

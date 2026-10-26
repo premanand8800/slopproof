@@ -105,9 +105,12 @@ def _blobs(bare: Path, sha: str) -> list[tuple[str, str]]:
         meta, path = line.split("\t", 1)
         if path.endswith((".c", ".h")):
             rows.append((path, meta.split()[2]))
-    # curl-style layouts keep product code in lib/, src/ and include/; elsewhere skip only tests.
+    # curl-style layouts keep product code in lib/, src/ and include/. Use them only if they hold C sources;
+    # otherwise (libevent keeps .c files at the top level) take everything except tests and samples.
     main = [r for r in rows if r[0].startswith(SEARCH_DIRS)]
-    return main or [r for r in rows if not re.match(r"(tests?|testing)/", r[0])]
+    if any(path.endswith(".c") for path, _ in main):
+        return main
+    return [r for r in rows if not re.match(r"(tests?|testing|test-export|sample|examples?|fuzz)/", r[0])]
 
 
 def load_functions(bare: Path, sha: str) -> list[Func]:

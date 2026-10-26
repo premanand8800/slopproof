@@ -63,12 +63,20 @@ $("#form").addEventListener("submit", async (e) => {
     if (!r.ok) throw new Error(j.detail || "request failed");
     resetLive();
     const es = new EventSource(`/api/jobs/${j.job}/events`);
+    let finished = false;
     es.onmessage = (m) => {
       const ev = JSON.parse(m.data);
       handle(ev);
-      if (ev.stage === "done" || ev.stage === "error") { es.close(); $("#go").disabled = false; }
+      if (ev.stage === "done" || ev.stage === "error") { finished = true; es.close(); $("#go").disabled = false; }
     };
-    es.onerror = () => { es.close(); $("#go").disabled = false; };
+    es.onerror = () => {
+      es.close();
+      $("#go").disabled = false;
+      if (!finished) {
+        $("#formerr").textContent = "The run was interrupted (the server restarted or the connection dropped). Please run it again.";
+        document.querySelectorAll(".stage.running").forEach((x) => x.classList.remove("running"));
+      }
+    };
   } catch (err) {
     $("#formerr").textContent = err.message;
     $("#go").disabled = false;

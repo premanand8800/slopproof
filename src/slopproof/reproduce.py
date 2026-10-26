@@ -61,7 +61,10 @@ Rules:
 7. Stay efficient: you have 40 tool calls in total. The relevant source is already in the prompt: read more only
    if you must, and batch reads into one command (grep -n, sed -n for several ranges). Aim to have a PoC running
    by tool call 10. The build runs in the background, so write the PoC while it builds. Call finish as soon as you have strong evidence either way.
-8. Impact, not just behaviour. Behaviour that looks wrong is only a vulnerability if it gives an attacker something
+8. Never modify the project's source files: you test the code as reported, you do not fix it. One build is
+   enough; do not rebuild in other configurations unless the first build cannot reach the code path.
+9. Call finish as soon as a sanitizer report, assertion or crash in project code shows the bug.
+10. Impact, not just behaviour. Behaviour that looks wrong is only a vulnerability if it gives an attacker something
    the intended use does not. Before calling it reproduced, run the plain, intended way to reach the same effect
    (for example the same request without the encoding trick, or the same option used directly). If the
    plain way already gives the same result, the behaviour is by design: the outcome is not_reproduced.
@@ -259,7 +262,7 @@ def _seal(result: dict, repo_url: str, sha: str, project: str, emit: Callable[[d
         return
     files = {t["path"]: t["content"] for t in result["transcript"] if t["tool"] == "write_file"
              and t["path"].startswith("/work/")}
-    bundle = make_bundle(repo_url, sha, BUILDS.get(project, "true"), files, check,
+    bundle = make_bundle(repo_url, sha, BUILDS.get(project) or _build_commands(result["transcript"]), files, check,
                          claim=result["explanation"][:300])
     emit({"stage": "reproduce", "type": "run", "cmd": "# re-running the proof bundle in a fresh sandbox"})
     v = verify(bundle)
@@ -269,6 +272,14 @@ def _seal(result: dict, repo_url: str, sha: str, project: str, emit: Callable[[d
         "verdict": v["verdict"], "seconds": v.get("at_commit", {}).get("seconds")}
     if v["verdict"] != "VERIFIED":
         _demote(result, "inconclusive", f"The reproduction did not repeat in a fresh sandbox ({v['verdict']}).")
+
+
+def _build_commands(transcript: list[dict]) -> str:
+    """For projects without a known recipe: the configure and build commands the agent ran successfully."""
+    steps = [t["cmd"] for t in transcript if t.get("tool") == "run" and t.get("exit_code") == 0
+             and re.search(r"\b(cmake|configure|autoreconf|autogen|buildconf|make|meson|ninja)\b", t["cmd"])
+             and not re.search(r"\b(cat|grep|sed -n|ls|find|tail|head)\b", t["cmd"].split("&&")[-1])]
+    return " && ".join(f"( {s} )" for s in steps) or "true"
 
 
 def _demote(result: dict, outcome: str, why: str) -> None:

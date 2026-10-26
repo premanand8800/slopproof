@@ -103,8 +103,8 @@ def _create(model: str, messages: list[dict], kw: dict):
     for attempt in range(12):
         try:
             return client().chat.completions.create(model=model, messages=messages, **kw)
-        except RateLimitError:
-            if attempt == 11:
+        except RateLimitError as e:
+            if attempt == 11 or "per-day" in str(e):  # a daily quota does not come back in a minute
                 raise
             time.sleep(10 + 5 * attempt)
 
@@ -158,6 +158,7 @@ def parse_json(text: str) -> dict:
     if start < 0 or end < 0:
         raise ValueError("no JSON object found")
     try:
-        return json.loads(text[start:end + 1])
+        # strict=False: models often put raw newlines or tabs inside strings (quoted code).
+        return json.loads(text[start:end + 1], strict=False)
     except json.JSONDecodeError as e:
         raise ValueError(str(e)) from e
