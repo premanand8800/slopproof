@@ -131,6 +131,10 @@ class Run {
       case "scope": renderPolicy(this, ev.scope, ts); break;
       case "reproduce": renderRepro(this, ev, ts); break;
       case "verdict": renderVerdict(this, ev, ts); break;
+      case "cost":
+        this.cost = ev.usd;
+        $("#r-facts", this.root).innerHTML = `<dt>Cost so far</dt><dd>$${(ev.usd || 0).toFixed(3)}</dd>${this.steps ? `<dt>Commands</dt><dd>${this.steps}</dd>` : ""}`;
+        break;
       case "done":
         this.status = "done";
         this.tEnd = ts ?? this.tEnd;
@@ -324,10 +328,13 @@ function renderSearch(run, found, ts) {
 }
 
 function renderAnalysis(run, a, ts) {
-  const kind = a.claim_holds === "yes" ? "bad" : a.claim_holds === "no" ? "good" : "meh";
-  const label = { yes: "The claimed condition CAN happen", no: "The claimed condition CANNOT happen", unclear: "Unclear from the code alone" }[a.claim_holds] || a.claim_holds;
+  // Icons say whether the evidence supports the report (✓) or contradicts it (✗), as in the verdict's findings.
+  const kind = a.claim_holds === "yes" ? "good" : a.claim_holds === "no" ? "bad" : "meh";
+  const label = { yes: "The code allows what the report claims", no: "The code rules out what the report claims", unclear: "Unclear from the code alone" }[a.claim_holds] || a.claim_holds;
+  const second = a.second_look ? fact("meh", `Second look after fetching ${a.second_look.asked_for.map((n) => `<code>${esc(n)}</code>`).join(", ")}`,
+    `First conclusion: ${esc(a.second_look.first_conclusion)}`) : "";
   run.set("analysis", a.claim_holds === "unclear" ? "warn" : "done", esc(label), `<div class="facts">${fact(kind, `<b>${label}</b>`, esc(a.reasoning))}
-    ${(a.key_lines || []).map((k) => fact("meh", `<code>${esc(k)}</code>`)).join("")}</div>`, ts);
+    ${second}${(a.key_lines || []).map((k) => fact("meh", `<code>${esc(k)}</code>`)).join("")}</div>`, ts);
   run.now = run.sandbox ? "Starting the sandbox…" : "Writing the verdict…";
 }
 
@@ -358,7 +365,7 @@ function renderRepro(run, ev, ts) {
   let state = "running", sum = run.steps ? `${run.steps} commands so far` : "starting";
   if (ev.type === "finish") {
     state = ev.outcome === "reproduced" ? "done" : ev.outcome === "not_reproduced" ? "done" : "warn";
-    sum = `${esc(ev.outcome.replace("_", " "))}${ev.bundle ? ` · proof ${esc(ev.bundle)}` : ""} · ${run.steps} commands`;
+    sum = `${ev.reason ? `stopped without a result: ${esc(ev.reason)}` : esc(ev.outcome.replace("_", " "))}${ev.bundle ? ` · proof ${esc(ev.bundle)}` : ""} · ${run.steps} commands`;
     run.term += `\n<b>Outcome: ${esc(ev.outcome)}</b>${ev.bundle ? `\nProof bundle re-run in a fresh sandbox: ${esc(ev.bundle)}` : ""}\n`;
     run.now = "Writing the verdict…";
   }
@@ -371,7 +378,8 @@ function renderVerdict(run, ev, ts) {
   const v = ev.verdict, cost = ev.cost || { total_usd: 0, by_model: {} };
   for (const id of ["policy", "reproduce", "screen", "search"]) {
     if (run.s[id].state === "pending" || run.s[id].state === "running") {
-      run.set(id, "skipped", id === "reproduce" ? "not run for this report" : "not recorded for this run", "", ts);
+      if (id === "reproduce" && run.steps) run.set(id, "warn", `stopped without a result · ${run.steps} commands`, undefined, ts);
+      else run.set(id, "skipped", id === "reproduce" ? "not run for this report" : "not recorded for this run", "", ts);
     }
   }
   run.set("verdict", "done", `<span class="vt ${esc(v.verdict)}">${esc(v.verdict)}</span>`, "", ts);

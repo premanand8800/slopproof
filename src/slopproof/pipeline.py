@@ -8,13 +8,13 @@ from concurrent.futures import ThreadPoolExecutor
 import httpx
 
 from . import codecheck, codesearch, webcheck
-from .analyze import analyze
+from .analyze import analyze_deep
 from .extract import extract_claims
 from .llm import MODELS, Ledger
 from .reproduce import reproduce
 from .scope import check_scope
 from .screen import screen
-from .verdict import decide
+from .verdict import allowed_cves, decide, scrub_cves
 
 
 def fetch_report(url: str) -> dict:
@@ -53,6 +53,7 @@ def triage(title: str, body: str, repo_url: str, created_at: str | None = None,
         """Reuse a saved result, or compute it; either way emit it so the run's timeline is complete."""
         value = done[key] if key in done else compute()
         emit({"stage": stage, field: value, **({"restored": True} if key in done else {})})
+        emit({"stage": "cost", "usd": ledger.summary()["total_usd"]})
         return value
 
     claims = step("claims", "claims", "claims", lambda: extract_claims(title, body, ledger))
@@ -87,7 +88,8 @@ def triage(title: str, body: str, repo_url: str, created_at: str | None = None,
         found = step("search", "search", "found", lambda: f_search.result())
 
     context = codecheck.code_context(tree, code, found)
-    analysis = step("analysis", "analysis", "analysis", lambda: analyze(title, body, claims, context, ledger))
+    analysis = step("analysis", "analysis", "analysis", lambda: analyze_deep(
+        title, body, claims, context, ledger, lambda names: codesearch.definitions(bare, ref["sha"], names)))
 
     def policy_check():
         # The project's written policy, quoted for the maintainer. Shown only: in our benchmark curl issued CVEs
@@ -112,7 +114,8 @@ def triage(title: str, body: str, repo_url: str, created_at: str | None = None,
     evidence = {"claims": claims, "ref": ref, "code_checks": code, "web_checks": web, "static_analysis": analysis,
                 "reproduction": {k: v for k, v in (repro or {}).items() if k != "transcript"} or "not run"}
     # The screen's vote is kept out of the evidence so the verdict model stays an independent second vote.
-    verdict = apply_guards(decide(title, body, evidence, ledger), analysis, repro, web, text_screen)
+    raw = scrub_cves(decide(title, body, evidence, ledger), allowed_cves(f"{title}\n{body}", web))
+    verdict = apply_guards(raw, analysis, repro, web, text_screen)
     result = {"title": title, "project": project, "ref": ref, "claims": claims, "code": code, "web": web,
               "screen": text_screen, "search": found, "scope": policy,
               "analysis": analysis, "reproduction": repro, "verdict": verdict, "cost": ledger.summary(), "ledger": ledger.calls,

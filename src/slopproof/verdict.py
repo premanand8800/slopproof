@@ -1,6 +1,7 @@
 """Final triage decision from all collected evidence."""
 
 import json
+import re
 
 from .llm import Ledger, chat_json
 
@@ -26,6 +27,10 @@ Important: AI-assisted writing style is NOT evidence either way. Many real vulne
 Judge only verifiable facts. Never mark a report FABRICATED or NOT_REPRODUCED unless specific evidence supports it;
 when in doubt choose PLAUSIBLE, because closing a real vulnerability is far worse than spending a maintainer's time.
 
+The maintainer_comment is posted by the maintainer, so it states only what the evidence shows and what is still
+needed from the reporter. Never promise fixes, tests, releases, timelines or any other action on the maintainer's
+behalf. Mention a CVE only if it appears in the report or in a verified check in the evidence.
+
 Reply with one JSON object only:
 {
   "verdict": "CONFIRMED | PLAUSIBLE | NOT_REPRODUCED | FABRICATED",
@@ -34,6 +39,42 @@ Reply with one JSON object only:
   "findings": [{"kind": "contradiction | confirmation | missing", "text": "specific fact with file:line or URL"}],
   "maintainer_comment": "a short, polite, factual reply that could be posted on the report, citing the evidence"
 }"""
+
+
+CVE_RE = re.compile(r"CVE-\d{4}-\d{4,7}", re.I)
+
+
+def allowed_cves(report_text: str, web: dict) -> set[str]:
+    """CVEs a reply may mention: cited by the report itself, or checked and found to be about this project."""
+    ok = {c.upper() for c in CVE_RE.findall(report_text)}
+    for c in (web.get("prior_art") or {}).get("cve_checks", []):
+        if c.get("exists") and c.get("affects_project") and c.get("same_issue"):
+            ok.add(c["cve"].upper())
+    return ok
+
+
+def scrub_cves(verdict: dict, allowed: set[str]) -> dict:
+    """Remove sentences and findings that name a CVE nobody verified: a wrong CVE in a posted reply is exactly
+    the kind of confident error SlopProof exists to prevent."""
+    def bad(text: str) -> bool:
+        return any(c.upper() not in allowed for c in CVE_RE.findall(text or ""))
+
+    def clean(text: str) -> str:
+        sentences = re.split(r"(?<=[.!?])\s+", text or "")
+        return " ".join(x for x in sentences if not bad(x))
+
+    v = dict(verdict)
+    dropped = [c for c in CVE_RE.findall(json.dumps(verdict)) if c.upper() not in allowed]
+    v["findings"] = [f for f in v.get("findings", []) if not bad(f.get("text", ""))]
+    # The reply is the maintainer's to send: no promises of fixes, tests or timelines made on their behalf.
+    promise = re.compile(r"^(we|we'll|we're|i|i'll|our team)\b[^.]*\b(will|'ll|plan to|intend to|going to|aim to)\b", re.I)
+    v["maintainer_comment"] = " ".join(x for x in re.split(r"(?<=[.!?])\s+", clean(v.get("maintainer_comment", "")))
+                                       if not promise.search(x.strip()))
+    if bad(v.get("headline", "")):
+        v["headline"] = clean(v["headline"]) or "Evidence summary below."
+    if dropped:
+        v["scrubbed_cves"] = sorted({c.upper() for c in dropped})
+    return v
 
 
 def decide(report_title: str, report_body: str, evidence: dict, ledger: Ledger) -> dict:

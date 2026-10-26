@@ -66,6 +66,27 @@ def check_urls(urls: list[str], report_summary: str, ledger: Ledger) -> list[dic
     return out
 
 
+CVE_RE = re.compile(r"CVE-\d{4}-\d{4,7}", re.I)
+
+CVE_FACT = """You check one CVE identifier against web evidence. Reply with one JSON object only:
+{"exists": true or false, "affects_project": true or false, "same_issue": true or false,
+ "summary": "what the CVE is about according to the evidence, one sentence, or empty"}
+affects_project is true only if the evidence says this CVE is in the named project itself.
+same_issue is true only if the evidence describes the same bug as the report (same component and same flaw)."""
+
+
+def verify_cve(cve: str, project: str, ledger: Ledger, as_of: str | None = None, report_summary: str = "") -> dict:
+    """Does this CVE exist, and is it about this project? Used for CVEs a model names, not the report."""
+    res = _search(cve, as_of, max_results=5)
+    hits = [{"url": r["url"], "title": r["title"], "snippet": r["content"][:400]} for r in res.get("results", [])]
+    evidence = "\n\n".join(f"[{h['url']}] {h['title']}\n{h['snippet']}" for h in hits) or "no results"
+    judged = chat_json("mid", CVE_FACT, f"CVE: {cve}\nProject: {project}\nReport: {report_summary}\n\nEVIDENCE:\n{evidence}",
+                       ledger, f"verify {cve}", max_tokens=800)
+    url = hits[0]["url"] if hits else None
+    return {"cve": cve.upper(), "exists": bool(judged.get("exists")), "affects_project": bool(judged.get("affects_project")),
+            "same_issue": bool(judged.get("same_issue")), "summary": judged.get("summary", ""), "evidence_url": url}
+
+
 def prior_art(project: str, claims: dict, ledger: Ledger, as_of: str | None = None) -> dict:
     """Search for the same issue already reported, fixed, or documented as intended behaviour."""
     q = f"{project} {claims.get('vuln_class', '')} {' '.join(claims.get('functions', [])[:2])} {claims.get('summary', '')}"[:380]
@@ -77,4 +98,21 @@ def prior_art(project: str, claims: dict, ledger: Ledger, as_of: str | None = No
  "explanation": "one or two sentences", "evidence_url": "best URL or null"}""",
                        f"Project: {project}\nReport summary: {claims.get('summary')}\n\nSEARCH RESULTS:\n{evidence}",
                        ledger, "prior art", max_tokens=1500)
-    return {"query": q, "results": hits[:4], **judged}
+    out = {"query": q, "results": hits[:4], **judged}
+    # A CVE the judge names is a claim too: check that it exists and is about this project before it is used.
+    named = sorted({c.upper() for c in CVE_RE.findall(judged.get("explanation") or "")})[:2]
+    if named:
+        checks = [verify_cve(c, project, ledger, as_of, claims.get("summary", "")) for c in named]
+        out["cve_checks"] = checks
+        bad = [c["cve"] for c in checks if not (c["exists"] and c["affects_project"] and c["same_issue"])]
+        if bad:
+            out["explanation"] = (CVE_RE.sub(lambda m: m.group(0) if m.group(0).upper() not in bad else "[unverified CVE]",
+                                             out.get("explanation") or "")
+                                  + f" ({', '.join(bad)} could not be confirmed as this {project} issue and was dropped.)")
+            if len(bad) == len(checks):
+                # The judge's prior art rested on CVEs that are not this issue: none of it stands.
+                why = "; ".join(f"{c['cve']}: {c['summary'] or 'not found'}" for c in checks)
+                out.update(known_issue=False, already_fixed=False, evidence_url=None,
+                           explanation=f"No confirmed prior report of this issue. The search pointed to {why}, "
+                                       f"which is not the issue reported.")
+    return out

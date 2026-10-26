@@ -198,3 +198,29 @@ def find_code(bare: Path, sha: str, title: str, body: str, claims: dict, k: int 
     hits = index_for(bare, sha).search(report_query(title, body, claims), k=k)
     return [{"file": f.file, "name": f.name, "start": f.start, "end": f.end, "score": s,
              "why": "matches " + ", ".join(terms)} for f, s, terms in hits]
+
+
+def definitions(bare: Path, sha: str, names: list[str], budget: int = 20000) -> str:
+    """Source of the named functions in the tree, for a second look by the analysis. A short wrapper also brings
+    the functions it calls, since the wrapper alone answers nothing (mk_string_search_n -> _mk_string_search)."""
+    funcs = load_functions(bare, sha)
+    by_name: dict[str, list[Func]] = {}
+    for f in funcs:
+        by_name.setdefault(f.name, []).append(f)
+    queue = [re.sub(r"[^\w]", "", n.split("(")[0]) for n in names]
+    seen, parts, total = set(), [], 0
+    while queue:
+        name = queue.pop(0)
+        if name in seen:
+            continue
+        seen.add(name)
+        for f in by_name.get(name, [])[:2]:
+            block = f"=== {f.file}:{f.start}-{f.end} {f.name}\n" + "\n".join(
+                f"{f.start + i:5d}  {line}" for i, line in enumerate(f.text.splitlines()[:250]))
+            if total + len(block) > budget:
+                return "\n\n".join(parts)
+            parts.append(block)
+            total += len(block)
+            if f.end - f.start < 15:
+                queue += [c for c in f.calls if c in by_name]
+    return "\n\n".join(parts)

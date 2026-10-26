@@ -11,6 +11,7 @@ from .sandbox import Sandbox
 
 MAX_STEPS = 40
 WALL_SECONDS = 25 * 60
+UNKNOWN_PROJECT_SECONDS = 12 * 60
 
 # Build commands started in the background as soon as the sandbox is up, while the agent reads code.
 BUILDS = {
@@ -123,6 +124,8 @@ def reproduce(tree: Path, project: str, report: str, claims: dict, analysis: dic
             f"Relevant source excerpts:\n{context[:20000]}\n\n"
             f"Full report:\n{report[:12000]}")},
     ]
+    # Without a build recipe the agent works the build out itself; cap that, it rarely pays off after 12 minutes.
+    wall = WALL_SECONDS if proj in BUILDS else UNKNOWN_PROJECT_SECONDS
     sb = Sandbox(tree)
     if proj in BUILDS:
         sb.background(BUILDS[proj])
@@ -130,7 +133,7 @@ def reproduce(tree: Path, project: str, report: str, claims: dict, analysis: dic
     t0 = time.time()
     try:
         for step in range(MAX_STEPS):
-            if time.time() - t0 > WALL_SECONDS:
+            if time.time() - t0 > wall:
                 break
             _shrink_old_outputs(messages)
             left = MAX_STEPS - step
@@ -180,8 +183,12 @@ def reproduce(tree: Path, project: str, report: str, claims: dict, analysis: dic
                 else:
                     content = f"unknown tool {tool}"
                 messages.append({"role": "tool", "tool_call_id": tc.id, "content": content})
-        return {"outcome": "inconclusive", "explanation": "step or time budget exhausted", "evidence": "",
-                "poc": "", "steps": MAX_STEPS, "seconds": round(time.time() - t0), "transcript": transcript}
+            emit({"stage": "cost", "usd": ledger.summary()["total_usd"]})
+        # Out of budget: say so, so the page and the verdict agree that it ran and stopped without a result.
+        why = "time budget used up" if time.time() - t0 > wall else "step budget used up"
+        emit({"stage": "reproduce", "type": "finish", "outcome": "inconclusive", "reason": why})
+        return {"outcome": "inconclusive", "explanation": f"Stopped without a result: {why}.", "evidence": "",
+                "poc": "", "steps": len(transcript), "seconds": round(time.time() - t0), "transcript": transcript}
     finally:
         sb.close()
 
