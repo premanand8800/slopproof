@@ -1,6 +1,7 @@
 """Reproduction agent: Nemotron Ultra builds the project and tries to trigger the claimed bug in a sandbox."""
 
 import json
+import re
 import time
 from collections.abc import Callable
 from pathlib import Path
@@ -16,6 +17,14 @@ BUILDS = {
     "curl": ("(autoreconf -fi || ./buildconf) && ./configure --with-openssl --disable-shared --enable-debug "
              "--enable-websockets CC=clang CFLAGS='-fsanitize=address,undefined -g -O1' "
              "LDFLAGS='-fsanitize=address,undefined' && make -j6"),
+}
+
+# A reproduction must run the project's own code: the built CLI run as a command (not just listed), or a PoC
+# compiled against the built library.
+_CMD_START = r"(?:^|[;&|(`]\s*|\b(?:then|do|exec|timeout\s+\S+|valgrind|gdb\s+-batch.*?--args)\s+)(?:\w+=\S*\s+)*"
+ENTRY_POINTS = {
+    "curl": (re.compile(_CMD_START + r"(?:\./|/work/repo/|\.\./repo/)?src/curl\b", re.M),
+             re.compile(r"\b(?:clang|gcc|cc)\b[^\n]*(?:libcurl\.a|-lcurl)")),
 }
 
 RECIPES = {
@@ -82,11 +91,13 @@ TOOLS = [
             "explanation": {"type": "string", "description": "what you tried and what happened, citing file:line"},
             "evidence": {"type": "string", "description": "the decisive output, e.g. the sanitizer report or test log, verbatim"},
             "poc": {"type": "string", "description": "the PoC source or command you ran"},
+            "reachable_by_attacker": {"type": "boolean",
+                                      "description": "can attacker-controlled input reach this code path in a real deployment"},
             "impact": {"type": "string", "enum": ["memory_safety", "crash_or_hang", "boundary_crossed", "none"],
                        "description": "what the attacker gains; none if the effect is reachable by intended use"},
             "baseline": {"type": "string",
                          "description": "the plain, intended-use command you compared against and its result"}},
-            "required": ["outcome", "explanation", "evidence", "impact"]}}},
+            "required": ["outcome", "explanation", "evidence", "impact", "reachable_by_attacker"]}}},
 ]
 
 
@@ -136,11 +147,8 @@ def reproduce(tree: Path, project: str, report: str, claims: dict, analysis: dic
                               "evidence": args.get("evidence", ""), "poc": args.get("poc", ""),
                               "impact": args.get("impact", "none"), "baseline": args.get("baseline", ""),
                               "steps": step + 1, "seconds": round(time.time() - t0), "transcript": transcript}
-                    if result["outcome"] == "reproduced" and result["impact"] == "none":
-                        # The behaviour happened, but intended use reaches the same effect: no vulnerability.
-                        result["outcome"] = "not_reproduced"
-                        result["explanation"] = ("Behaviour reproduced, but it gives an attacker nothing the intended "
-                                                 "use does not. " + result["explanation"])
+                    result["reachable_by_attacker"] = args.get("reachable_by_attacker")
+                    _check_reproduction(result, name)
                     emit({"stage": "reproduce", "type": "finish", "outcome": result["outcome"]})
                     return result
                 if name == "run":
@@ -164,6 +172,29 @@ def reproduce(tree: Path, project: str, report: str, claims: dict, analysis: dic
                 "poc": "", "steps": MAX_STEPS, "seconds": round(time.time() - t0), "transcript": transcript}
     finally:
         sb.close()
+
+
+def _check_reproduction(result: dict, project: str) -> None:
+    """Hard checks on a claimed reproduction; the agent's word is not enough."""
+    if result["outcome"] != "reproduced":
+        return
+    patterns = ENTRY_POINTS.get(project)
+    if patterns:
+        ran = "\n".join(t.get("cmd", "") + "\n" + t.get("content", "") for t in result["transcript"])
+        if not any(p.search(ran) for p in patterns):
+            # A PoC that re-implements the logic in its own code shows nothing about the project.
+            result["outcome"] = "inconclusive"
+            result["explanation"] = ("The PoC never ran the project's own code (its CLI or library), so it proves "
+                                     "nothing about the project. " + result["explanation"])
+            return
+    if result.get("reachable_by_attacker") is False:
+        result["outcome"] = "not_reproduced"
+        result["explanation"] = "Reproduced only on a path attacker input cannot reach. " + result["explanation"]
+    elif result.get("impact") == "none":
+        # The behaviour happened, but intended use reaches the same effect: no vulnerability.
+        result["outcome"] = "not_reproduced"
+        result["explanation"] = ("Behaviour reproduced, but it gives an attacker nothing the intended use does not. "
+                                 + result["explanation"])
 
 
 def _assistant_dict(msg) -> dict:
