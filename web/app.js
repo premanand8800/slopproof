@@ -162,11 +162,27 @@ function renderCode(code) {
   }
   for (const q of code.code_quotes) {
     const where = q.match.file ? `best match ${esc(q.match.file)}:${q.match.line}, similarity ${q.match.score}%` : "";
-    if (q.verdict === "verbatim") out.push(fact("good", "Quoted code is real", `<code>${esc(q.quote.slice(0, 160))}</code><br>${where}`));
-    else if (q.verdict === "paraphrased") out.push(fact("meh", "Quoted code is paraphrased, not verbatim", `<code>${esc(q.quote.slice(0, 160))}</code><br>${where}`));
-    else out.push(fact("bad", "Quoted code is NOT in the codebase", `<code>${esc(q.quote.slice(0, 160))}</code><br>${where}`));
+    const sub = `<code>${esc(q.quote.slice(0, 160))}</code><br>${where}${renderLineDiff(q.line_diff)}`;
+    if (q.verdict === "verbatim") out.push(fact("good", "Quoted code is real", sub));
+    else if (q.verdict === "paraphrased") out.push(fact("meh", "Quoted code is paraphrased, not verbatim", sub));
+    else if (q.verdict === "older_version") {
+      const h = q.history;
+      out.push(fact("meh", "Quoted code is from an older version of the project",
+        `${sub}<br>Added in <code>${esc(h.added.commit)}</code> (${esc(h.added.date)}), last changed in <code>${esc(h.last_changed.commit)}</code> (${esc(h.last_changed.date)}): ${esc(h.last_changed.subject)}`));
+    } else out.push(fact("bad", "Quoted code is NOT in the codebase", sub));
   }
   return `<div class="facts" style="margin-top:8px">${out.join("") || '<div class="muted">The report cites no code to check.</div>'}</div>`;
+}
+
+function renderLineDiff(d) {
+  if (!d) return "";
+  const parts = [`${d.exact} of ${d.lines} quoted lines exact`];
+  if (d.changed.length) parts.push(`${d.changed.length} changed`);
+  if (d.not_found_count) parts.push(`${d.not_found_count} not found near the match`);
+  const body = esc(d.diff).split("\n").map((l) =>
+    l.startsWith("+") && !l.startsWith("+++") ? `<span class="add">${l}</span>` :
+    l.startsWith("-") && !l.startsWith("---") ? `<span class="del">${l}</span>` : l).join("\n");
+  return `<br>${parts.join(" · ")}<details class="ldiff"><summary>Line diff: − real code, + report</summary><pre>${body}</pre></details>`;
 }
 
 function renderWeb(web) {

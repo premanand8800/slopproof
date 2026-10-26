@@ -115,6 +115,22 @@ expansion, as in repo maps); it found the fixed function slightly less often, so
 reranker are the next step. Semantic matching is used only to find code, never to decide whether quoted code is
 real: a meaning-based match would let invented code pass as "similar".
 
+### Checking quoted code: line by line, with history
+
+A quote gets three checks against the tree as of the report date:
+
+- **Closest window** (fuzzy match): verbatim, paraphrased, or not in the codebase.
+- **Line by line**: how many of its significant lines exist anywhere in the tree, character for character. This
+  catches quotes stitched together from several places, and the UI shows a line diff against the real code
+  (`- real code`, `+ report`) so a maintainer sees exactly which lines were changed or invented.
+- **History** (`git log -S`): a line that is gone now but existed before marks the quote as *older version*, not
+  invented. That protects reporters on old releases and exposes recycled, already-fixed issues.
+
+Explanations that the extractor mislabelled as code (`Curl_fopen() opens the file with...`) are no longer checked,
+and escaped `\n` line breaks are restored. On the same extracted claims, quotes from real CVE reports flagged as
+"not in the codebase" fell from 122 to 68; for slop, from 23 to 18. The flag still does not separate slop from
+real reports on its own (about 4 in 10 quotes for both), which is why it only lowers priority and never closes.
+
 ### Honest limits
 
 - The guard rules were chosen after error analysis on this same dataset; there is no held-out set yet.

@@ -57,7 +57,7 @@ def triage(title: str, body: str, repo_url: str, created_at: str | None = None,
     # Code, reference and prior-art checks and the text screen are independent, so run them together.
     with ThreadPoolExecutor(max_workers=6) as pool:
         f_screen = pool.submit(screen, title, body, project.split("/")[-1], ledger)
-        f_code = pool.submit(codecheck.check_code, tree, claims)
+        f_code = pool.submit(codecheck.check_code, tree, claims, bare, ref["sha"])
         f_search = pool.submit(codesearch.find_code, bare, ref["sha"], title, body, claims)
         f_cves = [pool.submit(webcheck.check_cve, c, project, claims.get("summary", ""), ledger, as_of)
                   for c in claims["cves"][:4]]

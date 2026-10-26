@@ -106,3 +106,6 @@ footer { text-align: center; color: var(--muted); font-size: 13px; padding: 20px
 #bench-compare h3 { margin: 0 0 6px; font-size: 17px; }
 #bench-compare table { width: 100%; margin: 10px 0; }
 #bench-compare .facts { margin-top: 8px; }
+.ldiff pre { font-size: 12px; line-height: 1.45; background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 8px; overflow-x: auto; max-height: 320px; }
+.ldiff .add { color: var(--bad); }
+.ldiff .del { color: var(--ok); }

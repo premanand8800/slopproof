@@ -1,5 +1,6 @@
 """Check a report's claims against the real source tree at the time of the report."""
 
+import difflib
 import os
 import re
 import shutil
@@ -7,7 +8,7 @@ import subprocess
 import threading
 from pathlib import Path
 
-from rapidfuzz import fuzz
+from rapidfuzz import fuzz, process
 
 CACHE = Path(__file__).resolve().parents[2] / ".cache"
 SOURCE_EXT = (".c", ".h", ".cc", ".cpp", ".hpp", ".py", ".go", ".rs", ".js", ".ts", ".java", ".rb", ".pl", ".sh")
@@ -166,10 +167,113 @@ def code_context(tree: Path, code: dict, found: list[dict] | None = None, budget
     return "\n\n".join(out)
 
 
-def check_code(tree: Path, claims: dict) -> dict:
+_CODE_LINE = re.compile(r"[;{}),:\\]\s*$|^\s*(#|case\b|default\b|else\b|if\s*\(|for\s*\(|while\s*\(|return\b)")
+
+
+def looks_like_prose(code: str) -> bool:
+    """True for explanations the extractor labelled as code: "Curl_fopen() opens the file with...".
+
+    Comments are removed first, so code with chatty comments still counts as code.
+    """
+    if any(ch in code for ch in "├└│→"):  # call-tree drawings and arrows from analysis write-ups
+        return True
+    lines = [re.sub(r"//.*$|/\*.*?\*/", "", line).rstrip() for line in code.splitlines()]
+    lines = [line for line in lines if line.strip()]
+    if not lines:
+        return True
+    codey = sum(1 for line in lines if _CODE_LINE.search(line))
+    wordy = sum(1 for line in lines if len(re.findall(r"\b[a-z]{2,}\b", line)) >= 5 and not line.endswith((";", "{", "}")))
+    return codey / len(lines) < 0.5 and wordy / len(lines) >= 0.5
+
+
+def line_diff(quote: str, tree: Path, rel: str, line: int, texts: dict[Path, str] | None = None) -> dict:
+    """Compare a quote line by line with the real code around its best match.
+
+    Each quoted line is exact, changed (a close real line exists) or not found. The unified diff is for people.
+    """
+    path = tree / rel
+    real = (texts.get(path) if texts else None) or path.read_text(errors="replace")
+    q_lines = [ln for ln in quote.splitlines() if ln.strip()]
+    lo = max(0, line - 1 - 3)
+    window = real.splitlines()[lo:line - 1 + len(quote.splitlines()) + 6]
+    norm_window = [_norm(w) for w in window]
+    exact, changed, missing = 0, [], []
+    for ql in q_lines:
+        hit = process.extractOne(_norm(ql), norm_window, scorer=fuzz.ratio) if norm_window else None
+        if hit and hit[1] >= 95:
+            exact += 1
+        elif hit and hit[1] >= 70:
+            changed.append({"report": ql.strip()[:160], "real": window[hit[2]].strip()[:160], "line": lo + hit[2] + 1})
+        else:
+            missing.append(ql.strip()[:160])
+    diff = difflib.unified_diff([w.rstrip() for w in window], [ln.rstrip() for ln in q_lines],
+                                fromfile=f"{rel} (real code)", tofile="report", lineterm="", n=1)
+    return {"lines": len(q_lines), "exact": exact, "changed": changed[:6], "not_found": missing[:6],
+            "not_found_count": len(missing), "diff": "\n".join(list(diff)[:80])}
+
+
+def _sig_line(line: str) -> str:
+    """A quoted line reduced to what must match: no comment, no whitespace. Empty if too generic to count."""
+    line = _norm(re.sub(r"//.*$|/\*.*?\*/", "", line)).replace(" ", "")
+    if len(line) < 10 or not re.search(r"[A-Za-z_]\w{2,}", line) or line.startswith("#include"):
+        return ""
+    return line
+
+
+def line_index(tree: Path, texts: dict[Path, str]) -> dict[str, str]:
+    """Every significant source line in the tree, mapped to its first location."""
+    index: dict[str, str] = {}
+    for f, text in texts.items():
+        rel = str(f.relative_to(tree))
+        for i, line in enumerate(text.splitlines(), 1):
+            key = _sig_line(line)
+            if key and key not in index:
+                index[key] = f"{rel}:{i}"
+    return index
+
+
+def lines_found(quote: str, index: dict[str, str]) -> dict:
+    """How many of the quote's significant lines exist somewhere in the tree, character for character.
+
+    Robust to quotes stitched together from several places or with lines left out, which a single
+    sliding-window match scores poorly.
+    """
+    keys = [(ln.strip(), _sig_line(ln)) for ln in quote.splitlines()]
+    keys = [(raw, k) for raw, k in keys if k]
+    found = [(raw, index[k]) for raw, k in keys if k in index]
+    missing = [raw[:160] for raw, k in keys if k not in index]
+    files = [loc.rsplit(":", 1)[0] for _, loc in found]
+    main_file = max(set(files), key=files.count) if files else None
+    first = next((loc for _, loc in found if loc.startswith(f"{main_file}:")), None)
+    return {"total": len(keys), "found": len(found), "missing": missing[:8], "main_location": first}
+
+
+def history_of(quote: str, bare: Path, sha: str) -> dict | None:
+    """Did this code exist in an earlier version? Uses git's pickaxe on the most distinctive quoted line."""
+    lines = [ln.strip() for ln in quote.splitlines()]
+    lines = [ln for ln in lines if len(ln) >= 20 and re.search(r"[A-Za-z_]\w{3,}", ln)
+             and not ln.startswith(("//", "/*", "*", "#include"))]
+    if not lines:
+        return None
+    probe = max(lines, key=len)[:80]
+    try:
+        log = subprocess.run(["git", "-C", str(bare), "log", "-S", probe, "--format=%H\t%as\t%s", sha,
+                              "--", "lib", "src", "include"], capture_output=True, text=True, timeout=20).stdout
+    except subprocess.TimeoutExpired:
+        return None
+    commits = [c.split("\t", 2) for c in log.strip().splitlines() if c.count("\t") == 2]
+    if not commits:
+        return None
+    last, first = commits[0], commits[-1]
+    return {"probe": probe, "added": {"commit": first[0][:12], "date": first[1], "subject": first[2]},
+            "last_changed": {"commit": last[0][:12], "date": last[1], "subject": last[2]}}
+
+
+def check_code(tree: Path, claims: dict, bare: Path | None = None, sha: str | None = None) -> dict:
     results = {"files": [], "functions": [], "line_refs": [], "code_quotes": []}
     all_files = _source_files(tree)
     texts = {f: f.read_text(errors="replace") for f in all_files}
+    index = line_index(tree, texts) if claims["code_quotes"] else {}
 
     for path in claims["files"]:
         path = path.strip().lstrip("/")
@@ -213,11 +317,14 @@ def check_code(tree: Path, claims: dict) -> dict:
 
     for q in claims["code_quotes"]:
         code = (q.get("code") or "").strip()
+        if "\\n" in code and "\n" not in code:
+            # Some extractions keep line breaks as the two characters backslash-n.
+            code = code.replace("\\n", "\n").replace("\\t", "\t").replace('\\"', '"')
         # Only quotes presented as the project's own code must exist in the tree.
         if len(code) < 12 or q.get("role", "project_code") != "project_code":
             continue
-        # Prose the extractor mislabelled as code has no code punctuation; skip it.
-        if not re.search(r"[(){};=\[\]<>*]", code):
+        # Prose the extractor mislabelled as code: no code punctuation, or sentences about the code.
+        if not re.search(r"[(){};=\[\]<>*]", code) or looks_like_prose(code):
             continue
         cited = tree / str(q.get("file") or "").lstrip("/")
         candidates = [cited] if cited.is_file() else []
@@ -230,5 +337,21 @@ def check_code(tree: Path, claims: dict) -> dict:
             if g["score"] > m["score"]:
                 m = g
         verdict = "verbatim" if m["score"] >= 90 else "paraphrased" if m["score"] >= 70 else "not_in_codebase"
-        results["code_quotes"].append({"quote": code[:400], "cited_file": q.get("file"), "match": m, "verdict": verdict})
+        lf = lines_found(code, index)
+        if verdict != "verbatim" and lf["total"] >= 3 and lf["found"] >= 0.8 * lf["total"]:
+            # Nearly every line is real code; the quote was stitched together or had lines left out.
+            verdict = "paraphrased"
+            if lf["main_location"]:
+                f, n = lf["main_location"].rsplit(":", 1)
+                m = {**m, "file": f, "line": int(n)}
+        entry = {"quote": code[:400], "cited_file": q.get("file"), "match": m, "verdict": verdict, "lines_found": lf}
+        if m.get("file") and verdict != "verbatim":
+            entry["line_diff"] = line_diff(code, tree, m["file"], m["line"], texts)
+        if verdict == "not_in_codebase" and bare is not None and sha:
+            past = history_of(code, bare, sha)
+            # Only meaningful if that line is gone now; otherwise the line diff already shows it.
+            if past and not any(past["probe"] in t for t in texts.values()):
+                # Real code from an older version is not invented; it may be a stale or recycled report.
+                entry["verdict"], entry["history"] = "older_version", past
+        results["code_quotes"].append(entry)
     return results
