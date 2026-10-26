@@ -4,6 +4,7 @@
 const STAGES = [
   { id: "report", title: "Fetch the report", tech: "HackerOne · GitHub" },
   { id: "claims", title: "Extract every checkable claim", tech: "Nemotron 3.5 Lightning" },
+  { id: "memory", title: "Recall from earlier runs", tech: "memory · pinned to code" },
   { id: "code", title: "Check claims against the real code", tech: "git · fuzzy match · line diff" },
   { id: "search", title: "Find the code the report is about", tech: "tree-sitter · BM25" },
   { id: "web", title: "Check references and prior art", tech: "Tavily · Nemotron 3 Super" },
@@ -131,6 +132,7 @@ class Run {
       case "scope": renderPolicy(this, ev.scope, ts); break;
       case "reproduce": renderRepro(this, ev, ts); break;
       case "verdict": renderVerdict(this, ev, ts); break;
+      case "memory": renderMemory(this, ev, ts); break;
       case "cost":
         this.cost = ev.usd;
         $("#r-facts", this.root).innerHTML = `<dt>Cost so far</dt><dd>$${(ev.usd || 0).toFixed(3)}</dd>${this.steps ? `<dt>Commands</dt><dd>${this.steps}</dd>` : ""}`;
@@ -379,7 +381,11 @@ function renderRepro(run, ev, ts) {
 
 function renderVerdict(run, ev, ts) {
   const v = ev.verdict, cost = ev.cost || { total_usd: 0, by_model: {} };
-  for (const id of ["policy", "reproduce", "screen", "search"]) {
+  for (const id of ["memory", "policy", "reproduce", "screen", "search"]) {
+    if (id === "memory" && run.s.memory.state === "pending") {
+      run.set("memory", "skipped", run.recorded ? "not used in benchmark runs" : "nothing remembered for this project yet", "", ts);
+      continue;
+    }
     if (run.s[id].state === "pending" || run.s[id].state === "running") {
       if (id === "reproduce" && run.steps) run.set(id, "warn", `stopped without a result · ${run.steps} commands`, undefined, ts);
       else run.set(id, "skipped", id === "reproduce" ? "not run for this report" : "not recorded for this run", "", ts);
@@ -404,6 +410,26 @@ function renderVerdict(run, ev, ts) {
   dl.innerHTML = `<dt>Verdict</dt><dd class="vt ${esc(v.verdict)}">${esc(v.verdict)}</dd><dt>Cost</dt><dd>$${(cost.total_usd || 0).toFixed(3)}</dd>
     ${run.ref ? `<dt>Tree</dt><dd>${esc(run.ref.sha.slice(0, 12))}</dd>` : ""}<dt>Commands</dt><dd>${run.steps}</dd>`;
   if (!run.recorded) rememberRun({ id: run.id, verdict: v.verdict, title: $("#r-title", run.root).textContent });
+}
+
+function renderMemory(run, ev, ts) {
+  if (ev.learned) {
+    const l = ev.learned, parts = [];
+    if ((l.skills || []).length) parts.push(`${l.skills.join(" and ")} skill`);
+    if ((l.facts || []).length) parts.push(`${l.facts.length} caller facts`);
+    const x = run.s.memory;
+    x.sum = `${x.sum ? `${x.sum} · ` : ""}learned: ${parts.join(", ") || "nothing new (no hard check confirmed anything)"}`;
+    return;
+  }
+  const r = ev.recalled || {};
+  const items = [
+    ...(r.skills || []).map((s) => fact("good", `<b>${esc(s.kind)} skill</b>: ${esc(s.title)}`, `worked ${s.successes} time(s) before`)),
+    ...(r.facts || []).map((f) => fact(f.stale ? "meh" : "good", `<code>${esc(f.subject)}</code>`,
+      `${esc(f.text)}<br>${f.stale ? "<b>Stale:</b> the file changed since this was seen; re-checked, not trusted" : "file unchanged since it was seen"} · source: ${esc(f.source)}`)),
+    ...(r.lessons || []).map((x) => fact("meh", `<b>Lesson</b>: ${esc(x.text)}`, `from ${esc(x.source)}`)),
+  ];
+  run.set("memory", "done", `${(r.skills || []).length} skills · ${(r.facts || []).length} facts · ${(r.lessons || []).length} lessons recalled`,
+    `<p class="muted" style="font-size:13px">Leads from earlier runs. They steer where to look and how to build; they never count as evidence.</p><div class="facts">${items.join("")}</div>`, ts);
 }
 
 function showBundle(run, rep) {

@@ -17,8 +17,13 @@ import traceback
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
-from slopproof.benchscore import score
-from slopproof.pipeline import triage
+import os
+
+# Benchmark runs never read or write memory: the numbers must not be learned from the test set.
+os.environ["SLOPPROOF_MEMORY"] = "off"
+
+from slopproof.benchscore import score  # noqa: E402
+from slopproof.pipeline import triage  # noqa: E402
 
 ROOT = Path(__file__).parent
 def load(path: Path) -> list[dict]:

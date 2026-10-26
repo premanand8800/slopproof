@@ -44,9 +44,35 @@ def verify_main(argv: list[str]) -> None:
     sys.exit(0 if res["verdict"].startswith("VERIFIED") else 1)
 
 
+def memory_main(argv: list[str]) -> None:
+    from . import memory
+
+    ap = argparse.ArgumentParser(prog="slopproof memory", description="Inspect or edit what SlopProof remembers.")
+    sub = ap.add_subparsers(dest="cmd", required=True)
+    sub.add_parser("list")
+    lesson = sub.add_parser("lesson", help="add an approved lesson")
+    lesson.add_argument("text")
+    lesson.add_argument("--project", default="*")
+    lesson.add_argument("--trigger", default="", help="comma-separated words that make it relevant")
+    lesson.add_argument("--evidence", default="")
+    lesson.add_argument("--source", default="maintainer")
+    gone = sub.add_parser("forget")
+    gone.add_argument("table", choices=["facts", "skills", "lessons", "episodes"])
+    gone.add_argument("id")
+    a = ap.parse_args(argv)
+    if a.cmd == "list":
+        print(json.dumps(memory.overview(), indent=1, default=str))
+    elif a.cmd == "lesson":
+        print(memory.add_lesson(a.project, a.trigger, a.text, a.evidence, a.source))
+    else:
+        memory.forget(a.table, int(a.id) if a.table != "episodes" else a.id)
+
+
 def main() -> None:
     if sys.argv[1:2] == ["verify"]:
         return verify_main(sys.argv[2:])
+    if sys.argv[1:2] == ["memory"]:
+        return memory_main(sys.argv[2:])
     ap = argparse.ArgumentParser(prog="slopproof")
     ap.add_argument("url", help="HackerOne report or GitHub issue URL (or: slopproof verify BUNDLE)")
     ap.add_argument("--repo", help="GitHub repo URL, if it cannot be inferred")

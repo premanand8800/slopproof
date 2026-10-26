@@ -7,7 +7,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 import httpx
 
-from . import codecheck, codesearch, webcheck
+from . import codecheck, codesearch, memory, webcheck
 from .analyze import analyze_deep
 from .extract import extract_claims
 from .llm import MODELS, Ledger
@@ -34,7 +34,7 @@ def fetch_report(url: str) -> dict:
 
 def triage(title: str, body: str, repo_url: str, created_at: str | None = None,
            run_sandbox: bool = True, emit: Callable[[dict], None] = lambda e: None,
-           replay: bool = False, resume: dict | None = None) -> dict:
+           replay: bool = False, resume: dict | None = None, run_id: str | None = None) -> dict:
     """Triage one report.
 
     replay=True is for the benchmark: web evidence is limited to pages published before the report,
@@ -66,6 +66,18 @@ def triage(title: str, body: str, repo_url: str, created_at: str | None = None,
     ref = step("ref", "ref", "ref", resolve)
     tree = codecheck.export_tree(bare, ref["sha"])
 
+    # What earlier runs on this project taught: build recipes, caller facts, lessons. Leads only.
+    recalled = memory.recall(project, bare, ref["sha"], {"files": claims.get("files", []),
+                                                        "functions": claims.get("functions", []),
+                                                        "summary": claims.get("summary", "")})
+    if recalled and any(recalled.values()):
+        memory.mark_used(recalled)
+        emit({"stage": "memory", "recalled": {
+            "skills": [{"kind": s["kind"], "title": s["title"], "successes": s["successes"]} for s in recalled["skills"]],
+            "facts": [{"subject": f["subject"], "text": f["text"], "stale": f["stale"], "source": f["source"]}
+                      for f in recalled["facts"]],
+            "lessons": [{"text": x["text"], "source": x["source"]} for x in recalled["lessons"]]}})
+
     # Code, reference and prior-art checks and the text screen are independent, so run them together.
     with ThreadPoolExecutor(max_workers=6) as pool:
         need = lambda key: key not in done  # noqa: E731
@@ -88,6 +100,8 @@ def triage(title: str, body: str, repo_url: str, created_at: str | None = None,
         found = step("search", "search", "found", lambda: f_search.result())
 
     context = codecheck.code_context(tree, code, found)
+    if recalled:
+        context += "\n\n" + memory.as_prompt(recalled)
     # The callers of the code in question: whether they bound lengths or NUL-terminate decides many reports.
     keys = list(dict.fromkeys([f["name"] for f in code.get("functions", []) if f.get("exists")][:2]
                               + [h["name"] for h in (found or [])[:1]]))
@@ -109,8 +123,9 @@ def triage(title: str, body: str, repo_url: str, created_at: str | None = None,
     repro = done.get("reproduction")
     if run_sandbox and repro is None:
         emit({"stage": "reproduce", "type": "begin"})
+        builds = [s["body"] for s in (recalled or {}).get("skills", []) if s["kind"] == "build"]
         repro = reproduce(tree, project, f"{title}\n\n{body}", claims, analysis, context, ledger, emit,
-                          repo_url=repo_url, sha=ref["sha"])
+                          repo_url=repo_url, sha=ref["sha"], remembered_build=builds[0] if builds else None)
         # Saved apart from the step-by-step events, so a resumed run can reuse it without the transcript.
         emit({"stage": "checkpoint", "key": "reproduction", "value": {k: v for k, v in repro.items() if k != "transcript"}})
     elif repro is not None:
@@ -126,6 +141,12 @@ def triage(title: str, body: str, repo_url: str, created_at: str | None = None,
               "screen": text_screen, "search": found, "scope": policy,
               "analysis": analysis, "reproduction": repro, "verdict": verdict, "cost": ledger.summary(), "ledger": ledger.calls,
               "seconds": round(time.time() - t0, 1)}
+    try:
+        learned = memory.consolidate(run_id or f"run-{int(t0)}", result, bare, repo_url)
+    except Exception as e:  # noqa: BLE001 - memory is a help, never a reason for a run to fail
+        learned = {"error": str(e)[:200]}
+    if learned:
+        emit({"stage": "memory", "learned": learned})
     emit({"stage": "verdict", "verdict": verdict, "cost": result["cost"], "seconds": result["seconds"]})
     return result
 

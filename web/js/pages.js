@@ -65,6 +65,28 @@ ROUTES.proof = async () => {
   return () => es && es.close();
 };
 
+ROUTES.memory = async () => {
+  app.innerHTML = `<div class="page-head"><h1>Memory</h1>
+    <p>What SlopProof remembers across runs, modelled on how people remember, with the safeguards triage needs.
+    Every item says where it came from. Nothing a reporter wrote is stored; items are kept only after a hard check
+    (a build that worked, a code line that exists, a proof that re-ran); facts are pinned to the exact file version
+    and turn <b>stale</b> when the code changes. Memory steers where to look and how to build. It never decides a
+    verdict, and benchmark runs do not use it.</p></div><div id="m-body"><div class="card"><div class="skeleton"></div></div></div>`;
+  if (STATIC) { $("#m-body").innerHTML = `<div class="card muted">Memory lives on the server that runs triage; this static copy has none.</div>`; return; }
+  const m = await getJSON("/api/memory");
+  const section = (title, rows, render, empty) => `<div class="section-title"><h2>${title}</h2><span class="muted" style="font-size:13px">${rows.length}</span></div>
+    <div class="card" style="padding:16px">${rows.length ? `<div class="facts" style="margin-top:0">${rows.map(render).join("")}</div>` : `<p class="muted" style="margin:0">${empty}</p>`}</div>`;
+  $("#m-body").innerHTML = `<p class="muted">Mode: <b>${esc(m.mode)}</b></p>` +
+    section("Skills (procedures that worked)", m.skills, (s) => fact("good", `<b>${esc(s.project)}</b> · ${esc(s.kind)}: ${esc(s.title)}`,
+      `<pre style="font-size:12px;margin-top:4px">${esc(s.body)}</pre>worked ${s.successes}× · failed ${s.failures}× · source: ${esc(s.source)}`), "No skills yet: a build or proof has to succeed first.") +
+    section("Facts (pinned to code)", m.facts, (f) => fact("meh", `<b>${esc(f.project)}</b> · <code>${esc(f.subject)}</code>`,
+      `${esc(f.text)}<br>file ${esc(f.file)} @ blob ${esc((f.blob || "").slice(0, 10))} · used ${f.uses}× · source: ${esc(f.source)}`), "No facts yet.") +
+    section("Lessons (from reviews and maintainers)", m.lessons, (x) => fact("meh", esc(x.text),
+      `${esc(x.project)} · triggers: ${esc(x.trigger)} · from ${esc(x.source)} · used ${x.uses}×<br>${esc(x.evidence)}`), "No lessons yet.") +
+    section("Episodes (runs remembered)", m.episodes, (e) => fact("meh", `<b>${esc(e.project)}</b> · ${esc(e.title)}`,
+      `${esc(e.verdict)} · sandbox: ${esc(e.repro || "not run")} · ${e.steps} commands · $${(e.cost || 0).toFixed(3)} · ${ago(e.ts)}`), "No runs remembered yet.");
+};
+
 ROUTES.how = () => {
   app.innerHTML = `<div class="page-head"><h1>How it works</h1>
     <p>Writing style is never evidence: many real curl CVEs in 2026 were found with AI tools. SlopProof asks whether a

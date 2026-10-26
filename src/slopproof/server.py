@@ -128,7 +128,7 @@ def launch(rep: dict, repo: str, sandbox: bool, url: str | None, resume: dict | 
             emit({"stage": "report", "title": rep["title"], "body": rep["body"][:20000], "repo": repo,
                   "created_at": rep.get("created_at")})
             res = triage(rep["title"], rep["body"], repo, rep.get("created_at"), run_sandbox=sandbox, emit=emit,
-                         resume=resume)
+                         resume=resume, run_id=job_id)
             jobs[job_id]["result"] = res
             emit({"stage": "done"})
         except Exception as e:
@@ -190,6 +190,14 @@ def _example(name: str) -> dict:
     if not re.fullmatch(r"[\w.-]+", name) or not (EXAMPLES / f"{name}.json").exists():
         raise HTTPException(404, "no such example")
     return json.loads((EXAMPLES / f"{name}.json").read_text())
+
+
+@app.get("/api/memory")
+def memory_overview():
+    """What SlopProof remembers across runs, with each item's source. Read-only here; maintainers edit it with
+    `slopproof memory` on the host."""
+    from . import memory
+    return {"mode": memory.mode(), **memory.overview()}
 
 
 @app.get("/api/examples/{name}")

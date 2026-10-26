@@ -94,6 +94,23 @@ step found it breaks two of curl's 22 netrc tests (680, 1304), so it is reported
 fix. A repair round that feeds the failing tests back to the agent is in progress. curl's own fix was a parser
 rewrite (`4ae1d7cc2643`, 581 lines).
 
+## Memory: learning across runs, without being taught by attackers
+
+SlopProof remembers across runs the way people do, with the safeguards a tool reading strangers' reports needs
+(`src/slopproof/memory.py`, one SQLite file):
+
+- **Episodes**: what happened in each run: outcome, commands, cost, builds that failed.
+- **Facts**, pinned to the exact file version (git blob) they were seen in. When the file changes, the fact is
+  shown as **stale** and re-checked, never trusted.
+- **Skills**: procedures that worked: a build that finished in the sandbox, a proof check that re-ran. A project
+  without a build recipe starts from the build that worked last time.
+- **Lessons**: corrections from reviews and maintainers, recalled when their trigger words match a report.
+
+Every item records its source. **Nothing a reporter wrote is stored**; items are kept only after a hard check (a
+build that worked, a cited line that exists, a proof that re-ran). Memory steers where to look and how to build;
+it **never decides a verdict**. Benchmark runs switch it off, so no number is learned from the test set.
+Maintainers inspect it on the Memory page and edit it with `slopproof memory list | lesson | forget`.
+
 ## How it works
 
 ```

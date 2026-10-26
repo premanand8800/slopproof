@@ -122,9 +122,13 @@ TOOLS = [
 
 
 def reproduce(tree: Path, project: str, report: str, claims: dict, analysis: dict, context: str,
-              ledger: Ledger, emit: Callable[[dict], None], repo_url: str | None = None, sha: str | None = None) -> dict:
+              ledger: Ledger, emit: Callable[[dict], None], repo_url: str | None = None, sha: str | None = None,
+              remembered_build: str | None = None) -> dict:
     proj = project.split("/")[-1]
     recipe = RECIPES.get(proj, GENERIC_RECIPE)
+    if remembered_build and proj not in RECIPES:
+        recipe += ("\nAn earlier run on this project built it successfully with these commands; start from them "
+                   "(they may need small changes for this commit):\n" + remembered_build)
     messages = [
         {"role": "system", "content": SYSTEM},
         {"role": "user", "content": (
