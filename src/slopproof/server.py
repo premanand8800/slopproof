@@ -3,6 +3,7 @@
 import json
 import os
 import queue
+import re
 import secrets
 import threading
 import time
@@ -88,6 +89,55 @@ def start(req: TriageRequest):
             res = triage(rep["title"], rep["body"], repo, rep.get("created_at"),
                          run_sandbox=req.sandbox and SANDBOX_ENABLED, emit=emit)
             jobs[job_id]["result"] = res
+            emit({"stage": "done"})
+        except Exception as e:
+            emit({"stage": "error", "message": str(e)[:500]})
+
+    threading.Thread(target=work, daemon=True).start()
+    return {"job": job_id}
+
+
+EXAMPLES = ROOT / "examples" / "bundles"
+
+
+def _example(name: str) -> dict:
+    if not re.fullmatch(r"[\w.-]+", name) or not (EXAMPLES / f"{name}.json").exists():
+        raise HTTPException(404, "no such example")
+    return json.loads((EXAMPLES / f"{name}.json").read_text())
+
+
+@app.get("/api/examples/{name}")
+def example(name: str):
+    """A shipped example proof bundle, or its recorded verification ({name}.verification)."""
+    return _example(name)
+
+
+@app.post("/api/examples/{name}/verify")
+def verify_example(name: str, passcode: str | None = None):
+    """Re-run one of the shipped example bundles live. Only bundles in the repository can run here;
+    anyone can verify their own bundle locally with `slopproof verify`."""
+    bundle = _example(name)
+    if not SANDBOX_ENABLED:
+        raise HTTPException(403, "This host has no sandbox. Run: slopproof verify " + f"examples/bundles/{name}.json")
+    if SANDBOX_KEY and not secrets.compare_digest(passcode or "", SANDBOX_KEY):
+        raise HTTPException(403, "Verifying runs a full build in the sandbox and needs the demo passcode.")
+    recorded = (EXAMPLES / f"{name}.verification.json")
+    against = json.loads(recorded.read_text()).get("at_against", {}).get("commit") if recorded.exists() else None
+    from .bundle import verify
+
+    job_id = uuid.uuid4().hex[:12]
+    q: queue.Queue = queue.Queue()
+    jobs[job_id] = {"queue": q, "events": [], "result": None}
+
+    def emit(ev: dict) -> None:
+        jobs[job_id]["events"].append(ev)
+        q.put(ev)
+
+    def work() -> None:
+        try:
+            res = verify(bundle, against, emit=lambda m: emit({"stage": "verify", "message": m}))
+            jobs[job_id]["result"] = res
+            emit({"stage": "verified", "result": res})
             emit({"stage": "done"})
         except Exception as e:
             emit({"stage": "error", "message": str(e)[:500]})

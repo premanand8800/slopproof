@@ -64,6 +64,9 @@ def main() -> None:
             (out / "data" / "runs" / mode).mkdir(parents=True, exist_ok=True)
             for r in rows:
                 (out / "data" / "runs" / mode / f"{r['id']}.json").write_text(json.dumps(stored_run(r, bodies), default=str))
+    (out / "data" / "examples").mkdir(parents=True, exist_ok=True)
+    for f in (ROOT / "examples" / "bundles").glob("*.json"):
+        shutil.copy(f, out / "data" / "examples" / f.name)
     fc = src / "baseline_factcheck.json"
     bench["baseline"]["factcheck"] = json.loads(fc.read_text()) if fc.exists() else None
     (out / "data" / "bench.json").write_text(json.dumps(bench, default=str))

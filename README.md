@@ -42,6 +42,24 @@ Detecting AI *style* is the wrong fix. In our own dataset, **62 real curl CVEs r
 help**. The right question is not "was this written by AI?" but "is this true?" That question can be answered
 with evidence.
 
+## Proof bundles: reports that carry their own proof
+
+Slop is cheap to write and expensive to disprove. SlopProof turns every bug it reproduces into a **proof bundle**:
+the project commit, the sandbox image, the build command, the PoC files and one check command that exits 0 only
+while the bug is present. Anyone can re-run it, and **no model is involved in verifying**:
+
+```bash
+uv run slopproof verify examples/bundles/curl-3735184-netrc.json --against 4ae1d7cc2643e4773a136395f12bc02fc6867854
+# bundle commit e9b9bbac22c2: bug present (116s)
+# 4ae1d7cc2643 (curl's fix for CVE-2026-8926): bug absent (116s)
+# VERIFIED_AND_FIXED
+```
+
+A reproduction only counts as CONFIRMED if its bundle passes again from scratch in a fresh sandbox. A real
+reporter can ship a bundle with the report; a slop reporter cannot, because there is no bug for the check to find.
+That moves the cost of proof to whoever makes the claim. The live demo re-runs the example bundle on demand
+(*Verify a proof* tab); arbitrary bundles are verified locally, since a bundle is code.
+
 ## How it works
 
 ```

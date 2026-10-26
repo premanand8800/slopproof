@@ -27,6 +27,7 @@ function showTab(name) {
   document.querySelectorAll(".tab").forEach((x) => x.classList.toggle("active", x.dataset.tab === name));
   document.querySelectorAll(".panel").forEach((x) => x.classList.toggle("active", x.id === `tab-${name}`));
   if (name === "bench") loadBench();
+  if (name === "proof") loadProof();
 }
 
 document.querySelectorAll(".examples a").forEach((a) => a.addEventListener("click", async () => {
@@ -283,6 +284,15 @@ function replay(res) {
     setStage("reproduce", "done", `<div class="muted">Not run for this report (static checks only).</div>`);
   }
   handle({ stage: "verdict", verdict: res.verdict, cost: res.cost, seconds: res.seconds });
+  const b = res.reproduction && res.reproduction.bundle;
+  if (b) {
+    const bv = res.reproduction.bundle_verification || {};
+    $("#verdict").insertAdjacentHTML("beforeend", `<div class="kicker" style="margin-top:14px">Proof bundle</div>
+      <div class="facts">${fact(bv.verdict && bv.verdict.startsWith("VERIFIED") ? "good" : "meh",
+        `<b>${esc(bv.verdict || "not verified")}</b> · <code>sha256:${esc(b.sha256.slice(0, 16))}</code>`,
+        `Re-run it yourself: <code>slopproof verify bundle.json</code> · <a href="#" id="dl-bundle">download bundle</a>`)}</div>`);
+    $("#dl-bundle").onclick = (e) => { e.preventDefault(); download(`slopproof-bundle-${b.sha256.slice(0, 12)}.json`, b); };
+  }
 }
 
 // Benchmark
@@ -343,4 +353,70 @@ function drawRows() {
     replay(res);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }));
+}
+
+// Proof bundles
+function download(name, obj) {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(obj, null, 1)], { type: "application/json" }));
+  a.download = name;
+  a.click();
+}
+
+const EXAMPLE = "curl-3735184-netrc";
+const exampleUrl = (name) => (STATIC ? `data/examples/${name}.json` : `/api/examples/${name}`);
+
+async function loadProof() {
+  const el = $("#proof-example");
+  if (el.dataset.loaded) return;
+  el.dataset.loaded = "1";
+  const [b, v] = await Promise.all([fetch(exampleUrl(EXAMPLE)), fetch(exampleUrl(EXAMPLE + ".verification"))]
+    .map((p) => p.then((r) => r.json())));
+  const files = Object.entries(b.files).map(([p, c]) => `<details><summary><code>${esc(p)}</code> (${c.length} bytes)</summary><pre>${esc(c)}</pre></details>`).join("");
+  el.innerHTML = `
+    <div class="kicker">Example: real CVE-2026-8926, HackerOne #3735184</div>
+    <h2>${esc(b.claim)}</h2>
+    <div class="facts">
+      ${fact("meh", `Commit <code>${esc(b.commit.slice(0, 12))}</code> of ${esc(b.repo)}`, `bundle <code>sha256:${esc(b.sha256.slice(0, 16))}</code>`)}
+      ${fact("meh", "Check command (exits 0 only while the bug is present)", `<code>${esc(b.check)}</code>`)}
+    </div>
+    ${files}
+    <div class="kicker" style="margin-top:14px">Recorded verification</div>
+    <div class="facts">${verifyFacts(v)}</div>
+    <div class="row between" style="margin-top:12px">
+      <span class="muted">Run it yourself: <code>slopproof verify bundle.json --against ${esc(v.at_against.commit.slice(0, 12))}</code></span>
+      <span><a href="#" id="dl-example">Download bundle</a></span>
+    </div>
+    ${STATIC ? "" : `<div class="row" style="margin-top:12px;gap:8px">
+      <input id="proof-pass" type="password" placeholder="demo passcode" autocomplete="off" style="max-width:180px">
+      <button id="proof-run">Re-run live (about 4 min)</button></div>
+      <div class="term" id="proof-term" hidden></div>`}`;
+  $("#dl-example").onclick = (e) => { e.preventDefault(); download(`${EXAMPLE}.json`, b); };
+  if (!STATIC) $("#proof-run").onclick = () => runProof();
+}
+
+function verifyFacts(v) {
+  const row = (r, label) => r ? fact(r.bug_present ? "bad" : "good",
+    `${label} <code>${esc(r.commit.slice(0, 12))}</code>: <b>${r.bug_present ? "bug present" : r.built ? "bug absent" : "build failed"}</b>`,
+    `built and checked in a fresh sandbox in ${r.seconds}s`) : "";
+  return fact(v.verdict.startsWith("VERIFIED") ? "good" : "bad", `<b>${esc(v.verdict)}</b>`) +
+    row(v.at_commit, "Reported commit") + row(v.at_against, "Fix commit");
+}
+
+async function runProof() {
+  const term = $("#proof-term");
+  term.hidden = false;
+  term.textContent = "Starting a fresh sandbox...\n";
+  $("#proof-run").disabled = true;
+  const r = await fetch(`/api/examples/${EXAMPLE}/verify?passcode=${encodeURIComponent($("#proof-pass").value)}`, { method: "POST" });
+  const j = await r.json();
+  if (!r.ok) { term.textContent += (j.detail || "failed") + "\n"; $("#proof-run").disabled = false; return; }
+  const es = new EventSource(`/api/jobs/${j.job}/events`);
+  es.onmessage = (m) => {
+    const ev = JSON.parse(m.data);
+    if (ev.stage === "verify") term.textContent += ev.message + "\n";
+    if (ev.stage === "verified") term.insertAdjacentHTML("afterend", `<div class="facts" style="margin-top:10px">${verifyFacts(ev.result)}</div>`);
+    if (ev.stage === "error") term.textContent += "error: " + ev.message + "\n";
+    if (ev.stage === "done" || ev.stage === "error") { es.close(); $("#proof-run").disabled = false; }
+  };
 }

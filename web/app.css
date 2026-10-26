@@ -36,8 +36,8 @@ textarea { font-family: "IBM Plex Mono", monospace; font-size: 13px; }
 .row { display: flex; gap: 10px; align-items: center; }
 .between { justify-content: space-between; flex-wrap: wrap; }
 .check { display: flex; gap: 8px; align-items: center; font-weight: 500; margin: 0; }
-button#go { background: var(--accent); color: white; border: 0; padding: 10px 22px; border-radius: 8px; font: inherit; font-weight: 600; cursor: pointer; }
-button#go:disabled { opacity: .5; cursor: wait; }
+button#go, button#proof-run { background: var(--accent); color: white; border: 0; padding: 10px 22px; border-radius: 8px; font: inherit; font-weight: 600; cursor: pointer; }
+button#go:disabled, button#proof-run:disabled { opacity: .5; cursor: wait; }
 details summary { cursor: pointer; color: var(--muted); margin: 6px 0 10px; }
 .examples { margin-top: 12px; font-size: 13px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 6px 12px; }
 .examples a { color: var(--accent); cursor: pointer; text-decoration: underline dotted; }
@@ -110,3 +110,6 @@ footer { text-align: center; color: var(--muted); font-size: 13px; padding: 20px
 .ldiff .add { color: var(--bad); }
 .ldiff .del { color: var(--ok); }
 #passcode { width: 150px; margin-left: 10px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 8px; font: inherit; background: var(--card); color: inherit; }
+#proof-pass { padding: 9px 12px; border: 1px solid var(--line); border-radius: 8px; font: inherit; background: var(--card); color: inherit; }
+#proof-term { margin-top: 10px; }
+#proof-example pre { font-size: 12px; max-height: 360px; overflow: auto; }

@@ -10,6 +10,7 @@ COPY src ./src
 RUN uv sync --frozen --no-dev
 COPY web ./web
 COPY bench ./bench
+COPY examples ./examples
 # Hosts such as Hugging Face Spaces run the container as uid 1000; it needs to write .cache (git clones).
 RUN mkdir -p /app/.cache && chown -R user /app
 USER user

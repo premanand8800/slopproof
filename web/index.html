@@ -20,6 +20,7 @@
   <nav>
     <button class="tab active" data-tab="triage">Triage a report</button>
     <button class="tab" data-tab="bench">Benchmark</button>
+    <button class="tab" data-tab="proof">Verify a proof</button>
     <button class="tab" data-tab="how">How it works</button>
   </nav>
 </header>
@@ -93,6 +94,18 @@
         <tbody id="bench-rows"></tbody>
       </table>
     </div>
+  </section>
+
+  <!-- PROOF -->
+  <section id="tab-proof" class="panel">
+    <div class="intro">
+      <p>Slop costs nothing to write and hours to disprove. A <b>proof bundle</b> flips that: it pins the project
+      commit, the PoC files and one check command that exits 0 only while the bug is present. Anyone can re-run it in
+      a fresh sandbox in about two minutes. <b>No AI is involved in verifying</b>, so the answer is not anyone's
+      opinion. SlopProof writes a bundle for every bug it reproduces, and a report only counts as CONFIRMED if its
+      bundle passes from scratch.</p>
+    </div>
+    <div id="proof-example" class="card"></div>
   </section>
 
   <!-- HOW -->

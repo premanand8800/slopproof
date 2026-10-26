@@ -23,7 +23,7 @@ jobs:
         env:
           NEBIUS_API_KEY: ${{ secrets.NEBIUS_API_KEY }}
           TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
-        run: uv run slopproof "${{ github.event.issue.html_url }}" --markdown triage.md --out triage.json
+        run: uv run slopproof "${{ github.event.issue.html_url }}" --markdown triage.md --out triage.json --bundle proof-bundle.json
       - name: Post summary for maintainers
         env:
           GH_TOKEN: ${{ github.token }}
@@ -31,4 +31,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: slopproof-triage
-          path: triage.json
+          path: |
+            triage.json
+            proof-bundle.json
+          if-no-files-found: ignore

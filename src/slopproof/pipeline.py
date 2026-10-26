@@ -82,7 +82,8 @@ def triage(title: str, body: str, repo_url: str, created_at: str | None = None,
     repro = None
     if run_sandbox:
         emit({"stage": "reproduce", "type": "begin"})
-        repro = reproduce(tree, project, f"{title}\n\n{body}", claims, analysis, context, ledger, emit)
+        repro = reproduce(tree, project, f"{title}\n\n{body}", claims, analysis, context, ledger, emit,
+                          repo_url=repo_url, sha=ref["sha"])
 
     evidence = {"claims": claims, "ref": ref, "code_checks": code, "web_checks": web, "static_analysis": analysis,
                 "reproduction": {k: v for k, v in (repro or {}).items() if k != "transcript"} or "not run"}

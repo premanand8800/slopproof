@@ -68,7 +68,8 @@ Rules:
    A sanitizer report or crash with its stack in project code always counts as impact.
 
 Call finish with outcome:
-- "reproduced": you triggered the claimed bug through a real code path, with evidence.
+- "reproduced": you triggered the claimed bug through a real code path, with evidence. Also give check_command:
+   it is re-run from scratch in a fresh sandbox, and only if it passes there does the report count as confirmed.
 - "not_reproduced": you built the project, exercised the claimed path, and the bug did not occur; or the source
    shows the claimed condition is impossible (cite the lines that prevent it).
 - "inconclusive": you could not build or could not reach the code path."""
@@ -96,13 +97,17 @@ TOOLS = [
             "impact": {"type": "string", "enum": ["memory_safety", "crash_or_hang", "boundary_crossed", "none"],
                        "description": "what the attacker gains; none if the effect is reachable by intended use"},
             "baseline": {"type": "string",
-                         "description": "the plain, intended-use command you compared against and its result"}},
+                         "description": "the plain, intended-use command you compared against and its result"},
+            "check_command": {"type": "string", "description": (
+                "when reproduced: ONE shell command, using only files you wrote under /work and the built project, "
+                "that exits 0 if and only if the bug is present (for example: bash /work/poc.sh | grep -q LEAKED). "
+                "It is re-run in a fresh sandbox to make a proof bundle anyone can verify.")}},
             "required": ["outcome", "explanation", "evidence", "impact", "reachable_by_attacker"]}}},
 ]
 
 
 def reproduce(tree: Path, project: str, report: str, claims: dict, analysis: dict, context: str,
-              ledger: Ledger, emit: Callable[[dict], None]) -> dict:
+              ledger: Ledger, emit: Callable[[dict], None], repo_url: str | None = None, sha: str | None = None) -> dict:
     name = project.split("/")[-1]
     recipe = RECIPES.get(name, "Find the build instructions in the repository (README, INSTALL, CI files).")
     messages = [
@@ -148,8 +153,12 @@ def reproduce(tree: Path, project: str, report: str, claims: dict, analysis: dic
                               "impact": args.get("impact", "none"), "baseline": args.get("baseline", ""),
                               "steps": step + 1, "seconds": round(time.time() - t0), "transcript": transcript}
                     result["reachable_by_attacker"] = args.get("reachable_by_attacker")
+                    result["check_command"] = args.get("check_command", "")
                     _check_reproduction(result, name, report, ledger)
-                    emit({"stage": "reproduce", "type": "finish", "outcome": result["outcome"]})
+                    if result["outcome"] == "reproduced" and repo_url and sha:
+                        _seal(result, repo_url, sha, name, emit)
+                    emit({"stage": "reproduce", "type": "finish", "outcome": result["outcome"],
+                          "bundle": (result.get("bundle_verification") or {}).get("verdict")})
                     return result
                 if name == "run":
                     cmd = str(args.get("cmd", ""))
@@ -235,6 +244,31 @@ def _check_reproduction(result: dict, project: str, report: str = "", ledger: Le
     result["impact_check"] = verdict.get("reason", "")
     if not verdict.get("security_impact"):
         _demote(result, "not_reproduced", f"Behaviour reproduced, but no security impact: {verdict.get('reason', '')}")
+
+
+def _seal(result: dict, repo_url: str, sha: str, project: str, emit: Callable[[dict], None]) -> None:
+    """Turn a reproduction into a proof bundle and re-run it in a fresh sandbox.
+
+    CONFIRMED needs this to pass: a reproduction that does not repeat from scratch is not proof.
+    """
+    from .bundle import make_bundle, verify
+
+    check = (result.get("check_command") or "").strip()
+    if not check:
+        _demote(result, "inconclusive", "No check command was given, so the reproduction could not be re-run.")
+        return
+    files = {t["path"]: t["content"] for t in result["transcript"] if t["tool"] == "write_file"
+             and t["path"].startswith("/work/")}
+    bundle = make_bundle(repo_url, sha, BUILDS.get(project, "true"), files, check,
+                         claim=result["explanation"][:300])
+    emit({"stage": "reproduce", "type": "run", "cmd": "# re-running the proof bundle in a fresh sandbox"})
+    v = verify(bundle)
+    emit({"stage": "reproduce", "type": "output", "exit_code": 0 if v["verdict"] == "VERIFIED" else 1,
+          "output": f"proof bundle {bundle['sha256'][:12]}: {v['verdict']}"})
+    result["bundle"], result["bundle_verification"] = bundle, {
+        "verdict": v["verdict"], "seconds": v.get("at_commit", {}).get("seconds")}
+    if v["verdict"] != "VERIFIED":
+        _demote(result, "inconclusive", f"The reproduction did not repeat in a fresh sandbox ({v['verdict']}).")
 
 
 def _demote(result: dict, outcome: str, why: str) -> None:
