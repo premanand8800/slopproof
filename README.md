@@ -192,7 +192,7 @@ Tavily is how SlopProof checks the outside world, not decoration:
 Requirements: Python 3.12+, [uv](https://docs.astral.sh/uv/), Docker, a Nebius Token Factory key and a Tavily key.
 
 ```bash
-git clone <this repo> && cd slopproof
+git clone https://github.com/premanand8800/slopproof && cd slopproof
 cp .env.example .env            # add NEBIUS_API_KEY and TAVILY_API_KEY
 docker build -t slopproof-sandbox -f docker/Dockerfile.sandbox docker
 uv sync
