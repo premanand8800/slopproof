@@ -4,145 +4,45 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SlopProof</title>
+<meta name="description" content="Proof, not vibes, for vulnerability reports: every claim checked against the real code, the web and a sandbox reproduction.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="static/app.css">
+<script>try { const t = localStorage.getItem("theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
 </head>
 <body>
 <header class="top">
-  <div class="brand">
-    <span class="logo">◆</span>
-    <div>
-      <h1>SlopProof</h1>
-      <p>Proof, not vibes, for vulnerability reports.</p>
-    </div>
-  </div>
+  <a class="brand" href="#/">
+    <span class="mark" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22"><path d="M12 2 3 6v6c0 5 3.8 9.3 9 10 5.2-.7 9-5 9-10V6l-9-4Z" fill="currentColor" opacity=".18"/><path d="M12 2 3 6v6c0 5 3.8 9.3 9 10 5.2-.7 9-5 9-10V6l-9-4Z" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="m8.5 12.2 2.4 2.4 4.6-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    <span><b>SlopProof</b><small>Proof, not vibes</small></span>
+  </a>
   <nav>
-    <button class="tab active" data-tab="triage">Triage a report</button>
-    <button class="tab" data-tab="bench">Benchmark</button>
-    <button class="tab" data-tab="proof">Verify a proof</button>
-    <button class="tab" data-tab="how">How it works</button>
+    <a href="#/" data-nav="home">Triage</a>
+    <a href="#/bench" data-nav="bench">Benchmark</a>
+    <a href="#/proof" data-nav="proof">Proofs</a>
+    <a href="#/how" data-nav="how">How it works</a>
   </nav>
+  <div class="tools">
+    <a class="icon-btn" href="https://github.com/premanand8800/slopproof" target="_blank" rel="noopener" title="Source on GitHub" aria-label="Source on GitHub">
+      <svg viewBox="0 0 16 16" width="18" height="18"><path fill="currentColor" d="M8 0C3.6 0 0 3.6 0 8c0 3.5 2.3 6.5 5.5 7.6.4.1.5-.2.5-.4v-1.4c-2.2.5-2.7-1-2.7-1-.4-.9-.9-1.2-.9-1.2-.7-.5.1-.5.1-.5.8.1 1.2.8 1.2.8.7 1.2 1.9.9 2.3.7.1-.5.3-.9.5-1.1-1.8-.2-3.6-.9-3.6-4 0-.9.3-1.6.8-2.1-.1-.2-.4-1 .1-2.1 0 0 .7-.2 2.2.8.6-.2 1.3-.3 2-.3s1.4.1 2 .3c1.5-1 2.2-.8 2.2-.8.4 1.1.2 1.9.1 2.1.5.6.8 1.3.8 2.1 0 3.1-1.9 3.8-3.6 4 .3.3.6.8.6 1.5v2.2c0 .2.1.5.6.4C13.7 14.5 16 11.5 16 8c0-4.4-3.6-8-8-8Z"/></svg>
+    </a>
+    <button class="icon-btn" id="theme" title="Switch light / dark" aria-label="Switch light or dark theme">
+      <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M12 3a9 9 0 1 0 9 9c0-.5 0-.9-.1-1.3A6 6 0 0 1 12.3 3.1L12 3Z"/></svg>
+    </button>
+  </div>
 </header>
 
-<main>
-  <!-- TRIAGE -->
-  <section id="tab-triage" class="panel active">
-    <div class="intro">
-      <p>Maintainers now get AI-written security reports faster than they can read them. Most are invented;
-      some are real. Style tells you nothing. SlopProof checks every claim against the real source code,
-      checks every reference on the live web, then tries to <b>reproduce the bug in a sandbox</b>.</p>
-    </div>
-    <form id="form" class="card">
-      <label>Report URL <span class="muted">(HackerOne report or GitHub issue)</span></label>
-      <div class="row">
-        <input id="url" type="url" placeholder="https://hackerone.com/reports/2298307">
-      </div>
-      <details id="paste">
-        <summary>…or paste report text</summary>
-        <input id="repo" type="url" placeholder="GitHub repo, e.g. https://github.com/curl/curl">
-        <input id="ptitle" placeholder="Report title">
-        <textarea id="text" rows="8" placeholder="Paste the report body"></textarea>
-      </details>
-      <div class="row between">
-        <label class="check"><input id="sandbox" type="checkbox" checked> Reproduce in sandbox <span class="muted">(Docker, about 5 min)</span>
-          <input id="passcode" type="password" placeholder="demo passcode" autocomplete="off" hidden></label>
-        <button id="go" type="submit">Triage</button>
-      </div>
-      <div class="examples">Try:
-        <a data-mode="sandbox" data-url="https://hackerone.com/reports/2298307">WebSocket "strcpy overflow" (slop)</a>
-        <a data-mode="sandbox" data-url="https://hackerone.com/reports/3117697">cookie "double free" (slop)</a>
-        <a data-mode="sandbox" data-url="https://hackerone.com/reports/3735184">.netrc password leak (real CVE, reproduced)</a>
-      </div>
-      <p id="formerr" class="err"></p>
-    </form>
+<main id="app"></main>
 
-    <div id="live" hidden>
-      <div class="card report">
-        <div class="kicker">Report</div>
-        <h2 id="r-title"></h2>
-        <div class="muted" id="r-meta"></div>
-        <details><summary>Show report text</summary><pre id="r-body"></pre></details>
-      </div>
-
-      <ol class="stages" id="stages"></ol>
-
-      <div id="verdict" class="card verdict" hidden></div>
-    </div>
-  </section>
-
-  <!-- BENCH -->
-  <section id="tab-bench" class="panel">
-    <div class="intro">
-      <p>We replayed every public curl HackerOne report we could find: the <b>AI slop reports</b> curl's maintainer
-      collected, and the reports that became <b>real CVEs</b>. Each is judged as of the day it was filed:
-      source tree from that day, and web evidence published before it.</p>
-    </div>
-    <div id="bench-head" class="stats"></div>
-    <div id="bench-compare" class="card"></div>
-    <div class="card">
-      <div class="row between">
-        <div class="filters">
-          <button class="chip active" data-f="all">All</button>
-          <button class="chip" data-f="slop">Slop</button>
-          <button class="chip" data-f="real">Real CVEs</button>
-        </div>
-        <span class="muted" id="bench-count"></span>
-      </div>
-      <table class="bench">
-        <thead><tr><th>Report</th><th>Ground truth</th><th>SlopProof verdict</th><th>Text-only baseline</th><th>Cost</th></tr></thead>
-        <tbody id="bench-rows"></tbody>
-      </table>
-    </div>
-  </section>
-
-  <!-- PROOF -->
-  <section id="tab-proof" class="panel">
-    <div class="intro">
-      <p>Slop costs nothing to write and hours to disprove. A <b>proof bundle</b> flips that: it pins the project
-      commit, the PoC files and one check command that exits 0 only while the bug is present. Anyone can re-run it in
-      a fresh sandbox in about two minutes. <b>No AI is involved in verifying</b>, so the answer is not anyone's
-      opinion. SlopProof writes a bundle for every bug it reproduces, and a report only counts as CONFIRMED if its
-      bundle passes from scratch.</p>
-    </div>
-    <div id="proof-example" class="card"></div>
-  </section>
-
-  <!-- HOW -->
-  <section id="tab-how" class="panel">
-    <div class="card how">
-      <h2>Pipeline</h2>
-      <ol class="pipeline">
-        <li><b>Extract claims</b> <span class="model">Nemotron 3.5 Lightning</span>
-          Files, functions, line numbers, quoted code, CVEs, URLs, attack surface.</li>
-        <li><b>Check the code</b> <span class="model">git + fuzzy match</span>
-          The tree at the commit the reporter saw. Do the files and functions exist? Is the quoted code real or invented?</li>
-        <li><b>Find the code</b> <span class="model">tree-sitter + BM25</span>
-          Splits the project into functions and ranks them against the report's own words and the identifiers it mentions.
-          Works even when a report names no file or function.</li>
-        <li><b>Check the references</b> <span class="model">Tavily search + extract · Nemotron 3 Super</span>
-          Does each cited CVE exist and match? Do cited pages say what the report says? Is this a known, fixed or documented issue?</li>
-        <li><b>Text screen</b> <span class="model">Nemotron 3 Ultra</span>
-          One call judges the wording alone. It is a vote, never evidence: it can lower a report's priority, or let a close
-          through when the evidence-based verdict also wants to close.</li>
-        <li><b>Static analysis</b> <span class="model">Nemotron 3 Ultra</span>
-          Reads the real code and traces sizes, bounds and ownership to decide if the claimed condition can happen.</li>
-        <li><b>Reproduce</b> <span class="model">Nemotron 3 Ultra agent · Docker sandbox</span>
-          Builds the project with AddressSanitizer, writes a PoC through the real attack surface, runs it with no network.</li>
-        <li><b>Verdict</b> <span class="model">Nemotron 3 Ultra</span>
-          CONFIRMED only with a sandbox reproduction. Closes a report only with specific contradicting evidence.</li>
-      </ol>
-      <h2>Rules we hold ourselves to</h2>
-      <ul>
-        <li>Wording is never evidence. The text screen may vote, but every reason we show is a checked fact. Many real 2026 curl CVEs were found with AI tools.</li>
-        <li>Closing a real vulnerability is far worse than wasting a maintainer's minute, so doubt means PLAUSIBLE.</li>
-        <li>A PoC that is itself buggy proves nothing about the project.</li>
-      </ul>
-    </div>
-  </section>
-</main>
-
-<footer>Runs on NVIDIA Nemotron via Nebius Token Factory · web evidence by Tavily · MIT licensed</footer>
-<script src="static/app.js"></script>
+<footer>
+  <span>Runs on NVIDIA Nemotron via Nebius Token Factory · web evidence by Tavily · sandbox with AddressSanitizer</span>
+  <span><a href="https://github.com/premanand8800/slopproof" target="_blank" rel="noopener">MIT licensed source</a></span>
+</footer>
+<div id="toast" role="status" aria-live="polite"></div>
+<script src="static/js/core.js"></script>
+<script src="static/js/run.js"></script>
+<script src="static/js/home.js"></script>
+<script src="static/js/bench.js"></script>
+<script src="static/js/pages.js"></script>
 </body>
 </html>

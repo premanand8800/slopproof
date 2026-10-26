@@ -46,12 +46,10 @@ def main() -> None:
     for child in out.iterdir():  # keep .git when building into a checked-out Space
         if child.name != ".git":
             shutil.rmtree(child) if child.is_dir() else child.unlink()
-    (out / "static").mkdir()
-    for f in ("app.js", "app.css"):
-        shutil.copy(ROOT / "web" / f, out / "static" / f)
+    shutil.copytree(ROOT / "web", out / "static", ignore=shutil.ignore_patterns("index.html"))
     html = (ROOT / "web" / "index.html").read_text()
-    html = html.replace('<script src="static/app.js">', '<script>window.SLOPPROOF_STATIC = true;</script>\n'
-                                                        '<script src="static/app.js">')
+    html = html.replace('<script src="static/js/core.js">', '<script>window.SLOPPROOF_STATIC = true;</script>\n'
+                                                            '<script src="static/js/core.js">')
     (out / "index.html").write_text(html)
 
     bodies = report_bodies(src)
