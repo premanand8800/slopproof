@@ -49,6 +49,13 @@ def test_code_alone_cannot_close_a_known_area():
     assert out["verdict"] == "PLAUSIBLE"
 
 
+def test_code_alone_cannot_close_when_prior_art_check_failed():
+    web = {"prior_art": {"known_issue": False, "already_fixed": False, "error": "search quota exceeded"}}
+    out = apply_guards(v("NOT_REPRODUCED"), {"claim_holds": "no"}, None, web)
+    assert out["verdict"] == "PLAUSIBLE" and "prior-art check failed" in out["headline"]
+    assert apply_guards(v("FABRICATED"), {"claim_holds": "no"}, None, web, {"close": True})["verdict"] == "FABRICATED"
+
+
 def test_sandbox_can_close_a_known_area():
     web = {"prior_art": {"already_fixed": True}}
     assert apply_guards(v("NOT_REPRODUCED"), None, {"outcome": "not_reproduced"}, web)["verdict"] == "NOT_REPRODUCED"

@@ -182,16 +182,17 @@ def apply_guards(verdict: dict, analysis: dict | None, repro: dict | None, web: 
     or the code rules the claim out. Wrong file names, invented snippets or a similar old CVE are common in
     real reports too, so on their own they only lower the priority.
     Reading the code is not enough when prior art shows the same area had a real bug: the report may be a
-    bypass or regression of that fix.
+    bypass or regression of that fix. A prior-art check that failed counts as unknown, not as "no prior art".
     """
     v = dict(verdict)
     v["model_verdict"] = verdict.get("verdict")
     outcome = (repro or {}).get("outcome")
     prior = (web or {}).get("prior_art") or {}
+    prior_unknown = bool(prior.get("error"))
     known_area = bool(prior.get("known_issue") or prior.get("already_fixed"))
     screen_close = bool((text_screen or {}).get("close"))
     code_rules_out = (analysis or {}).get("claim_holds") == "no"
-    may_close = outcome == "not_reproduced" or screen_close or (code_rules_out and not known_area)
+    may_close = outcome == "not_reproduced" or screen_close or (code_rules_out and not known_area and not prior_unknown)
     if v["model_verdict"] == "CONFIRMED" and outcome != "reproduced":
         v["verdict"] = "PLAUSIBLE"
         v["headline"] = "[Not yet reproduced] " + v.get("headline", "")
@@ -199,6 +200,8 @@ def apply_guards(verdict: dict, analysis: dict | None, repro: dict | None, web: 
         v["verdict"] = "PLAUSIBLE"
         v["priority"] = "low"
         why = ("a related bug was fixed before, so this may be a bypass; reproduce before closing" if known_area
+               else "the prior-art check failed, so a related fixed bug is not ruled out; reproduce before closing"
+               if code_rules_out and prior_unknown
                else "references look wrong, but nothing rules the claim out yet")
         v["headline"] = f"[Low priority: {why}] " + v.get("headline", "")
     elif v["verdict"] == "PLAUSIBLE" and screen_close:
