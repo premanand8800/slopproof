@@ -32,7 +32,7 @@ def digest(bundle: dict) -> str:
 
 
 def make_bundle(repo: str, commit: str, build: str, files: dict[str, str], check: str, claim: str,
-                expect_output: str | None = None, setup: str = "") -> dict:
+                expect_output: str | None = None, setup: str = "", control: str = "") -> dict:
     bundle = {
         "schema": SCHEMA,
         "claim": claim,
@@ -43,6 +43,7 @@ def make_bundle(repo: str, commit: str, build: str, files: dict[str, str], check
         "files": files,
         "setup": setup,
         "check": check,
+        "control": control,  # optional negative control: the check on the safe case, must exit non-zero
         "expect_output": expect_output,  # optional regex the check's output must also match
         "created_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
     }
@@ -75,8 +76,15 @@ def _run_at(bundle: dict, ref: str, emit: Callable[[str], None], patch: str | No
         emit("running the check ...")
         res = sb.run(bundle["check"], timeout=300, pipefail=False)
         matched = bool(re.search(bundle["expect_output"], res["output"], re.M)) if bundle.get("expect_output") else True
-        return {"commit": sha, "built": True, "exit_code": res["exit_code"], "output": res["output"][-3000:],
-                "bug_present": res["exit_code"] == 0 and matched, "seconds": round(time.time() - t0)}
+        out = {"commit": sha, "built": True, "exit_code": res["exit_code"], "output": res["output"][-3000:]}
+        control_ok = True
+        if bundle.get("control"):  # old bundles have none; the bug shows only if the safe case does not pass
+            ctl = sb.run(bundle["control"], timeout=300, pipefail=False)
+            out["control_exit_code"], out["control_output"] = ctl["exit_code"], ctl["output"][-1500:]
+            control_ok = ctl["exit_code"] != 0
+        out["bug_present"] = res["exit_code"] == 0 and matched and control_ok
+        out["seconds"] = round(time.time() - t0)
+        return out
     finally:
         sb.close()
 

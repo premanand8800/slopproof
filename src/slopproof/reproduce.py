@@ -85,6 +85,8 @@ Rules:
 Call finish with outcome:
 - "reproduced": you triggered the claimed bug through a real code path, with evidence. Also give check_command:
    it is re-run from scratch in a fresh sandbox, and only if it passes there does the report count as confirmed.
+   Also give control_check: the same check run on the safe case (your baseline). It must FAIL there. A check that
+   also passes on the safe case proves nothing, for example grepping output that is printed either way.
 - "not_reproduced": you built the project, exercised the claimed path, and the bug did not occur; or the source
    shows the claimed condition is impossible (cite the lines that prevent it).
 - "inconclusive": you could not build or could not reach the code path."""
@@ -116,7 +118,12 @@ TOOLS = [
             "check_command": {"type": "string", "description": (
                 "when reproduced: ONE shell command, using only files you wrote under /work and the built project, "
                 "that exits 0 if and only if the bug is present (for example: bash /work/poc.sh | grep -q LEAKED). "
-                "It is re-run in a fresh sandbox to make a proof bundle anyone can verify.")}},
+                "It is re-run in a fresh sandbox to make a proof bundle anyone can verify.")},
+            "control_check": {"type": "string", "description": (
+                "when reproduced: ONE shell command that runs the SAME check against the safe case (no trigger, "
+                "your baseline, for example the same command without the vulnerable option) and must exit non-zero "
+                "there. A check that also passes on the safe case proves nothing: for example it greps output "
+                "that is printed either way. Required for a confirmed report.")}},
             "required": ["outcome", "explanation", "evidence", "impact", "reachable_by_attacker"]}}},
 ]
 
@@ -175,6 +182,7 @@ def reproduce(tree: Path, project: str, report: str, claims: dict, analysis: dic
                               "steps": step + 1, "seconds": round(time.time() - t0), "transcript": transcript}
                     result["reachable_by_attacker"] = args.get("reachable_by_attacker")
                     result["check_command"] = args.get("check_command", "")
+                    result["control_check"] = args.get("control_check", "")
                     _check_reproduction(result, proj, report, ledger)
                     if result["outcome"] == "reproduced" and repo_url and sha:
                         _seal(result, repo_url, sha, proj, emit)
@@ -317,16 +325,25 @@ def _seal(result: dict, repo_url: str, sha: str, project: str, emit: Callable[[d
     if not check:
         _demote(result, "inconclusive", "No check command was given, so the reproduction could not be re-run.")
         return
+    control = (result.get("control_check") or "").strip()
+    if not control:
+        _demote(result, "inconclusive", "No control check was given, so it is not shown that the check fails on the "
+                                        "safe case.")
+        return
     files = {t["path"]: t["content"] for t in result["transcript"] if t["tool"] == "write_file"
              and t["path"].startswith("/work/")}
     bundle = make_bundle(repo_url, sha, BUILDS.get(project) or _build_commands(result["transcript"]), files, check,
-                         claim=result["explanation"][:300])
+                         claim=result["explanation"][:300], control=control)
     emit({"stage": "reproduce", "type": "run", "cmd": "# re-running the proof bundle in a fresh sandbox"})
     v = verify(bundle)
     emit({"stage": "reproduce", "type": "output", "exit_code": 0 if v["verdict"] == "VERIFIED" else 1,
           "output": f"proof bundle {bundle['sha256'][:12]}: {v['verdict']}"})
     result["bundle"], result["bundle_verification"] = bundle, {
         "verdict": v["verdict"], "seconds": v.get("at_commit", {}).get("seconds")}
+    at = v.get("at_commit", {})
+    if at.get("built") and at.get("exit_code") == 0 and at.get("control_exit_code") == 0:
+        _demote(result, "inconclusive", "The check also passes on the safe case, so it does not show the bug.")
+        return
     if v["verdict"] != "VERIFIED":
         _demote(result, "inconclusive", f"The reproduction did not repeat in a fresh sandbox ({v['verdict']}).")
 

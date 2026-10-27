@@ -11,7 +11,8 @@ from slopproof.codecheck import line_diff, lines_found, line_index, looks_like_p
 from slopproof.codesearch import tokens
 from slopproof.llm import parse_json
 from slopproof.pipeline import apply_guards, resume_from_events
-from slopproof.reproduce import _check_reproduction
+from slopproof import bundle as bundle_mod
+from slopproof.reproduce import _check_reproduction, _seal
 from slopproof.verdict import allowed_cves, scrub_cves
 
 
@@ -141,6 +142,73 @@ def test_bundle_digest_detects_edits():
 def test_bundle_files_must_stay_under_work():
     b = {"schema": SCHEMA, "repo": "x", "commit": "y", "check": "true", "files": {"/etc/passwd": "x"}}
     assert verify(b)["verdict"] == "INVALID"
+
+
+class FakeSandbox:
+    """Stands in for Docker: the check and the control exit with the codes the test sets."""
+    codes: dict[str, int] = {}
+
+    def __init__(self, tree):
+        pass
+
+    def run(self, cmd, timeout=0, pipefail=True):
+        return {"exit_code": self.codes.get(cmd, 0), "output": ""}
+
+    def write(self, path, content):
+        pass
+
+    def close(self):
+        pass
+
+
+def fake_verify(monkeypatch, check_code, control_code):
+    FakeSandbox.codes = {"check": check_code, "control": control_code}
+    monkeypatch.setattr(bundle_mod, "Sandbox", FakeSandbox)
+    monkeypatch.setattr(bundle_mod.codecheck, "ensure_repo", lambda repo: "bare")
+    monkeypatch.setattr(bundle_mod.codecheck, "git", lambda *a: "abc123")
+    monkeypatch.setattr(bundle_mod.codecheck, "export_tree", lambda bare, sha: "tree")
+    monkeypatch.setattr(bundle_mod, "image_id", lambda: None)
+    b = bundle_mod.make_bundle("r", "abc123", "true", {}, "check", "claim", control="control")
+    return verify(b)
+
+
+def test_bundle_needs_the_control_to_fail(monkeypatch):
+    assert fake_verify(monkeypatch, 0, 1)["verdict"] == "VERIFIED"
+    assert fake_verify(monkeypatch, 0, 0)["verdict"] == "NOT_VERIFIED"
+
+
+def test_old_bundle_without_control_still_verifies(monkeypatch):
+    fake_verify(monkeypatch, 0, 1)
+    b = bundle_mod.make_bundle("r", "abc123", "true", {}, "check", "claim")
+    del b["control"]
+    b["sha256"] = digest(b)
+    assert verify(b)["verdict"] == "VERIFIED"
+
+
+def sealable(control):
+    return {"outcome": "reproduced", "explanation": "e", "check_command": "check", "control_check": control,
+            "transcript": []}
+
+
+def test_seal_downgrades_a_check_that_passes_on_the_safe_case(monkeypatch):
+    fake_verify(monkeypatch, 0, 0)
+    r = sealable("control")
+    _seal(r, "r", "abc123", "p", lambda e: None)
+    assert r["outcome"] == "inconclusive" and "safe case" in r["explanation"]
+
+
+def test_seal_without_a_control_is_not_confirmed(monkeypatch):
+    fake_verify(monkeypatch, 0, 1)
+    r = sealable("")
+    _seal(r, "r", "abc123", "p", lambda e: None)
+    assert r["outcome"] == "inconclusive" and "control" in r["explanation"]
+
+
+def test_seal_keeps_a_check_that_fails_on_the_safe_case(monkeypatch):
+    fake_verify(monkeypatch, 0, 1)
+    r = sealable("control")
+    _seal(r, "r", "abc123", "p", lambda e: None)
+    assert r["outcome"] == "reproduced" and r["bundle"]["control"] == "control"
 
 
 # ---- Plumbing
