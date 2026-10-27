@@ -290,6 +290,9 @@ def check_code(tree: Path, claims: dict, bare: Path | None = None, sha: str | No
         if not name:
             continue
         pat = re.compile(rf"\b{re.escape(name)}\s*\(")
+        # Other languages say "def", "func", "fn" or "function" and may indent methods.
+        kw = re.compile(rf"^\s*(?:(?:pub(?:\([^)]*\))?|async|export|static|private|public|protected)\s+)*"
+                        rf"(?:def|fn|function|func(?:\s*\([^)]*\))?)\s+{re.escape(name)}\s*[(<]")
         defs, uses = [], 0
         for f in all_files:
             text = texts[f]
@@ -299,7 +302,8 @@ def check_code(tree: Path, claims: dict, bare: Path | None = None, sha: str | No
             rel = str(f.relative_to(tree))
             for i, line in enumerate(text.splitlines(), 1):
                 # A definition starts at column 0 in C style and is not a call statement.
-                if pat.search(line) and not line.startswith((" ", "\t")) and not line.rstrip().endswith(";"):
+                if kw.search(line) or (f.suffix in (".c", ".h", ".cc", ".cpp", ".hpp") and pat.search(line)
+                                       and not line.startswith((" ", "\t")) and not line.rstrip().endswith(";")):
                     defs.append(f"{rel}:{i}")
         test_only = bool(defs) and all(d.startswith(("tests/", "test/")) for d in defs)
         results["functions"].append({"name": name, "exists": uses > 0, "definitions": defs[:5],

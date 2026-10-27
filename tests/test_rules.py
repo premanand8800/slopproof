@@ -261,3 +261,16 @@ def test_hooks_block_repeats_endless_loops_and_endless_reading():
     compiled = [{"tool": "run", "cmd": "clang poc.c -o poc", "exit_code": 1}]
     assert "already ran" in _hook("clang poc.c -o poc", compiled)
     assert _hook("clang poc.c -o poc", compiled + [{"tool": "write_file", "path": "/work/poc.c"}]) is None
+
+
+# ---- Code search beyond C
+def test_code_search_parses_python_go_javascript_and_rust():
+    from slopproof.codesearch import parse_functions
+    py = parse_functions("a.py", b"class S:\n    def send(self, r):\n        return self.adapter.send(r)\n")
+    go = parse_functions("a.go", b"package x\nfunc (c *C) Do() error { return c.send(deadline()) }\n")
+    js = parse_functions("a.js", b"function a(x) { return b.c(x) }\n")
+    rs = parse_functions("a.rs", b"fn main() { helper(); x.read(); }\n")
+    assert [(f["name"], f["calls"]) for f in py] == [("send", ["send"])]
+    assert [(f["name"], f["calls"]) for f in go] == [("Do", ["deadline", "send"])]
+    assert [(f["name"], f["calls"]) for f in js] == [("a", ["c"])]
+    assert [(f["name"], f["calls"]) for f in rs] == [("main", ["helper", "read"])]

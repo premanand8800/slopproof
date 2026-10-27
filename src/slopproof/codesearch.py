@@ -20,11 +20,30 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import tree_sitter_c
+import tree_sitter_go
+import tree_sitter_javascript
+import tree_sitter_python
+import tree_sitter_rust
 from tree_sitter import Language, Parser
 
 from .codecheck import CACHE
 
 C_LANG = Language(tree_sitter_c.language())
+# Per language: the grammar, the node types that define a function, and the node type of a call.
+LANGS = {
+    "c": (C_LANG, {"function_definition"}, "call_expression"),
+    "python": (Language(tree_sitter_python.language()), {"function_definition"}, "call"),
+    "go": (Language(tree_sitter_go.language()), {"function_declaration", "method_declaration"}, "call_expression"),
+    "javascript": (Language(tree_sitter_javascript.language()),
+                   {"function_declaration", "method_definition", "generator_function_declaration"}, "call_expression"),
+    "rust": (Language(tree_sitter_rust.language()), {"function_item"}, "call_expression"),
+}
+EXTENSIONS = {".c": "c", ".h": "c", ".py": "python", ".go": "go", ".js": "javascript", ".mjs": "javascript",
+              ".cjs": "javascript", ".jsx": "javascript", ".rs": "rust"}
+
+
+def language_of(path: str) -> str | None:
+    return EXTENSIONS.get(Path(path).suffix)
 SEARCH_DIRS = ("lib/", "src/", "include/")
 STOP = set("""if else for while do switch case break continue return goto sizeof struct union enum typedef static const
 void int char long short unsigned signed bool size_t ssize_t null true false the a an of to in is it and or be this that
@@ -56,7 +75,10 @@ def tokens(text: str) -> list[str]:
 
 
 def _name_of(node) -> str | None:
-    """Walk a function_definition's declarator chain down to its identifier."""
+    """The function's name: a `name` field in most grammars; in C, walk the declarator chain down to it."""
+    n = node.child_by_field_name("name")
+    if n is not None:
+        return n.text.decode(errors="replace")
     d = node.child_by_field_name("declarator")
     while d is not None:
         if d.type in ("identifier", "field_identifier"):
@@ -69,12 +91,24 @@ def _name_of(node) -> str | None:
     return None
 
 
+def _callee(f) -> str | None:
+    """The called name: `f(...)`, or the last part of `obj.f(...)`, `pkg.F(...)`, `mod::f(...)`."""
+    if f.type == "identifier":
+        return f.text.decode(errors="replace")
+    for field in ("field", "attribute", "property", "name"):
+        n = f.child_by_field_name(field)
+        if n is not None:
+            return n.text.decode(errors="replace")
+    return None
+
+
 def parse_functions(path: str, source: bytes) -> list[dict]:
-    tree = Parser(C_LANG).parse(source)
+    lang, func_types, call_type = LANGS[language_of(path) or "c"]
+    tree = Parser(lang).parse(source)
     out, stack = [], [tree.root_node]
     while stack:
         node = stack.pop()
-        if node.type == "function_definition":
+        if node.type in func_types:
             name = _name_of(node)
             if name:
                 start = node.start_point[0]
@@ -85,10 +119,16 @@ def parse_functions(path: str, source: bytes) -> list[dict]:
                 calls, cstack = set(), [node]
                 while cstack:
                     n = cstack.pop()
-                    if n.type == "call_expression":
+                    if n.type == call_type:
                         f = n.child_by_field_name("function")
-                        if f is not None and f.type == "identifier":
-                            calls.add(f.text.decode(errors="replace"))
+                        if f is None:
+                            name_called = None
+                        elif lang is C_LANG:  # C: direct calls only, as the benchmark index was built
+                            name_called = f.text.decode(errors="replace") if f.type == "identifier" else None
+                        else:
+                            name_called = _callee(f)
+                        if name_called:
+                            calls.add(name_called)
                     cstack.extend(n.children)
                 lines = source.decode(errors="replace").splitlines()[start:node.end_point[0] + 1]
                 out.append({"file": path, "name": name, "start": start + 1, "end": node.end_point[0] + 1,
@@ -103,12 +143,13 @@ def _blobs(bare: Path, sha: str) -> list[tuple[str, str]]:
     rows = []
     for line in out.splitlines():
         meta, path = line.split("\t", 1)
-        if path.endswith((".c", ".h")):
+        if language_of(path):
             rows.append((path, meta.split()[2]))
     # Everything that ships, wherever a project keeps it (lib/, src/, plugins/, the top level); not tests,
     # fuzzers, docs, examples or per-platform packaging.
     skip = re.compile(r"(?:^|/)(tests?|testing|test-export|unittests?|fuzz\w*|docs?|examples?|samples?|"
-                      r"packages|projects|winbuild|vms)/")
+                      r"packages|projects|winbuild|vms|vendor|node_modules|third_party|dist|build)/"
+                      r"|_test\.go$|(?:^|/)test_[^/]*\.py$|\.(?:test|spec|min)\.js$")
     return [r for r in rows if not skip.search(r[0])]
 
 
@@ -190,6 +231,7 @@ def report_query(title: str, body: str, claims: dict) -> list[str]:
              " ".join(claims.get("functions") or []), " ".join(claims.get("files") or []),
              " ".join(claims.get("repro_steps") or [])]
     ids = re.findall(r"\b(?:CURL[A-Z]*_[A-Z0-9_]+|Curl_\w+|curl_\w+|curlx_\w+)\b|--[a-z][a-z0-9-]+", body)
+    ids += [x for x in re.findall(r"\b([A-Za-z_]\w*(?:_\w+|[a-z][A-Z]\w*))\s*\(", body) if x not in ids]  # other languages
     return tokens(" ".join(parts + ids))
 
 
