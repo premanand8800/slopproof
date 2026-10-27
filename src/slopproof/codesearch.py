@@ -35,7 +35,8 @@ LANGS = {
     "python": (Language(tree_sitter_python.language()), {"function_definition"}, "call"),
     "go": (Language(tree_sitter_go.language()), {"function_declaration", "method_declaration"}, "call_expression"),
     "javascript": (Language(tree_sitter_javascript.language()),
-                   {"function_declaration", "method_definition", "generator_function_declaration"}, "call_expression"),
+                   {"function_declaration", "method_definition", "generator_function_declaration",
+                    "function_expression", "function", "arrow_function"}, "call_expression"),
     "rust": (Language(tree_sitter_rust.language()), {"function_item"}, "call_expression"),
 }
 EXTENSIONS = {".c": "c", ".h": "c", ".py": "python", ".go": "go", ".js": "javascript", ".mjs": "javascript",
@@ -79,6 +80,17 @@ def _name_of(node) -> str | None:
     n = node.child_by_field_name("name")
     if n is not None:
         return n.text.decode(errors="replace")
+    if node.type in ("function_expression", "function", "arrow_function"):
+        # JavaScript: res.json = function (...) {}, const f = () => {}, {f: function () {}}
+        p = node.parent
+        if p is not None and p.type == "assignment_expression":
+            left = p.child_by_field_name("left")
+            prop = left.child_by_field_name("property") if left is not None else None
+            return (prop or left).text.decode(errors="replace") if left is not None else None
+        if p is not None and p.type in ("variable_declarator", "pair"):
+            k = p.child_by_field_name("name") or p.child_by_field_name("key")
+            return k.text.decode(errors="replace") if k is not None else None
+        return None
     d = node.child_by_field_name("declarator")
     while d is not None:
         if d.type in ("identifier", "field_identifier"):

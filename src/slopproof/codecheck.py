@@ -293,11 +293,12 @@ def check_code(tree: Path, claims: dict, bare: Path | None = None, sha: str | No
         pat = re.compile(rf"\b{re.escape(name)}\s*\(")
         # Other languages say "def", "func", "fn" or "function" and may indent methods.
         kw = re.compile(rf"^\s*(?:(?:pub(?:\([^)]*\))?|async|export|static|private|public|protected)\s+)*"
-                        rf"(?:def|fn|function|func(?:\s*\([^)]*\))?)\s+{re.escape(name)}\s*[(<]")
+                        rf"(?:def|fn|function|func(?:\s*\([^)]*\))?)\s+{re.escape(name)}\s*[(<]"
+                        rf"|\b{re.escape(name)}\s*[:=]\s*(?:async\s+)?(?:function\b|\([^)]*\)\s*=>)", re.M)
         defs, uses = [], 0
         for f in all_files:
             text = texts[f]
-            if not pat.search(text):
+            if not pat.search(text) and not kw.search(text):
                 continue
             uses += 1
             rel = str(f.relative_to(tree))
