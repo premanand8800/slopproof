@@ -1,0 +1,59 @@
+/* home: styles for the home UI pass. Loaded after app.css. */
+
+/* Numbers that count up keep their width while they change */
+.n, .stat .n, .kpi .n, .scoreboard .n { font-variant-numeric: tabular-nums; }
+
+/* Hero: one-line lead, then the sample reports as clickable terminal output */
+.hero p.lead { font-size: 16px; margin-top: 12px; }
+.term-open { margin-top: 18px; padding: 12px 14px 8px; border: 1px dashed var(--line-2); border-radius: 10px;
+  background: color-mix(in srgb, var(--card-2) 70%, transparent); }
+.term-open .term-line { font-size: 21px; color: var(--ink); display: flex; align-items: baseline; flex-wrap: wrap; gap: 0 2px; }
+.term-open .hint { margin-left: auto; font-size: 17px; color: var(--muted); }
+.term-list { list-style: none; margin: 6px 0 0; padding: 0; font: 20px/1.25 "VT323", "IBM Plex Mono", monospace; }
+.term-list a { position: relative; display: flex; align-items: baseline; gap: 8px; padding: 4px 30px 4px 8px; margin: 0 -8px;
+  border-radius: 6px; color: var(--ink-2); }
+.term-list a:hover, .term-list a:focus-visible { background: var(--ink); color: var(--bg); text-decoration: none; outline: none; }
+.term-list .gt { color: var(--ok); }
+.term-list .tt { white-space: nowrap; }
+.term-list .tt.slop { color: var(--fab); }
+.term-list .tt.real { color: var(--bad); }
+.term-list a:hover .tt, .term-list a:hover .gt, .term-list a:focus-visible .tt, .term-list a:focus-visible .gt { color: inherit; }
+.term-list .tl { min-width: 0; overflow-wrap: anywhere; }
+.term-list .go { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); opacity: 0; }
+.term-list a:hover .go, .term-list a:focus-visible .go { opacity: 1; }
+.hero-actions { margin-top: 18px; }
+
+/* "Runs on" badge row */
+.runs-on { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: -12px 0 22px; }
+.runs-on .kicker { margin-right: 4px; }
+.runs-on .pill { display: inline-flex; align-items: center; height: 28px; padding: 0 12px; border: 1px solid var(--line-2); border-radius: 99px;
+  background: var(--card); color: var(--ink-2); font-size: 13px; font-weight: 500; white-space: nowrap; }
+
+/* Benchmark head-to-head scoreboard */
+.scoreboard { margin-bottom: 20px; }
+.scoreboard h2 { font-size: 21px; margin: 6px 0 14px; }
+.sb-grid { display: grid; }
+.sb-row { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: start;
+  padding: 14px 0; border-top: 1px solid var(--line); }
+.sb-head { padding: 0 0 8px; border-top: 0; font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.sb-head .us { color: var(--accent); }
+.sb-label b { display: block; font-size: 15px; }
+.sb-label span { display: block; color: var(--muted); font-size: 13px; }
+.sb-row > .sb-cell:nth-child(2) { padding-left: 12px; border-left: 3px solid var(--accent); }
+.sb-row > .sb-cell:nth-child(3) { padding-left: 12px; border-left: 3px solid var(--line-2); }
+.sb-cell .n { font-size: 30px; font-weight: 700; letter-spacing: -.02em; line-height: 1.1; }
+.sb-cell .n.ok { color: var(--ok); } .sb-cell .n.accent { color: var(--accent); } .sb-cell .n.bad { color: var(--bad); }
+.sb-cell .n.none { font-size: 20px; color: var(--muted); padding-top: 6px; }
+.sb-cell .sub { color: var(--ink-2); font-size: 13px; line-height: 1.35; margin-top: 3px; }
+
+@media (max-width: 640px) {
+  .term-open { padding: 10px 10px 6px; }
+  .term-list { font-size: 18px; }
+  .term-open .hint { display: none; }
+  .runs-on { margin-top: -10px; }
+  .sb-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px 12px; }
+  .sb-row .sb-label { grid-column: 1 / -1; }
+  .sb-head > div:first-child { display: none; }
+  .sb-cell .n { font-size: 26px; }
+}
+.sb-head > div:nth-child(n+2) { padding-left: 15px; }

@@ -10,12 +10,26 @@ const BUNDLES = [
     title: "curl returns the URL with the password still in it from CURLINFO_EFFECTIVE_URL" },
 ];
 
-function verifyFacts(v) {
-  const row = (r, label) => r ? fact(r.bug_present ? "bad" : "good",
-    `${label} <code>${esc(r.commit.slice(0, 12))}</code>: <b>${r.bug_present ? "bug present" : r.built ? "bug absent" : "build failed"}</b>`,
-    `built and checked in a fresh sandbox in ${r.seconds}s`) : "";
-  return fact((v.verdict || "").startsWith("VERIFIED") ? "good" : "bad", `<b>${esc(v.verdict)}</b>`) +
-    row(v.at_commit, "Reported commit") + row(v.at_against, "Fix commit");
+// The recorded (or live) verification as a seal plus one result card per commit.
+function verifySeal(v) {
+  const card = (r, label, want) => {
+    if (!r) return "";
+    const state = !r.built ? "build failed" : r.bug_present ? "bug present" : "bug gone";
+    const ok = r.built && r.bug_present === want;
+    const exit = r.exit_code == null ? "" : `check exit ${esc(r.exit_code)}${r.exit_code !== 0 ? " (non-zero)" : ""}`;
+    return `<div class="vres ${!r.built ? "fail" : r.bug_present ? "present" : "gone"}">
+      <div class="vres-head"><span>${label}</span><code>${esc((r.commit || "").slice(0, 12))}</code></div>
+      <div class="vres-state">${r.bug_present ? "✗" : r.built ? "✓" : "!"} ${state}</div>
+      <div class="vres-sub">${exit}${exit && r.seconds != null ? " · " : ""}${r.seconds != null ? `${esc(r.seconds)}s in a fresh sandbox` : ""}</div>
+      <div class="vres-exp">${ok ? "as expected" : "not as expected"}</div></div>`;
+  };
+  const sealed = v.verdict === "VERIFIED_AND_FIXED";
+  return (sealed ? `<div class="seal" title="Re-verified from scratch by a check command, with no model involved">
+      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M12 2 3 6v6c0 5 3.8 9.3 9 10 5.2-.7 9-5 9-10V6l-9-4Z" fill="currentColor" opacity=".18"/><path d="M12 2 3 6v6c0 5 3.8 9.3 9 10 5.2-.7 9-5 9-10V6l-9-4Z" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="m8.5 12.2 2.4 2.4 4.6-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span><b>VERIFIED_AND_FIXED</b><small>no AI in the loop</small></span></div>`
+    : `<div class="facts">${fact((v.verdict || "").startsWith("VERIFIED") ? "good" : "bad", `<b>${esc(v.verdict || "no verdict")}</b>`)}</div>`) +
+    `<div class="vres-pair">${card(v.at_commit, "Reported commit", true)}${card(v.at_against, "Fix commit", false)}</div>` +
+    (v.problems && v.problems.length ? `<div class="facts">${v.problems.map((p) => fact("bad", esc(p))).join("")}</div>` : "");
 }
 
 ROUTES.proof = async (parts) => {
@@ -29,6 +43,7 @@ ROUTES.proof = async (parts) => {
     <div class="proof-grid" id="p-grid"><div class="card"><div class="skeleton"></div></div><div class="card"><div class="skeleton"></div></div></div>`;
   $$(".seg button", app).forEach((btn) => { btn.onclick = () => { location.hash = `#/proof/${btn.dataset.n}`; }; });
   const [b, v] = await Promise.all([getJSON(exampleUrl(ex.name)), getJSON(exampleUrl(ex.name + ".verification"))]);
+  const cmd = v.command || `slopproof verify ${ex.name}.json --against ${v.at_against ? v.at_against.commit : ""}`;
   const files = Object.entries(b.files).map(([p, c]) => `<details style="margin-top:8px"><summary><code>${esc(p)}</code>
     <span class="muted">${c.length} bytes</span></summary><pre class="file">${esc(c)}</pre></details>`).join("");
   $("#p-grid").innerHTML = `
@@ -40,10 +55,11 @@ ROUTES.proof = async (parts) => {
         ${fact("meh", "Check command, exits 0 only while the bug is present", `<code>${esc(b.check)}</code>`)}
       </div>${files}
       <details style="margin-top:8px"><summary class="muted">The agent's claim, as sealed in the bundle</summary><pre class="file">${esc(b.claim)}</pre></details>
-      <div class="row wrap" style="margin-top:16px"><button class="btn" id="p-dl">Download bundle</button>
-        <span class="muted" style="font-size:13px">Re-run locally: <code>slopproof verify bundle.json --against ${esc(v.at_against.commit.slice(0, 12))}</code></span></div>
+      <div class="row wrap" style="margin-top:16px"><button class="btn" id="p-dl">Download bundle</button></div>
     </div>
-    <div class="card"><div class="kicker">Recorded verification</div><div class="facts">${verifyFacts(v)}</div>
+    <div class="card"><div class="kicker">Recorded verification</div>${verifySeal(v)}
+      <div class="kicker" style="margin-top:20px">Re-run it yourself</div>
+      <div class="cmd"><code id="p-cmd">${esc(cmd)}</code><button class="btn small" id="p-copy" aria-label="Copy the re-run command">Copy</button></div>
       ${STATIC ? "" : `<div class="kicker" style="margin-top:22px">Re-run it live</div>
         <p class="muted" style="font-size:13px;margin:6px 0 10px">Builds curl twice in fresh sandboxes (the reported commit and the fix), about 4 minutes.
         It runs code on this host, so it needs the demo passcode.</p>
@@ -52,6 +68,7 @@ ROUTES.proof = async (parts) => {
         <div class="term hidden" id="p-term"></div><div id="p-result"></div>`}
     </div>`;
   $("#p-dl").onclick = () => download(`${ex.name}.json`, b);
+  $("#p-copy").onclick = () => copyText(cmd);
   if (STATIC) return;
   let es = null;
   $("#p-run").onclick = async () => {
@@ -69,7 +86,7 @@ ROUTES.proof = async (parts) => {
       const ev = JSON.parse(m.data);
       const at = fmtClock((Date.now() - t0) / 1000);
       if (ev.stage === "verify") term.textContent += `[${at}] ${ev.message}\n`;
-      if (ev.stage === "verified") $("#p-result").innerHTML = `<div class="facts" style="margin-top:12px">${verifyFacts(ev.result)}</div>`;
+      if (ev.stage === "verified") $("#p-result").innerHTML = `<div style="margin-top:12px">${verifySeal(ev.result)}</div>`;
       if (ev.stage === "error") term.textContent += `error: ${ev.message}\n`;
       if (ev.stage === "done" || ev.stage === "error") { es.close(); btn.disabled = false; }
     };

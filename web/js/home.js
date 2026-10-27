@@ -15,15 +15,20 @@ ROUTES.home = async () => {
         <div class="term-line" aria-hidden="true"><span class="prompt">C:\\&gt;</span><span id="h-kicker"></span></div>
         <h1 class="typed" style="margin-top:10px" aria-label="Slop is cheap to write. Proof is cheap to check.">
           <span id="h-l1" aria-hidden="true"></span><br><span id="h-l2" aria-hidden="true"></span></h1>
-        <div class="row wrap" style="margin-top:18px"><button class="btn primary" id="tour-start" type="button">Take the 60-second tour</button>
+        <p class="lead"><b>Proof, not vibes.</b> SlopProof checks every claim against the project's real code as of the filing
+        date, the web and a sandbox, so each verdict ships with evidence, a reply to post and, for real bugs, a re-runnable proof bundle.</p>
+        <div class="term-open">
+          <div class="term-line"><span class="prompt">C:\\&gt;</span>open sample_report<span class="hint">click one</span></div>
+          <ul class="term-list">${EXAMPLES.map((e) => `<li><a href="#/report/${e.mode}/${e.id}"><span class="gt" aria-hidden="true">&gt;</span>
+            <span class="tt ${e.kind}">[${e.kind === "slop" ? "AI slop" : "real CVE"}]</span> <span class="tl">${esc(e.label)}</span><span class="go" aria-hidden="true">↵</span></a></li>`).join("")}</ul>
+        </div>
+        <div class="row wrap hero-actions"><button class="btn primary" id="tour-start" type="button">Take the 60-second tour</button>
           <a class="btn" href="#/report/sandbox/3735184">See a real CVE proved</a></div>
-        <p class="lead"><b>Proof before priority, for every report.</b> SlopProof checks every claim in a security report
-        against the project's real code on the day it was filed, checks every reference on the web, follows the code to
-        where real input enters, and tries to reproduce the bug in a locked-down sandbox. Every verdict comes with evidence
-        and a reply you can post.</p>
       </div>
       <div class="kpis" id="kpis">${[1, 2, 3].map(() => `<div class="kpi"><div class="skeleton" style="width:100%"></div></div>`).join("")}</div>
     </section>
+    <div class="runs-on" aria-label="Runs on"><span class="kicker">Runs on</span>
+      ${["NVIDIA Nemotron", "Nebius Token Factory", "Tavily", "Docker + AddressSanitizer"].map((x) => `<span class="pill">${x}</span>`).join("")}</div>
 
     <div class="marquee" aria-hidden="true"><div class="track" id="h-marquee"></div></div>
 
@@ -69,9 +74,10 @@ ROUTES.home = async () => {
     const el = $("#kpis");
     if (!el) return;
     el.innerHTML = `
-      <div class="kpi"><div class="n ok">${esc(s.real_wrongly_closed)}</div><div class="l">real CVE reports wrongly closed, out of ${s.reports} public curl reports replayed as of their filing date</div></div>
-      <div class="kpi"><div class="n accent">${confirmed}</div><div class="l">real CVE${confirmed === 1 ? "" : "s"} reproduced in the sandbox, each with a proof that re-runs from scratch</div></div>
-      <div class="kpi"><div class="n bad">${fc ? `${fc.closes_with_false_reason}/${fc.baseline_closes}` : "–"}</div><div class="l">closes by a plain “is this slop?” model that cite something false. SlopProof cites checked facts.</div></div>`;
+      <div class="kpi"><div class="n ok" data-count="${esc(s.real_wrongly_closed)}">${esc(s.real_wrongly_closed)}</div><div class="l">real CVE reports wrongly closed, out of ${s.reports} public curl reports replayed as of their filing date</div></div>
+      <div class="kpi"><div class="n accent" data-count="${confirmed}">${confirmed}</div><div class="l">real CVE${confirmed === 1 ? "" : "s"} reproduced in the sandbox, each with a proof that re-runs from scratch</div></div>
+      <div class="kpi"><div class="n bad" data-count="${fc ? `${fc.closes_with_false_reason}/${fc.baseline_closes}` : "–"}">${fc ? `${fc.closes_with_false_reason}/${fc.baseline_closes}` : "–"}</div><div class="l">closes by a plain “is this slop?” model that cite something false. SlopProof cites checked facts.</div></div>`;
+    countUp(el);
     const items = [`<b>${esc(s.real_wrongly_closed)}</b> real CVE reports wrongly closed`, `<b>${s.reports}</b> curl reports replayed as of their filing date`,
       `<b>${confirmed}</b> real CVE${confirmed === 1 ? "" : "s"} reproduced and proved`, `<b>${fc ? fc.closes_with_false_reason : "–"}</b> false reasons from a text-only model`,
       `<b>$${s.avg_usd.toFixed(2)}</b> per report for the static checks`, "<b>0</b> AI involved in verifying a proof bundle", "NVIDIA Nemotron · Nebius Token Factory · Tavily"];
@@ -157,5 +163,33 @@ async function typeHero() {
       for (const ch of text) { if (!still()) return; span.textContent += ch; await sleep(55); }
     }
     await sleep(220);
+  }
+}
+
+// Count the first number in each [data-count] element up from zero the first time it scrolls into view.
+// data-count holds the final text ("0/147", "$0.020", "100%"); only its first number moves. Reduced motion: shown at once.
+function countUp(root = document) {
+  const els = $$("[data-count]", root);
+  if (!els.length || matchMedia("(prefers-reduced-motion: reduce)").matches || !("IntersectionObserver" in window)) return;
+  const parts = (t) => t.match(/^(\D*)(\d+(?:\.\d+)?)(.*)$/s);
+  const run = (el) => {
+    const m = parts(el.dataset.count), t0 = performance.now(), dur = 900;
+    const dec = (m[2].split(".")[1] || "").length, to = Number(m[2]);
+    const step = (now) => {
+      if (!el.isConnected) return;
+      const p = Math.min(1, (now - t0) / dur), e = 1 - (1 - p) ** 3;
+      el.textContent = p < 1 ? m[1] + (to * e).toFixed(dec) + m[3] : el.dataset.count;
+      if (p < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  };
+  const io = new IntersectionObserver((entries) => entries.forEach((x) => {
+    if (x.isIntersecting) { io.unobserve(x.target); run(x.target); }
+  }), { threshold: 0.4 });
+  for (const el of els) {
+    const m = parts(el.dataset.count);
+    if (!m || Number(m[2]) === 0) continue;
+    el.textContent = m[1] + (0).toFixed((m[2].split(".")[1] || "").length) + m[3];
+    io.observe(el);
   }
 }

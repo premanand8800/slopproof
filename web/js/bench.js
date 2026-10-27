@@ -8,12 +8,35 @@ function bar(label, value, max, cls) {
 }
 const frac = (s) => s.split("/").map(Number);
 
+// Head-to-head: SlopProof against the same model asked only "is this slop?". Every number comes from loadBench().
+function scoreboard(s, base, fc, sb) {
+  const num = (v, cls, sub) => `<div class="sb-cell"><div class="n ${cls || ""}" data-count="${esc(v)}">${esc(v)}</div>${sub ? `<div class="sub">${sub}</div>` : ""}</div>`;
+  const txt = (v, sub) => `<div class="sb-cell"><div class="n none">${v}</div>${sub ? `<div class="sub">${sub}</div>` : ""}</div>`;
+  const row = (label, hint, ours, theirs) => `<div class="sb-row"><div class="sb-label"><b>${label}</b><span>${hint}</span></div>${ours}${theirs}</div>`;
+  const proved = (sb && sb.verdicts.real && sb.verdicts.real.CONFIRMED) || 0;
+  const sbReal = sb ? frac(sb.real_wrongly_closed)[1] : 0;
+  return `<section class="card scoreboard" aria-labelledby="sb-h">
+    <div class="kicker">Head to head · same reports, same Nemotron model</div>
+    <h2 id="sb-h">SlopProof vs a plain “is this slop?” model</h2>
+    <div class="sb-grid">
+      <div class="sb-row sb-head"><div></div><div class="us">SlopProof</div><div>Plain model</div></div>
+      ${row("Real CVEs wrongly closed", "lower is better", num(s.real_wrongly_closed, "ok"), num(base.real_wrongly_closed))}
+      ${row("AI slop closed", "out of the slop reports", num(s.slop_auto_closed, "accent", "each with checked evidence"),
+        num(base.slop_auto_closed, "", `${esc(fc.closes_with_false_reason)} of its ${esc(fc.baseline_closes)} closes cite something false`))}
+      ${row("Closes citing something false", "checked against the git tree on the report's date", txt("checked", "every close cites evidence checked against the code"),
+        num(`${fc.closes_with_false_reason}/${fc.baseline_closes}`, "bad"))}
+      ${sb ? row("Real CVEs proved in the sandbox", "reproduced under AddressSanitizer", num(proved, "accent", `of ${sbReal} real CVEs in the sandbox sample`),
+        txt("none", "text only, it cannot run anything")) : ""}
+    </div></section>`;
+}
+
 ROUTES.bench = async () => {
   app.innerHTML = `<div class="page-head"><h1>Benchmark</h1>
     <p>Every public curl HackerOne report we could collect: the reports curl's maintainer lists as AI slop, and the
     reports that became real CVEs. Each one is judged <b>as of the day it was filed</b>: the source tree from that day,
     and web evidence published before it, so later write-ups cannot leak the answer.</p></div>
     <div class="stats" id="b-stats">${[1, 2, 3, 4].map(() => `<div class="stat"><div class="skeleton"></div></div>`).join("")}</div>
+    <div id="b-score"></div>
     <div class="compare" id="b-compare"></div>
     <div class="section-title"><h2>All reports</h2><span class="muted" id="b-count" style="font-size:13px"></span></div>
     <div class="card" style="padding:16px">
@@ -31,10 +54,13 @@ ROUTES.bench = async () => {
   const b = await loadBench();
   const s = b.static.score, base = b.baseline.score, fc = b.baseline.factcheck, sb = b.sandbox.score;
   $("#b-stats").innerHTML = `
-    <div class="stat"><div class="n ok">${s.real_kept_pct}%</div><div class="l">of real CVE reports kept open (${esc(s.real_wrongly_closed)} wrongly closed)</div></div>
-    <div class="stat"><div class="n accent">${s.slop_auto_closed_pct}%</div><div class="l">of AI-slop reports closed, each with checked evidence (${esc(s.slop_auto_closed)})</div></div>
-    <div class="stat"><div class="n">${esc(s.slop_closed_or_low)}</div><div class="l">slop closed or sent to the bottom of the queue, against ${esc(s.real_closed_or_low)} real reports</div></div>
-    <div class="stat"><div class="n">$${s.avg_usd.toFixed(3)}</div><div class="l">average cost per report for the static checks, ${s.avg_seconds}s</div></div>`;
+    <div class="stat"><div class="n ok" data-count="${s.real_kept_pct}%">${s.real_kept_pct}%</div><div class="l">of real CVE reports kept open (${esc(s.real_wrongly_closed)} wrongly closed)</div></div>
+    <div class="stat"><div class="n accent" data-count="${s.slop_auto_closed_pct}%">${s.slop_auto_closed_pct}%</div><div class="l">of AI-slop reports closed, each with checked evidence (${esc(s.slop_auto_closed)})</div></div>
+    <div class="stat"><div class="n" data-count="${esc(s.slop_closed_or_low)}">${esc(s.slop_closed_or_low)}</div><div class="l">slop closed or sent to the bottom of the queue, against ${esc(s.real_closed_or_low)} real reports</div></div>
+    <div class="stat"><div class="n" data-count="$${s.avg_usd.toFixed(3)}">$${s.avg_usd.toFixed(3)}</div><div class="l">average cost per report for the static checks, ${s.avg_seconds}s</div></div>`;
+
+  if (base && fc) $("#b-score").innerHTML = scoreboard(s, base, fc, sb);
+  countUp(app);
 
   if (base && fc) {
     const [sc, st] = frac(s.slop_auto_closed), [bc, bt] = frac(base.slop_auto_closed);

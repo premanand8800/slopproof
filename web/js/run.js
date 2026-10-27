@@ -273,8 +273,15 @@ function renderCode(run, code, ts) {
     else add("good", `Function <code>${esc(f.name)}</code> exists`, f.definitions.length ? `defined at ${f.definitions.map(esc).join(", ")}` : `used in ${f.files_using} files`);
   }
   for (const r of code.line_refs) {
-    if (r.actual != null) add("meh", `<code>${esc(r.file)}:${r.line}</code> is <code>${esc(r.actual)}</code>`);
+    const rows = refRows(r);
+    if (rows.length) add("meh", `<code>${esc(r.file)}:${r.line}</code> in the real source tree`, codeBlock(r.file, rows, r.line));
+    else if (r.actual != null) add("meh", `<code>${esc(r.file)}:${r.line}</code> is <code>${esc(r.actual)}</code>`);
     else add("bad", `Cited line <code>${esc(r.file)}:${r.line}</code> does not exist`);
+    if (r.actual != null && !run.citedRef) run.citedRef = `${r.file}:${r.line}`;
+  }
+  if (!run.citedRef) {
+    const q = code.code_quotes.find((x) => x.verdict === "verbatim" && x.match && x.match.file);
+    if (q) run.citedRef = `${q.match.file}:${q.match.line}`;
   }
   for (const q of code.code_quotes) {
     const where = q.match.file ? `best match ${esc(q.match.file)}:${q.match.line}, similarity ${q.match.score}%` : "";
@@ -290,6 +297,22 @@ function renderCode(run, code, ts) {
   const sum = out.length ? `${good} confirmed · ${bad} contradicted` : "the report cites no code";
   run.set("code", bad ? "warn" : "done", sum, tree + (out.length ? `<div class="facts">${out.join("")}</div>` : `<p class="muted">The report cites no code to check.</p>`), ts);
   run.now = "Searching the code and the web…";
+}
+
+// Source lines recorded for a cited line, as [{n, text}]. Only text the code check actually read from the tree:
+// a context window if the event carries one, else the single line it found at that number. Never invented.
+function refRows(r) {
+  const start = r.context_start ?? r.snippet_start ?? r.start;
+  if (Array.isArray(r.lines) && r.lines.length && typeof r.lines[0] === "object") return r.lines.map((l) => ({ n: l.line ?? l.n, text: l.text ?? "" }));
+  const ctx = Array.isArray(r.context) ? r.context : typeof r.snippet === "string" ? r.snippet.split("\n") : null;
+  if (ctx && ctx.length && Number.isInteger(start)) return ctx.map((text, i) => ({ n: start + i, text: String(text) }));
+  if (r.actual != null) return [{ n: r.line, text: r.actual }];
+  return [];
+}
+
+function codeBlock(file, rows, hl) {
+  return `<div class="codeblk"><div class="cb-file">${esc(file)}</div><pre>${rows.map((r) =>
+    `<span class="cb-row${r.n === hl ? " hl" : ""}"><span class="cb-n">${esc(r.n)}</span><span class="cb-t">${esc(r.text)}</span></span>`).join("")}</pre></div>`;
 }
 
 function lineDiff(d) {
@@ -364,12 +387,15 @@ function renderRepro(run, ev, ts) {
     run.now = `Step ${run.steps}: ${ev.cmd.slice(0, 120)}`;
   }
   if (ev.type === "output") {
+    if (/ERROR: AddressSanitizer/.test(ev.output || "")) run.asan = true;
     const lines = (ev.output || "").trim().split("\n").slice(-14).join("\n");
     run.term += `<span class="${ev.exit_code === 0 ? "" : "fail"}">${esc(lines)}</span>\n<span class="${ev.exit_code === 0 ? "ok" : "fail"}">[exit ${ev.exit_code}]</span>\n`;
   }
   if (ev.type === "write") run.term += `\n<span class="file">✎ ${esc(ev.path)}</span>\n${esc((ev.content || "").slice(0, 1500))}\n`;
   let state = "running", sum = run.steps ? `${run.steps} commands so far` : "starting";
   if (ev.type === "finish") {
+    run.reproOutcome = ev.outcome;
+    if (ev.bundle_sha) run.bundleSha = ev.bundle_sha;
     state = ev.outcome === "reproduced" ? "done" : ev.outcome === "not_reproduced" ? "done" : "warn";
     sum = `${ev.reason ? `stopped without a result: ${esc(ev.reason)}` : esc(ev.outcome.replace("_", " "))}${ev.bundle ? ` · proof ${esc(ev.bundle)}` : ""} · ${run.steps} commands`;
     run.term += `\n<b>Outcome: ${esc(ev.outcome)}</b>${ev.bundle ? `\nProof bundle re-run in a fresh sandbox: ${esc(ev.bundle)}` : ""}\n`;
@@ -407,16 +433,40 @@ function renderVerdict(run, ev, ts) {
     <details style="margin-top:14px"><summary class="muted">Cost $${(cost.total_usd || 0).toFixed(4)}${ev.seconds ? ` · ${fmtDur(ev.seconds)}` : ""} · per model</summary>
       <table class="ledger"><tr><th>Model</th><th>Calls</th><th>Tokens in / out</th><th>USD</th></tr>${rows}</table></details></div>`;
   // The answer first: a one-line verdict above the timeline, linking down to the evidence.
-  $("#r-summary", run.root).innerHTML = `<div class="vsum v-${esc(v.verdict)}"><span class="vbadge">${esc(v.verdict)}</span>
-    <div class="vtext">${esc(v.headline)}<small>${esc(action)}</small></div>
+  const pct = Math.round((v.confidence || 0) * 100);
+  $("#r-summary", run.root).innerHTML = `<div class="vsum v-${esc(v.verdict)}">
+    <span class="vstamp-wrap"><span class="vbadge vstamp">${esc(String(v.verdict).replace(/_/g, " "))}</span></span>
+    ${v.confidence != null ? `<span class="vring" style="--p:${pct}" title="Model confidence ${pct}%" aria-label="confidence ${pct}%"><b>${pct}<i>%</i></b></span>` : ""}
+    <div class="vtext">${esc(v.headline)}<small>${esc(action)}</small><div class="vchips">${verdictChips(run, v)}</div></div>
     <button class="btn small" id="r-jump" type="button">Evidence and reply ↓</button></div>`;
   $("#r-jump", run.root).onclick = () => $("#r-verdict", run.root).scrollIntoView({ behavior: "smooth", block: "start" });
+  const refChip = $(".vchip.ref", run.root);
+  if (refChip) refChip.onclick = () => {
+    run.s.code.open = true;
+    run.renderStage("code");
+    $('.st[data-id="code"]', run.root).scrollIntoView({ behavior: "smooth", block: "start" });
+  };
   $("#r-copy-reply", run.root).onclick = () => navigator.clipboard.writeText($("#r-reply", run.root).textContent).then(() => toast("Reply copied"));
   const dl = $("#r-facts", run.root);
   dl.innerHTML = `<dt>Verdict</dt><dd class="vt ${esc(v.verdict)}">${esc(v.verdict)}</dd><dt>Cost</dt><dd>$${(cost.total_usd || 0).toFixed(3)}</dd>
     ${run.ref ? `<dt>Tree</dt><dd>${esc(run.ref.sha.slice(0, 12))}</dd>` : ""}<dt>Commands</dt><dd>${run.steps}</dd>`;
   if (!run.recorded) rememberRun({ id: run.id, verdict: v.verdict, title: $("#r-title", run.root).textContent });
 }
+
+// Up to three evidence chips for the verdict strip, each taken from data this run actually has.
+const REF_RE = /\b((?:[\w.-]+\/)*[\w.-]+\.(?:c|h|cc|cpp|hpp|py|js|ts|go|rs|java|rb|php)):(\d+)/;
+function verdictChips(run, v) {
+  const chips = [];
+  let ref = run.citedRef;
+  if (!ref) for (const f of v.findings || []) { const m = REF_RE.exec(f.text || ""); if (m) { ref = `${m[1]}:${m[2]}`; break; } }
+  if (ref) chips.push(`<button type="button" class="vchip ref" title="Show the code checks">${esc(ref)}</button>`);
+  if (run.reproOutcome === "reproduced") chips.push(`<span class="vchip hit">reproduced${run.asan ? " · ASan" : ""}</span>`);
+  else if (run.asan) chips.push(`<span class="vchip">ASan report</span>`);
+  else if (run.reproOutcome === "not_reproduced") chips.push(`<span class="vchip">not reproduced in sandbox</span>`);
+  if (run.bundleSha) chips.push(proofChip(run.bundleSha));
+  return chips.slice(0, 3).join("");
+}
+const proofChip = (sha) => `<span class="vchip proof" title="sha256:${esc(sha)}">proof sha256:${esc(sha.slice(0, 8))}</span>`;
 
 function renderMemory(run, ev, ts) {
   if (ev.learned) {
@@ -442,6 +492,8 @@ function showBundle(run, rep) {
   const b = rep && rep.bundle;
   if (!b) return;
   const bv = rep.bundle_verification || {};
+  const chips = $(".vchips", run.root);
+  if (chips && b.sha256 && !$(".vchip.proof", chips) && chips.children.length < 3) chips.insertAdjacentHTML("beforeend", proofChip(b.sha256));
   $("#r-bundle", run.root).innerHTML = `<div class="kicker" style="margin-top:18px">Proof bundle</div><div class="facts">${fact(
     (bv.verdict || "").startsWith("VERIFIED") ? "good" : "meh",
     `<b>${esc(bv.verdict || "not verified")}</b> · <code>sha256:${esc(b.sha256.slice(0, 16))}</code>`,
@@ -489,7 +541,9 @@ ROUTES.run = async ([id]) => {
 // A recorded benchmark run, rebuilt into the same timeline.
 ROUTES.report = async ([mode, id]) => {
   const run = new Run(app, { recorded: true, title: "Loading…", sandbox: true });
+  const here = location.hash;
   const res = await getJSON(runUrl(mode, id));
+  if (location.hash !== here) return; // navigated away while loading
   const evs = [{ stage: "report", title: res.title, body: res.report_body || "", repo: `https://github.com/${res.project}`, created_at: res.created_at },
     { stage: "claims", claims: res.claims }, { stage: "ref", ref: res.ref }, { stage: "code", code: res.code }];
   if (res.search) evs.push({ stage: "search", found: res.search });
@@ -504,15 +558,64 @@ ROUTES.report = async ([mode, id]) => {
       if (t.tool === "run") evs.push({ stage: "reproduce", type: "run", cmd: t.cmd }, { stage: "reproduce", type: "output", output: t.output, exit_code: t.exit_code });
       else evs.push({ stage: "reproduce", type: "write", path: t.path, content: t.content });
     }
-    evs.push({ stage: "reproduce", type: "finish", outcome: rep.outcome, bundle: (rep.bundle_verification || {}).verdict });
+    evs.push({ stage: "reproduce", type: "finish", outcome: rep.outcome, bundle: (rep.bundle_verification || {}).verdict,
+      bundle_sha: rep.bundle && rep.bundle.sha256 });
   }
   evs.push({ stage: "verdict", verdict: res.verdict, cost: res.cost, seconds: res.seconds });
-  for (const ev of evs) run.apply(ev);
-  run.status = "recorded";
-  if (res.seconds) $("#r-clock", app).textContent = fmtClock(res.seconds);
-  run.now = `Recorded run of HackerOne #${id}, replayed as of ${res.created_at ? res.created_at.slice(0, 10) : "its filing date"}.`;
+
+  let i = 0, timer = null, over = false;
+  const finish = () => {
+    over = true;
+    clearTimeout(timer);
+    while (i < evs.length) run.apply(evs[i++]);
+    run.status = "recorded";
+    if (res.seconds) $("#r-clock", app).textContent = fmtClock(res.seconds);
+    run.now = `Recorded run of HackerOne #${id}, replayed as of ${res.created_at ? res.created_at.slice(0, 10) : "its filing date"}.`;
+    run.root.classList.remove("replaying");
+    run.render();
+    showBundle(run, rep);
+    const skip = $("#r-skip", app);
+    if (skip) skip.remove();
+  };
+  const instant = matchMedia("(prefers-reduced-motion: reduce)").matches || tourStep() != null;
+  if (instant) {
+    finish();
+    // On the tour, go straight to the verdict: the timeline above it is there for anyone who wants the detail.
+    if (tourStep() != null) setTimeout(() => $("#r-verdict", app).scrollIntoView({ behavior: "smooth", block: "start" }), 400);
+    return;
+  }
+
+  // Replay: events one by one, so the stages light up in order. Sandbox steps are minor and go quicker;
+  // the whole replay stays under about 12 seconds.
+  const STAGE_OF = { report: "report", claims: "claims", ref: "code", code: "code", search: "search", web: "web", screen: "screen",
+    analysis: "analysis", scope: "policy", reproduce: "reproduce", verdict: "verdict" };
+  const minor = (ev) => ev.stage === "ref" || (ev.stage === "reproduce" && !["begin", "finish"].includes(ev.type));
+  const majors = evs.filter((ev) => !minor(ev)).length, minors = evs.length - majors;
+  const big = 420, small = Math.max(40, Math.min(250, minors ? (11000 - majors * big) / minors : 0));
+  const delays = evs.map((ev) => (minor(ev) ? small : ev.stage === "verdict" ? 600 : big));
+  const total = delays.reduce((a, b) => a + b, 0);
+  let elapsed = 0;
+  run.root.classList.add("replaying");
+  $(".run-head .row", app).insertAdjacentHTML("afterbegin", `<button class="btn small" id="r-skip" type="button" title="Show the whole run at once">Skip to verdict ⏭</button>`);
+  $("#r-skip", app).onclick = finish;
+  run.now = "Replaying the recorded run…";
+  run.s.report.state = "running";
   run.render();
-  showBundle(run, rep);
-  // On the tour, go straight to the verdict: the timeline above it is there for anyone who wants the detail.
-  if (tourStep() != null) setTimeout(() => $("#r-verdict", app).scrollIntoView({ behavior: "smooth", block: "start" }), 400);
+  $("#r-status", app).innerHTML = `<span class="pulse"></span>Replaying`;
+  const step = () => {
+    if (over || !$("#r-skip", app)) return; // finished, or the page was replaced
+    const ev = evs[i++];
+    run.apply(ev);
+    elapsed += delays[i - 1];
+    // The next stage shows as running while it waits for its event.
+    const next = evs[i] && run.s[STAGE_OF[evs[i].stage]];
+    if (next && next.state === "pending") next.state = "running";
+    if (i >= evs.length) { finish(); return; }
+    run.render();
+    if (res.seconds) $("#r-clock", app).textContent = fmtClock((res.seconds * elapsed) / total);
+    $("#r-status", app).innerHTML = `<span class="pulse"></span>Replaying`;
+    timer = setTimeout(step, delays[i]);
+  };
+  timer = setTimeout(step, 250);
+  return () => { over = true; clearTimeout(timer); };
 };
