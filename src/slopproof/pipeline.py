@@ -61,7 +61,11 @@ def triage(title: str, body: str, repo_url: str, created_at: str | None = None,
 
     def resolve():
         r = codecheck.resolve_ref(bare, claims, created_at)
-        r["version_tag"] = codecheck.version_tag(bare, claims.get("claimed_version"))
+        r["version_tag"] = tag = codecheck.version_tag(bare, claims.get("claimed_version"))
+        if tag and r["why"].startswith("default branch HEAD"):
+            # A pasted report with no date or commit but a version: check the code of that release, not today's.
+            r = {"sha": codecheck.git(bare, "rev-parse", f"{tag}^{{commit}}").strip(),
+                 "why": f"release {tag} named in the report (no date or commit)", "version_tag": tag}
         return r
     ref = step("ref", "ref", "ref", resolve)
     tree = codecheck.export_tree(bare, ref["sha"])
