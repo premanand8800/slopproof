@@ -171,3 +171,6 @@ def test_hooks_block_repeats_endless_loops_and_endless_reading():
     assert "Stop reading" in _hook("cat b.c", reads)
     assert _hook("cat b.c", reads + [{"tool": "write_file", "path": "/work/poc.c"}]) is None
     assert _hook("clang poc.c -o poc", reads) is None
+    compiled = [{"tool": "run", "cmd": "clang poc.c -o poc", "exit_code": 1}]
+    assert "already ran" in _hook("clang poc.c -o poc", compiled)
+    assert _hook("clang poc.c -o poc", compiled + [{"tool": "write_file", "path": "/work/poc.c"}]) is None

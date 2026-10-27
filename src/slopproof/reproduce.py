@@ -245,8 +245,10 @@ READ_BUDGET = 12
 
 def _hook(cmd: str, transcript: list[dict]) -> str | None:
     """Rules checked at every command, like hooks in a coding agent. Returns a message instead of running, or None."""
-    runs = [t for t in transcript if t.get("tool") == "run" and not t.get("hook")]
-    if any(t["cmd"].strip() == cmd.strip() for t in runs):
+    # A repeat is pointless only if nothing changed since: re-running a compile after editing the file is fine.
+    last = max((i for i, t in enumerate(transcript) if t.get("tool") == "run" and not t.get("hook")
+                and t["cmd"].strip() == cmd.strip()), default=None)
+    if last is not None and not any(t.get("tool") == "write_file" for t in transcript[last + 1:]):
         return ("[hook] You already ran exactly this command; its output is above. Do not repeat it: use what you "
                 "learned and take the next step (write the harness or PoC, build it, run it).")
     if re.search(r"\btail\s+-f\b|while\s+true|while\s+:\s*;", cmd):
