@@ -56,6 +56,18 @@ def test_code_alone_cannot_close_when_prior_art_check_failed():
     assert apply_guards(v("FABRICATED"), {"claim_holds": "no"}, None, web, {"close": True})["verdict"] == "FABRICATED"
 
 
+def test_code_alone_cannot_close_against_a_confident_screen():
+    keep = {"close": False, "confidence": 0.9, "reason": "specific and plausible"}
+    out = apply_guards(v("NOT_REPRODUCED"), {"claim_holds": "no"}, None, {}, keep)
+    assert out["verdict"] == "PLAUSIBLE" and "text screen finds it credible" in out["headline"]
+    # A weak or failed screen does not block, and a sandbox run still closes.
+    assert apply_guards(v("NOT_REPRODUCED"), {"claim_holds": "no"}, None, {},
+                        {"close": False, "confidence": 0.7})["verdict"] == "NOT_REPRODUCED"
+    assert apply_guards(v("NOT_REPRODUCED"), {"claim_holds": "no"}, None, {},
+                        {"close": False, "confidence": None})["verdict"] == "NOT_REPRODUCED"
+    assert apply_guards(v("NOT_REPRODUCED"), None, {"outcome": "not_reproduced"}, {}, keep)["verdict"] == "NOT_REPRODUCED"
+
+
 def test_sandbox_can_close_a_known_area():
     web = {"prior_art": {"already_fixed": True}}
     assert apply_guards(v("NOT_REPRODUCED"), None, {"outcome": "not_reproduced"}, web)["verdict"] == "NOT_REPRODUCED"

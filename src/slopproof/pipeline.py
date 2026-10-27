@@ -173,6 +173,10 @@ def _settled(future, fallback):
         return fallback | {"error": str(e)[:200]} if isinstance(fallback, dict) else fallback
 
 
+# The text screen's confidence at or above which its vote to keep a report open blocks a close on code alone.
+SCREEN_DISSENT = 0.8
+
+
 def apply_guards(verdict: dict, analysis: dict | None, repro: dict | None, web: dict | None = None,
                  text_screen: dict | None = None) -> dict:
     """Hard rules the model cannot override.
@@ -183,6 +187,8 @@ def apply_guards(verdict: dict, analysis: dict | None, repro: dict | None, web: 
     real reports too, so on their own they only lower the priority.
     Reading the code is not enough when prior art shows the same area had a real bug: the report may be a
     bypass or regression of that fix. A prior-art check that failed counts as unknown, not as "no prior art".
+    Nor is it enough when the text screen confidently votes to keep the report open: two independent reads
+    then disagree, and in our benchmark every real CVE closed on code alone was one the screen backed.
     """
     v = dict(verdict)
     v["model_verdict"] = verdict.get("verdict")
@@ -192,7 +198,11 @@ def apply_guards(verdict: dict, analysis: dict | None, repro: dict | None, web: 
     known_area = bool(prior.get("known_issue") or prior.get("already_fixed"))
     screen_close = bool((text_screen or {}).get("close"))
     code_rules_out = (analysis or {}).get("claim_holds") == "no"
-    may_close = outcome == "not_reproduced" or screen_close or (code_rules_out and not known_area and not prior_unknown)
+    # A failed screen has no confidence, so it never counts as a vote to keep the report open.
+    ts = text_screen or {}
+    screen_keeps = ts.get("close") is False and (ts.get("confidence") or 0) >= SCREEN_DISSENT
+    may_close = outcome == "not_reproduced" or screen_close or (
+        code_rules_out and not known_area and not prior_unknown and not screen_keeps)
     if v["model_verdict"] == "CONFIRMED" and outcome != "reproduced":
         v["verdict"] = "PLAUSIBLE"
         v["headline"] = "[Not yet reproduced] " + v.get("headline", "")
@@ -202,6 +212,8 @@ def apply_guards(verdict: dict, analysis: dict | None, repro: dict | None, web: 
         why = ("a related bug was fixed before, so this may be a bypass; reproduce before closing" if known_area
                else "the prior-art check failed, so a related fixed bug is not ruled out; reproduce before closing"
                if code_rules_out and prior_unknown
+               else "the code reading rules the claim out but the text screen finds it credible; reproduce before closing"
+               if code_rules_out and screen_keeps
                else "references look wrong, but nothing rules the claim out yet")
         v["headline"] = f"[Low priority: {why}] " + v.get("headline", "")
     elif v["verdict"] == "PLAUSIBLE" and screen_close:
