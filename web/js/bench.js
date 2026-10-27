@@ -7,7 +7,7 @@ const BEYOND = [
   { job: "b31796d9edea", project: "gin-gonic/gin (Go)", what: "invented “heap overflow in Context.Query()”", verdict: "FABRICATED", ok: true,
     note: "parseQueryBuffer() and its memcpy do not exist in gin; Go has no memcpy." },
   { job: "ce0af4d0ca30", project: "expressjs/express (JavaScript)", what: "invented “prototype pollution in res.json()”", verdict: "PLAUSIBLE",
-    note: "deepMergeJson() does not exist and res.json() (lib/response.js:236) calls JSON.stringify directly. Still kept open at low priority: a related fix exists, so code reading alone may not close it." },
+    note: "Cautious by design: the invented deepMergeJson() was caught and res.json() (lib/response.js:236) calls JSON.stringify directly, but a related prototype-pollution fix exists, so the rule that keeps real CVEs open will not let code reading alone close it. Sent to the bottom of the queue." },
   { job: "cdc10e0ef32e", project: "fluent/fluent-bit (C, with sandbox)", what: "chunked-parser read past the end", verdict: "PLAUSIBLE",
     note: "Two HTTP/1 callers pass the length without a NUL terminator; the sandbox did not reproduce it." },
 ];
