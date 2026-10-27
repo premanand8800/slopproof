@@ -34,14 +34,28 @@ Factory: Nemotron 3.5 Lightning for extraction, Nemotron 3 Super for judging web
 analysis, the reproduction agent and the verdict. Tavily search and extract, with `end_date` for time-travel replay.
 
 ## Benchmark
-196 public curl HackerOne reports (49 AI slop, 147 real CVEs), each replayed as of its filing date.
-- 0 of 147 real CVE reports wrongly closed.
-- 24 of 49 slop reports closed, each with checked evidence; 39 of 49 closed or moved to the bottom of the queue.
+197 public curl HackerOne reports (49 AI slop, 148 real CVEs), each replayed as of its filing date. Final run on
+NVIDIA Nemotron via Nebius Token Factory, with Tavily web search working.
+- 0 of 148 real CVE reports wrongly closed.
+- 21 of 49 slop reports closed, each with checked evidence; 38 of 49 closed or moved to the bottom of the queue.
 - Text-only baseline (same model): closes 31 of 49, but 13 of its 31 closing reasons are false.
-- Sandbox: reproduced a real CVE (#3735184, .netrc credential leak) in 161 s for $0.31.
-- About $0.02 per report for the static checks.
+- Sandbox (27-report sample, 19 slop and 8 real): 9 of 19 slop closed with a run, 0 of 8 real closed, and two real
+  CVEs reproduced and proved: #3735184 (.netrc credential leak, 161 s for $0.31) and #4041053 (.netrc password in
+  CURLINFO_EFFECTIVE_URL). Both proof bundles re-run as VERIFIED_AND_FIXED against curl's fix.
+- About $0.065 per report for the static checks (median 44 s).
+- Held out: 60 reports curl closed as not applicable, never seen during development; 2 closed.
 - Code search finds a function the CVE fix changed in its top 5 for 104 of 139 real reports (75%), against 70 when
   reading only the code a report names; for reports that name no code, 10 of 16 against 0.
+
+Benchmark notes:
+- The earlier runs stay in the repo for transparency: v1 (older pipeline, rescored with the current guards: 0 of
+  147 real closed, 22 of 49 slop), v2 (partial OpenRouter cross-check) and v3 (run while the Tavily quota was
+  exhausted, so every web check failed).
+- A code-only close is blocked when the text screen disagrees with confidence 0.8 or more. That threshold was
+  chosen on this benchmark after it closed 4 real CVEs in the final run, so 0 of 148 is not an unbiased estimate.
+  The held-out result did not change.
+- A proof bundle needs a negative control: its check must fail on the safe case. #3583983 reproduced, but its
+  check had no control (it also matched the header sent to the first host), so it stays PLAUSIBLE.
 
 ## Challenges
 - Benchmark leakage: titles of real reports name the CVE and the web has later write-ups. We strip the prefix,

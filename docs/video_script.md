@@ -30,8 +30,8 @@ Screen: replay of report #3735184, terminal stage.
 
 ## 1:55–2:30 Benchmark and baseline
 Screen: Benchmark tab, comparison table, the false-statements list.
-> We replayed 196 public curl reports, each as of the day it was filed. Zero of 147 real CVE reports were
-> wrongly closed. Half of the slop is closed with evidence, and 80 percent is closed or moved to the bottom.
+> We replayed 197 public curl reports, each as of the day it was filed. Zero of 148 real CVE reports were
+> wrongly closed. 21 of 49 slop reports are closed with evidence, and 38 of 49 are closed or moved to the bottom.
 > Why not just ask a model "is this slop?" We tried. It closes more, but 13 of its 31 reasons are false:
 > it says lib/ws.c does not exist. That is answering slop with slop.
 

@@ -14,10 +14,10 @@ import tempfile
 from pathlib import Path
 
 from slopproof.benchscore import score
-from slopproof.server import report_bodies, stored_run
+from slopproof.server import BENCH_FILES, bench_rows, report_bodies, stored_run
 
 ROOT = Path(__file__).resolve().parents[1]
-FILES = ("dataset.jsonl", "results_static.jsonl", "results_sandbox.jsonl", "results_baseline.jsonl",
+FILES = ("dataset.jsonl", *(n for names in BENCH_FILES.values() for n in names),
          "baseline_factcheck.json", "search_eval.json")
 
 
@@ -30,10 +30,6 @@ def bench_dir(from_head: bool) -> Path:
         if out.returncode == 0:
             (tmp / name).write_bytes(out.stdout)
     return tmp
-
-
-def load(path: Path) -> list[dict]:
-    return [json.loads(line) for line in path.read_text().splitlines() if line.strip()] if path.exists() else []
 
 
 def main() -> None:
@@ -55,12 +51,11 @@ def main() -> None:
     bodies = report_bodies(src)
     bench = {}
     for mode in ("static", "sandbox", "baseline"):
-        rows = load(src / f"results_{mode}.jsonl")
-        light = [{k: v for k, v in r.items() if k != "full"} for r in rows]
+        light = [{k: v for k, v in r.items() if k != "full"} for r in bench_rows(mode, src)]
         bench[mode] = {"score": score(light) if light else None, "rows": light}
         if mode != "baseline":
             (out / "data" / "runs" / mode).mkdir(parents=True, exist_ok=True)
-            for r in rows:
+            for r in bench_rows(mode, src, headline_only=False):
                 (out / "data" / "runs" / mode / f"{r['id']}.json").write_text(json.dumps(stored_run(r, bodies), default=str))
     (out / "data" / "examples").mkdir(parents=True, exist_ok=True)
     for f in (ROOT / "examples" / "bundles").glob("*.json"):

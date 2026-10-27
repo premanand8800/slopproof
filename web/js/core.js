@@ -106,7 +106,7 @@ const palette = { el: null, items: [], shown: [], sel: 0, prev: null, runsLoaded
 function paletteBase() {
   const page = (label, hash, hint) => ({ label, hint, kind: "Page", run: () => { location.hash = hash; } });
   return [
-    page("Triage", "#/", "check a report"), page("Benchmark", "#/bench", "196 curl reports"),
+    page("Triage", "#/", "check a report"), page("Benchmark", "#/bench", benchCache ? `${benchCache.static.score.reports} curl reports` : "curl reports, replayed"),
     page("Proofs", "#/proof", "re-runnable proof bundles"), page("Memory", "#/memory", "what runs remember"),
     page("How it works", "#/how", "the pipeline"),
     { label: "Start the 60-second tour", kind: "Action", hint: "five stops", run: startTour },
@@ -212,7 +212,13 @@ const TOUR = [
   { hash: "#/report/sandbox/2298307", text: "A fake report: its “buffer overflow” is ruled out by a bounds check two lines earlier (lib/ws.c:578). Closed with evidence, and a reply to post." },
   { hash: "#/report/sandbox/3735184", text: "A real CVE: the agent reproduced the .netrc password leak in the sandbox, and the run became a proof bundle." },
   { hash: "#/proof", text: "The proof bundles (two so far): one command re-runs each from scratch. Bug present at the reported commit, gone at curl's fix. No AI involved in verifying." },
-  { hash: "#/bench", text: "196 curl reports replayed as of their filing date: 0 real CVEs wrongly closed. A plain “is this slop?” model gives false reasons in 13 of 31 closes." },
+  { hash: "#/bench", text: (b) => {
+    const s = b && b.static.score, fc = b && b.baseline.factcheck;
+    if (!s) return "Every public curl report, replayed as of its filing date, next to a plain “is this slop?” model.";
+    return `${s.reports} curl reports replayed as of their filing date: ${s.real_wrongly_closed} real CVE reports wrongly closed, ` +
+      `${s.slop_auto_closed} AI slop closed with evidence.` +
+      (fc ? ` A plain “is this slop?” model gives false reasons in ${fc.closes_with_false_reason} of ${fc.baseline_closes} closes.` : "");
+  } },
   { hash: "#/memory", text: "Memory across runs, built so attackers can't teach it: facts pinned to the code version, nothing a reporter wrote is stored, and it never decides a verdict." },
 ];
 function tourStep() { try { return JSON.parse(sessionStorage.getItem("tour") ?? "null"); } catch (e) { return null; } }
@@ -222,7 +228,9 @@ function renderTour() {
   const i = tourStep(), el = $("#tour");
   if (i == null || !TOUR[i]) { el.classList.add("hidden"); return; }
   el.classList.remove("hidden");
-  el.innerHTML = `<span class="tour-n">Tour ${i + 1}/${TOUR.length}</span><span class="tour-t">${esc(TOUR[i].text)}</span>
+  const t = TOUR[i].text;
+  if (typeof t === "function" && !benchCache) loadBench().then(() => { if (tourStep() === i) renderTour(); }).catch(() => {});
+  el.innerHTML = `<span class="tour-n">Tour ${i + 1}/${TOUR.length}</span><span class="tour-t">${esc(typeof t === "function" ? t(benchCache) : t)}</span>
     <span class="row">${i > 0 ? `<button class="btn small" id="tour-prev">Back</button>` : ""}
     ${i < TOUR.length - 1 ? `<button class="btn small primary" id="tour-next">Next</button>` : `<button class="btn small primary" id="tour-end">Finish</button>`}
     <button class="btn small" id="tour-x" title="Close the tour">✕</button></span>`;

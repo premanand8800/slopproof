@@ -15,20 +15,22 @@ It runs on **NVIDIA Nemotron models served by Nebius Token Factory**, with **Tav
 judges' passcode from the submission).
 
 <!-- BENCH:START -->
-**Results on 196 public curl HackerOne reports, each replayed as of the day it was filed:**
+**Results on 197 public curl HackerOne reports, each replayed as of the day it was filed** (final run: NVIDIA
+Nemotron on Nebius Token Factory, web search working; see [Benchmark notes](#benchmark-notes)):
 
 | | SlopProof (static checks) | Text-only baseline (same model) |
 |---|---|---|
-| Real CVE reports wrongly closed | **0 of 147** | 0 of 148 |
-| AI-slop reports closed | 24 of 49 (49%) | 31 of 49 (63%) |
-| Closes whose stated reason is false | 0 of 24 headlines on manual check; reasons cite `file:line` or a source. One supporting finding (#2905552) cites a wrong CVE number | **13 of 31**, verified against the git tree |
-| Slop closed or sent to the bottom of the queue | 39 of 49 (80%), vs 16 of 147 real | - |
-| Cost per report | $0.02, median 25 s | $0.0014 |
+| Real CVE reports wrongly closed | **0 of 148** | 0 of 148 |
+| AI-slop reports closed | 21 of 49 (43%) | 31 of 49 (63%) |
+| Closes whose stated reason is false | Reasons cite `file:line` or a source (the manual check of 24 headlines was on the v1 run) | **13 of 31**, verified against the git tree |
+| Slop closed or sent to the bottom of the queue | 38 of 49 (78%), vs 6 of 148 real | - |
+| Cost per report | $0.065 on average, median 44 s | $0.0014 |
 
-With the sandbox (24-report sample, about $0.30 to $0.80 and 4 to 12 minutes each): **9 of 19 slop reports closed
-with a run that exercised the claim, 0 of 5 real ones closed**, and one real CVE (HackerOne #3735184, the `.netrc`
-credential leak, CVE-2026-8926) reproduced and turned into a proof bundle that re-runs as **VERIFIED_AND_FIXED**:
-the bug is present at the reported commit and gone at curl's fix.
+With the sandbox (27-report sample: 19 slop, 8 real; $0.12 to $1.13 and 3 to 35 minutes each): **9 of 19 slop
+reports closed with a run that exercised the claim, 0 of 8 real ones closed**, and two real CVEs reproduced and
+turned into proof bundles that re-run as **VERIFIED_AND_FIXED** (bug present at the reported commit, gone at
+curl's fix): HackerOne #3735184, the `.netrc` credential leak (CVE-2026-8926), and #4041053, a `.netrc` password
+leaking into `CURLINFO_EFFECTIVE_URL` after a redirect.
 <!-- BENCH:END -->
 
 ## The problem
@@ -205,20 +207,38 @@ real reports on its own (about 4 in 10 quotes for both), which is why it only lo
 
 ### Honest limits
 
-- The guard rules were chosen after error analysis on this same dataset; there is no held-out set yet.
+- The guard rules were chosen after error analysis on this same dataset. The held-out set below is the only
+  check on reports never seen during development.
 - Two slop reports were first CONFIRMED by the sandbox: one PoC re-implemented curl's logic in its own program, and
   one read `/etc/passwd` through an encoded `file://` path, which a plain `file:///etc/passwd` also does. The checks
   that now catch both (the PoC must run curl's own CLI or library; without a sanitizer report in curl's code, an
   independent model must see a gain over intended use) were written after seeing these two cases.
-- The sandbox numbers are a small sample (8 reports) because each run costs about $0.44.
-- One report (#2604391) is missing from the static results: claim extraction returned no JSON twice. The pipeline
-  now continues without structured claims in that case.
+- The sandbox numbers are a small sample (27 reports) because each run costs about $0.59 (median).
 - Held-out check: 60 reports curl closed as *not applicable* between May and October 2026, never seen during
   development. SlopProof closed 2 and sent 3 more to the bottom of the queue. For 51 of the 60, the code does
   behave as the report says: these are accurate reports that curl judged out of scope, not invented ones.
   SlopProof checks truth; deciding scope stays with the maintainer, helped by a quote from the project's own
   policy. (The text-only screen kept 55 of the 60 too.)
 - Build recipes are tuned for curl.
+
+### Benchmark notes
+
+- **Headline run.** The numbers above are the final run (`bench/results_static_final.jsonl`): current code,
+  NVIDIA Nemotron on Nebius Token Factory, Tavily web search working. 197 reports: 0 of 148 real CVE reports
+  wrongly closed, 21 of 49 AI slop closed, $0.065 per report on average.
+- **Earlier runs, kept for transparency.** `results_static.jsonl` (v1, an older pipeline, 196 reports) rescored
+  with the current guards: 0 of 147 real closed, 22 of 49 slop closed. `results_static_v2.jsonl` is a partial
+  cross-check through OpenRouter (100 reports). `results_static_v3.jsonl` ran while the Tavily quota was exhausted,
+  so every web check failed; it is why a failed prior-art search now blocks a code-only close.
+- **A threshold chosen on the benchmark.** In the final run the code check alone closed 4 real CVEs while the
+  text screen voted to keep each open with confidence 0.85 to 0.95. A code-only close is now blocked when the text
+  screen disagrees with confidence 0.8 or more. That threshold was picked on this benchmark, so the 0 of 148 is
+  not an unbiased estimate. The held-out result (2 of 60 closed) did not change.
+- **Proof needs a negative control.** A proof bundle's check must pass when the bug is present and its control
+  check must fail on the safe case. #3583983 (bearer token leak with a redirect and `.netrc`) reproduced in the
+  sandbox, but its check grepped `curl -v` output that also matched the header sent to the first host and had no
+  control, so it stays PLAUSIBLE rather than CONFIRMED.
+- **Sandbox subset.** The sandbox numbers come from 27 of the 197 reports (19 slop, 8 real), not the full set.
 
 ### Run the benchmark
 
@@ -268,11 +288,11 @@ replays each report as of its filing date and checks whether a baseline's stated
 | Tool | What it does | Difference |
 |---|---|---|
 | [HackerOne Hai Triage / Agentic Validation](https://www.hackerone.com/press-release/hackerone-unveils-hai-triage-upgraded-ai-powered-vulnerability-response) (2025) | AI agents assess incoming reports in minutes as likely valid, invalid or needing review; [human analysts confirm outcomes and reproduce findings](https://docs.hackerone.com/en/articles/8837878-how-hai-triage-works) | Commercial and tied to the HackerOne platform; reproduction is done by people. SlopProof is open, runs anywhere, and reproduces in a sandbox |
-| [Elastic's AI triage pipeline](https://www.elastic.co/security-labs/blog/ai-vulnerability-triage-bug-bounty-hackerone) | Analyses HackerOne reports and reproduces them in sandboxed VMs; 85% agreement with engineers on 764 reports, about $2 per report | The closest match. Internal to Elastic and its products, not released. SlopProof is open source, about $0.02 per report for the static path, and publishes a replayable benchmark |
+| [Elastic's AI triage pipeline](https://www.elastic.co/security-labs/blog/ai-vulnerability-triage-bug-bounty-hackerone) | Analyses HackerOne reports and reproduces them in sandboxed VMs; 85% agreement with engineers on 764 reports, about $2 per report | The closest match. Internal to Elastic and its products, not released. SlopProof is open source, about $0.07 per report for the static path, and publishes a replayable benchmark |
 | [Nikasha](https://pypi.org/project/nikasha/) | Deterministic check of a report's factual claims against the source at the named version, with commit/path/line evidence | Roughly SlopProof's claim-checking step, without web checks, analysis or reproduction |
 | [ProjectDiscovery Neo Triage](https://projectdiscovery.io/triage) | Reproduces incoming findings against a company's live web and cloud assets in a sandbox | Closed, enterprise, web targets. SlopProof builds the project's source as of the report date and tests memory-safety and logic claims in C code |
 | [HackerOne Hai Triage](https://www.hackerone.com/platform/triage) | AI-assisted triage for programs on HackerOne | Platform-bound and paid. curl left HackerOne in 2026; SlopProof runs anywhere, including as a GitHub Action |
-| [Elastic's triage pipeline](https://www.elastic.co/security-labs/blog/ai-vulnerability-triage-bug-bounty-hackerone) | Internal agent for Elastic's bug bounty: 85% agreement with humans, about $2 per report | Internal, not released. SlopProof is open, about $0.02 per report statically, and publishes a replayable benchmark |
+| [Elastic's triage pipeline](https://www.elastic.co/security-labs/blog/ai-vulnerability-triage-bug-bounty-hackerone) | Internal agent for Elastic's bug bounty: 85% agreement with humans, about $2 per report | Internal, not released. SlopProof is open, about $0.07 per report statically, and publishes a replayable benchmark |
 | [Anthropic OSS Scanner](https://red.anthropic.com/oss-scanner/), [ossscanner.org](https://ossscanner.org/), [Argo](https://github.com/gigioneggiando/argo) | AI agents that scan repositories to find new bugs | They find bugs; SlopProof checks reports other people send. More AI bug finding means more reports to check |
 | [Pydantic AI sandboxes](https://pydantic.dev/docs/ai/harness/index.md) (Docker, E2B, Modal, BoxLite and others) | Execution environments for agents | Infrastructure, not triage. SlopProof's own sandbox is a small hardened Docker runner with optional gVisor |
 

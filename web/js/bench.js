@@ -7,13 +7,14 @@ function bar(label, value, max, cls) {
     <div class="track"><div class="fill ${cls || ""}" style="width:${pct}%"></div></div></div>`;
 }
 const frac = (s) => s.split("/").map(Number);
+const provedCount = (sb) => (sb && sb.verdicts.real && sb.verdicts.real.CONFIRMED) || 0;
 
 // Head-to-head: SlopProof against the same model asked only "is this slop?". Every number comes from loadBench().
 function scoreboard(s, base, fc, sb) {
   const num = (v, cls, sub) => `<div class="sb-cell"><div class="n ${cls || ""}" data-count="${esc(v)}">${esc(v)}</div>${sub ? `<div class="sub">${sub}</div>` : ""}</div>`;
   const txt = (v, sub) => `<div class="sb-cell"><div class="n none">${v}</div>${sub ? `<div class="sub">${sub}</div>` : ""}</div>`;
   const row = (label, hint, ours, theirs) => `<div class="sb-row"><div class="sb-label"><b>${label}</b><span>${hint}</span></div>${ours}${theirs}</div>`;
-  const proved = (sb && sb.verdicts.real && sb.verdicts.real.CONFIRMED) || 0;
+  const proved = provedCount(sb);
   const sbReal = sb ? frac(sb.real_wrongly_closed)[1] : 0;
   return `<section class="card scoreboard" aria-labelledby="sb-h">
     <div class="kicker">Head to head · same reports, same Nemotron model</div>
@@ -34,7 +35,8 @@ ROUTES.bench = async () => {
   app.innerHTML = `<div class="page-head"><h1>Benchmark</h1>
     <p>Every public curl HackerOne report we could collect: the reports curl's maintainer lists as AI slop, and the
     reports that became real CVEs. Each one is judged <b>as of the day it was filed</b>: the source tree from that day,
-    and web evidence published before it, so later write-ups cannot leak the answer.</p></div>
+    and web evidence published before it, so later write-ups cannot leak the answer. Scores below are the final run
+    (NVIDIA Nemotron on Nebius Token Factory); earlier runs stay in the repository for transparency.</p></div>
     <div class="stats" id="b-stats">${[1, 2, 3, 4].map(() => `<div class="stat"><div class="skeleton"></div></div>`).join("")}</div>
     <div id="b-score"></div>
     <div class="compare" id="b-compare"></div>
@@ -82,7 +84,7 @@ ROUTES.bench = async () => {
         <div class="facts" style="max-height:360px;overflow:auto">${fc.claims.map((c) => fact("bad",
           `#${esc(c.id)}: “${esc(c.baseline_said)}”`, `Fact: ${esc(c.fact)}`)).join("")}</div>
         ${sb ? `<p class="muted" style="font-size:13px;margin-top:14px">Sandbox sample: ${esc(sb.slop_auto_closed)} slop closed with a run,
-          ${esc(sb.real_wrongly_closed)} real wrongly closed, ${(sb.verdicts.real && sb.verdicts.real.CONFIRMED) || 0} real CVE reproduced.</p>` : ""}
+          ${esc(sb.real_wrongly_closed)} real wrongly closed, ${provedCount(sb)} real CVE${provedCount(sb) === 1 ? "" : "s"} reproduced.</p>` : ""}
       </div>`;
   }
 

@@ -167,7 +167,7 @@ async function typeHero() {
 }
 
 // Count the first number in each [data-count] element up from zero the first time it scrolls into view.
-// data-count holds the final text ("0/147", "$0.020", "100%"); only its first number moves. Reduced motion: shown at once.
+// data-count holds the final text ("0/148", "$0.065", "100%"); only its first number moves. Reduced motion: shown at once.
 function countUp(root = document) {
   const els = $$("[data-count]", root);
   if (!els.length || matchMedia("(prefers-reduced-motion: reduce)").matches || !("IntersectionObserver" in window)) return;

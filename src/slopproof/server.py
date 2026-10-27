@@ -293,18 +293,40 @@ def result(job_id: str):
     return job["result"]
 
 
-def _bench_rows(mode: str) -> list[dict]:
-    path = BENCH / f"results_{mode}.jsonl"
+# The headline file for each mode first, then older runs kept for transparency. A recorded run is looked up in
+# that order, so a link to a report scored only in an older run still opens.
+BENCH_FILES = {
+    "static": ("results_static_final.jsonl", "results_static.jsonl"),
+    "sandbox": ("results_sandbox.jsonl",),
+    "baseline": ("results_baseline.jsonl",),
+}
+
+
+def load_rows(path: Path) -> list[dict]:
     if not path.exists():
         return []
     return [json.loads(line) for line in path.read_text().splitlines() if line.strip()]
+
+
+def bench_rows(mode: str, bench_dir: Path = BENCH, headline_only: bool = True) -> list[dict]:
+    """The rows of a benchmark mode: the headline run, or (headline_only=False) every run, newest first and
+    each report id once."""
+    rows, seen = [], set()
+    for name in BENCH_FILES.get(mode, ()):
+        for r in load_rows(bench_dir / name):
+            if r["id"] not in seen:
+                seen.add(r["id"])
+                rows.append(r)
+        if headline_only:
+            break
+    return rows
 
 
 @app.get("/api/bench")
 def bench():
     out = {}
     for mode in ("static", "sandbox", "baseline"):
-        rows = [{k: v for k, v in r.items() if k != "full"} for r in _bench_rows(mode)]
+        rows = [{k: v for k, v in r.items() if k != "full"} for r in bench_rows(mode)]
         out[mode] = {"score": score(rows) if rows else None, "rows": rows}
     factcheck = BENCH / "baseline_factcheck.json"
     out["baseline"]["factcheck"] = json.loads(factcheck.read_text()) if factcheck.exists() else None
@@ -325,7 +347,7 @@ def report_bodies(bench_dir: Path = BENCH) -> dict[str, str]:
 
 @app.get("/api/bench/{mode}/{report_id}")
 def bench_run(mode: str, report_id: str):
-    for r in _bench_rows(mode):
+    for r in bench_rows(mode, headline_only=False):
         if r["id"] == report_id:
             return stored_run(r, report_bodies())
     raise HTTPException(404, "no such run")
