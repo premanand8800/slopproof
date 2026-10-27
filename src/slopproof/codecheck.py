@@ -286,7 +286,8 @@ def check_code(tree: Path, claims: dict, bare: Path | None = None, sha: str | No
         results["files"].append({"path": path, "exists": exists, "found_elsewhere": moved})
 
     for fn in claims["functions"]:
-        name = re.sub(r"[^\w]", "", fn.split("(")[0])
+        # res.json, Session.send, mod::f, obj->f: the method's own name is what the code defines.
+        name = re.sub(r"[^\w]", "", re.split(r"\.|::|->|#", fn.split("(")[0].strip())[-1])
         if not name:
             continue
         pat = re.compile(rf"\b{re.escape(name)}\s*\(")
