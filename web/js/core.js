@@ -87,6 +87,34 @@ $("#theme").onclick = () => {
   try { localStorage.setItem("theme", root.dataset.theme); } catch (e) { /* not persisted */ }
 };
 
+// Guided tour: five stops a judge can click through in about a minute. Kept per tab in sessionStorage.
+const TOUR = [
+  { hash: "#/report/sandbox/2298307", text: "A fake report: its “buffer overflow” is ruled out by a bounds check two lines earlier (lib/ws.c:578). Closed with evidence, and a reply to post." },
+  { hash: "#/report/sandbox/3735184", text: "A real CVE: the agent reproduced the .netrc password leak in the sandbox, and the run became a proof bundle." },
+  { hash: "#/proof", text: "The proof bundle: one command re-runs it from scratch. Bug present at the reported commit, gone at curl's fix. No AI involved in verifying." },
+  { hash: "#/bench", text: "196 curl reports replayed as of their filing date: 0 real CVEs wrongly closed. A plain “is this slop?” model gives false reasons in 13 of 31 closes." },
+  { hash: "#/memory", text: "Memory across runs, built so attackers can't teach it: facts pinned to the code version, nothing a reporter wrote is stored, and it never decides a verdict." },
+];
+function tourStep() { try { return JSON.parse(sessionStorage.getItem("tour") ?? "null"); } catch (e) { return null; } }
+function setTour(i) { try { i == null ? sessionStorage.removeItem("tour") : sessionStorage.setItem("tour", String(i)); } catch (e) { /* no tour persistence */ } }
+function startTour() { setTour(0); location.hash = TOUR[0].hash; }
+function renderTour() {
+  const i = tourStep(), el = $("#tour");
+  if (i == null || !TOUR[i]) { el.classList.add("hidden"); return; }
+  el.classList.remove("hidden");
+  el.innerHTML = `<span class="tour-n">Tour ${i + 1}/${TOUR.length}</span><span class="tour-t">${esc(TOUR[i].text)}</span>
+    <span class="row">${i > 0 ? `<button class="btn small" id="tour-prev">Back</button>` : ""}
+    ${i < TOUR.length - 1 ? `<button class="btn small primary" id="tour-next">Next</button>` : `<button class="btn small primary" id="tour-end">Finish</button>`}
+    <button class="btn small" id="tour-x" title="Close the tour">✕</button></span>`;
+  const go = (j) => { setTour(j); location.hash = TOUR[j].hash; };
+  if ($("#tour-prev")) $("#tour-prev").onclick = () => go(i - 1);
+  if ($("#tour-next")) $("#tour-next").onclick = () => go(i + 1);
+  if ($("#tour-end")) $("#tour-end").onclick = () => { setTour(null); location.hash = "#/"; };
+  $("#tour-x").onclick = () => { setTour(null); renderTour(); };
+}
+const TITLES = { home: "SlopProof", bench: "Benchmark · SlopProof", proof: "Proof bundles · SlopProof", memory: "Memory · SlopProof",
+  how: "How it works · SlopProof", run: "Triage run · SlopProof", report: "Recorded run · SlopProof" };
+
 // Router. A page function gets the path parts and may return a cleanup function.
 const ROUTES = {};
 let cleanup = null;
@@ -98,6 +126,8 @@ function route() {
   const nav = ["run", "report", "home"].includes(name) ? "home" : name;
   $$("nav a").forEach((a) => a.classList.toggle("active", a.dataset.nav === nav));
   window.scrollTo(0, 0);
+  document.title = TITLES[name] || TITLES.home;
+  renderTour();
   const page = ROUTES[name] || ROUTES.home;
   Promise.resolve(page(parts.slice(1))).then((fn) => { cleanup = typeof fn === "function" ? fn : null; })
     .catch((e) => { app.innerHTML = `<div class="card"><h2>Something went wrong</h2><p class="muted">${esc(e.message)}</p><a href="#/">Back to start</a></div>`; });

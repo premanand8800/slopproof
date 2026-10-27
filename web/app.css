@@ -290,3 +290,11 @@ table.bench tbody tr:hover td { background: var(--card-2); }
 @media (prefers-reduced-motion: reduce) {
   .retro::after, .cursor, .glitch, .marquee .track { animation: none; }
 }
+.tour { position: sticky; top: 61px; z-index: 15; display: flex; gap: 14px; align-items: center; flex-wrap: wrap;
+  padding: 10px 28px; background: var(--accent); color: var(--accent-ink); font-size: 14px; }
+.tour-n { font-family: "VT323", monospace; font-size: 20px; white-space: nowrap; }
+.tour-t { flex: 1; min-width: 240px; }
+.tour .btn { height: 30px; }
+.tour .btn:not(.primary) { background: transparent; color: var(--accent-ink); border-color: color-mix(in srgb, var(--accent-ink) 50%, transparent); }
+.tour .btn.primary { background: var(--accent-ink); color: var(--accent); border-color: var(--accent-ink); }
+@media (max-width: 640px) { .tour { top: 104px; padding: 10px 16px; } }

@@ -14,6 +14,8 @@ ROUTES.home = async () => {
         <div class="term-line" aria-hidden="true"><span class="prompt">C:\\&gt;</span><span id="h-kicker"></span></div>
         <h1 class="typed" style="margin-top:10px" aria-label="Slop is cheap to write. Proof is cheap to check.">
           <span id="h-l1" aria-hidden="true"></span><br><span id="h-l2" aria-hidden="true"></span></h1>
+        <div class="row wrap" style="margin-top:18px"><button class="btn primary" id="tour-start" type="button">Take the 60-second tour</button>
+          <a class="btn" href="#/report/sandbox/3735184">See a real CVE proved</a></div>
         <p class="lead"><b>Proof before priority, for every report.</b> SlopProof checks every claim in a security report
         against the project's real code on the day it was filed, checks every reference on the web, follows the code to
         where real input enters, and tries to reproduce the bug in a locked-down sandbox. Every verdict comes with evidence
@@ -36,9 +38,9 @@ ROUTES.home = async () => {
         <textarea id="text" placeholder="Report body"></textarea>
       </details>
       <div class="options">
-        <label class="switch"><input id="sandbox" type="checkbox" checked> Reproduce in sandbox</label>
-        <span class="muted" style="font-size:13px">Docker, no network, AddressSanitizer · about 5 to 15 minutes</span>
-        <input id="passcode" type="password" placeholder="sandbox passcode" class="hidden">
+        <label class="switch"><input id="sandbox" type="checkbox"> Also reproduce in the sandbox</label>
+        <span class="muted" style="font-size:13px" id="sandbox-note">Static checks take about 2 minutes. The sandbox (Docker, no network, AddressSanitizer) adds 5 to 15 minutes.</span>
+        <input id="passcode" type="password" placeholder="demo passcode (in the Devpost text)" class="hidden">
       </div>
       <div class="examples"><span class="muted" style="font-size:13px">Recorded runs:</span>
         ${EXAMPLES.map((e) => `<a class="ex" href="#/report/${e.mode}/${e.id}"><span class="tag ${e.kind}">${e.kind === "slop" ? "AI slop" : "real CVE"}</span>${esc(e.label)}</a>`).join("")}
@@ -59,6 +61,7 @@ ROUTES.home = async () => {
     </div>`;
 
   typeHero();
+  $("#tour-start").onclick = startTour;
   loadBench().then((b) => {
     const s = b.static.score, fc = b.baseline.factcheck, sb = b.sandbox.score;
     const confirmed = (sb && sb.verdicts.real && sb.verdicts.real.CONFIRMED) || 0;

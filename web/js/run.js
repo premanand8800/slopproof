@@ -507,4 +507,6 @@ ROUTES.report = async ([mode, id]) => {
   run.now = `Recorded run of HackerOne #${id}, replayed as of ${res.created_at ? res.created_at.slice(0, 10) : "its filing date"}.`;
   run.render();
   showBundle(run, rep);
+  // On the tour, go straight to the verdict: the timeline above it is there for anyone who wants the detail.
+  if (tourStep() != null) setTimeout(() => $("#r-verdict", app).scrollIntoView({ behavior: "smooth", block: "start" }), 400);
 };
