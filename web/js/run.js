@@ -55,6 +55,7 @@ class Run {
         </div>
       </div>
       <div class="progress"><div id="r-bar" style="width:0"></div></div>
+      <div id="r-summary"></div>
       <div class="run-grid">
         <div>
           <ol class="timeline" id="r-timeline"></ol>
@@ -405,6 +406,11 @@ function renderVerdict(run, ev, ts) {
     <div id="r-bundle"></div>
     <details style="margin-top:14px"><summary class="muted">Cost $${(cost.total_usd || 0).toFixed(4)}${ev.seconds ? ` · ${fmtDur(ev.seconds)}` : ""} · per model</summary>
       <table class="ledger"><tr><th>Model</th><th>Calls</th><th>Tokens in / out</th><th>USD</th></tr>${rows}</table></details></div>`;
+  // The answer first: a one-line verdict above the timeline, linking down to the evidence.
+  $("#r-summary", run.root).innerHTML = `<div class="vsum v-${esc(v.verdict)}"><span class="vbadge">${esc(v.verdict)}</span>
+    <div class="vtext">${esc(v.headline)}<small>${esc(action)}</small></div>
+    <button class="btn small" id="r-jump" type="button">Evidence and reply ↓</button></div>`;
+  $("#r-jump", run.root).onclick = () => $("#r-verdict", run.root).scrollIntoView({ behavior: "smooth", block: "start" });
   $("#r-copy-reply", run.root).onclick = () => navigator.clipboard.writeText($("#r-reply", run.root).textContent).then(() => toast("Reply copied"));
   const dl = $("#r-facts", run.root);
   dl.innerHTML = `<dt>Verdict</dt><dd class="vt ${esc(v.verdict)}">${esc(v.verdict)}</dd><dt>Cost</dt><dd>$${(cost.total_usd || 0).toFixed(3)}</dd>

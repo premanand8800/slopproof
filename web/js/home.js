@@ -11,6 +11,7 @@ ROUTES.home = async () => {
   app.innerHTML = `
     <section class="hero">
       <div class="retro">
+        <div class="titlebar" aria-hidden="true"><i></i><i></i><i></i><span>SLOPPROOF.EXE</span></div>
         <div class="term-line" aria-hidden="true"><span class="prompt">C:\\&gt;</span><span id="h-kicker"></span></div>
         <h1 class="typed" style="margin-top:10px" aria-label="Slop is cheap to write. Proof is cheap to check.">
           <span id="h-l1" aria-hidden="true"></span><br><span id="h-l2" aria-hidden="true"></span></h1>
@@ -69,10 +70,10 @@ ROUTES.home = async () => {
     if (!el) return;
     el.innerHTML = `
       <div class="kpi"><div class="n ok">${esc(s.real_wrongly_closed)}</div><div class="l">real CVE reports wrongly closed, out of ${s.reports} public curl reports replayed as of their filing date</div></div>
-      <div class="kpi"><div class="n accent">${confirmed}</div><div class="l">real CVE reproduced in the sandbox, with a proof that re-runs from scratch</div></div>
+      <div class="kpi"><div class="n accent">${confirmed}</div><div class="l">real CVE${confirmed === 1 ? "" : "s"} reproduced in the sandbox, each with a proof that re-runs from scratch</div></div>
       <div class="kpi"><div class="n bad">${fc ? `${fc.closes_with_false_reason}/${fc.baseline_closes}` : "–"}</div><div class="l">closes by a plain “is this slop?” model that cite something false. SlopProof cites checked facts.</div></div>`;
     const items = [`<b>${esc(s.real_wrongly_closed)}</b> real CVE reports wrongly closed`, `<b>${s.reports}</b> curl reports replayed as of their filing date`,
-      `<b>${confirmed}</b> real CVE reproduced and proved`, `<b>${fc ? fc.closes_with_false_reason : "–"}</b> false reasons from a text-only model`,
+      `<b>${confirmed}</b> real CVE${confirmed === 1 ? "" : "s"} reproduced and proved`, `<b>${fc ? fc.closes_with_false_reason : "–"}</b> false reasons from a text-only model`,
       `<b>$${s.avg_usd.toFixed(2)}</b> per report for the static checks`, "<b>0</b> AI involved in verifying a proof bundle", "NVIDIA Nemotron · Nebius Token Factory · Tavily"];
     const m = $("#h-marquee");
     if (m) m.innerHTML = [...items, ...items].map((x) => `<span>★ ${x}</span>`).join("");

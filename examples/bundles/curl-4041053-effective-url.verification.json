@@ -1,0 +1,22 @@
+{
+ "bundle": "30f25b73d9970ac63524ad5b1c9a67c6ca67e0188aadb61e388969f283f539ce",
+ "claim": "The bug is reproduced. When curl uses a .netrc file for credentials and follows a same-host relative redirect (Location: /newpath), the netrc username and password are leaked into CURLINFO_EFFECTIVE_URL, the verbose output, and the %{url_effective} writeout variable.\n\nEvidence from the test run:\n- W",
+ "problems": [],
+ "at_commit": {
+  "commit": "d1823ebc17e5778c30f8a6b2221a057ec607a9b7",
+  "built": true,
+  "exit_code": 0,
+  "output": "BUG REPRODUCED: netrc password leaked into EFFECTIVE_URL\n",
+  "bug_present": true,
+  "seconds": 198
+ },
+ "verdict": "VERIFIED_AND_FIXED",
+ "at_against": {
+  "commit": "7a6bd027d0de2b6857472d35da090ef60cc29f19",
+  "built": true,
+  "exit_code": 1,
+  "output": "",
+  "bug_present": false,
+  "seconds": 151
+ }
+}

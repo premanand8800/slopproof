@@ -91,7 +91,7 @@ $("#theme").onclick = () => {
 const TOUR = [
   { hash: "#/report/sandbox/2298307", text: "A fake report: its “buffer overflow” is ruled out by a bounds check two lines earlier (lib/ws.c:578). Closed with evidence, and a reply to post." },
   { hash: "#/report/sandbox/3735184", text: "A real CVE: the agent reproduced the .netrc password leak in the sandbox, and the run became a proof bundle." },
-  { hash: "#/proof", text: "The proof bundle: one command re-runs it from scratch. Bug present at the reported commit, gone at curl's fix. No AI involved in verifying." },
+  { hash: "#/proof", text: "The proof bundles (two so far): one command re-runs each from scratch. Bug present at the reported commit, gone at curl's fix. No AI involved in verifying." },
   { hash: "#/bench", text: "196 curl reports replayed as of their filing date: 0 real CVEs wrongly closed. A plain “is this slop?” model gives false reasons in 13 of 31 closes." },
   { hash: "#/memory", text: "Memory across runs, built so attackers can't teach it: facts pinned to the code version, nothing a reporter wrote is stored, and it never decides a verdict." },
 ];

@@ -1,7 +1,14 @@
 "use strict";
 // Proof bundles and How it works. Loaded last: it starts the router.
 
-const EXAMPLE_BUNDLE = "curl-3735184-netrc";
+// Shipped proof bundles of real curl CVEs the sandbox agent reproduced. Each has a recorded verification
+// at the reported commit and at curl's fix.
+const BUNDLES = [
+  { name: "curl-3735184-netrc", report: "3735184", cve: "CVE-2026-8926", short: ".netrc password leak",
+    title: "curl sends the .netrc password of user alice when the URL names user bob" },
+  { name: "curl-4041053-effective-url", report: "4041053", cve: "CVE-2026-94266", short: "password in effective URL",
+    title: "curl returns the URL with the password still in it from CURLINFO_EFFECTIVE_URL" },
+];
 
 function verifyFacts(v) {
   const row = (r, label) => r ? fact(r.bug_present ? "bad" : "good",
@@ -11,23 +18,28 @@ function verifyFacts(v) {
     row(v.at_commit, "Reported commit") + row(v.at_against, "Fix commit");
 }
 
-ROUTES.proof = async () => {
+ROUTES.proof = async (parts) => {
+  const ex = BUNDLES.find((x) => x.name === parts[0]) || BUNDLES[0];
   app.innerHTML = `<div class="page-head"><h1>Proof bundles</h1>
     <p>Slop costs nothing to write and hours to disprove. A <b>proof bundle</b> flips that: it pins the project commit,
     the test files and one check command that exits 0 only while the bug is present. Anyone can re-run it in a fresh
     sandbox in about two minutes, and <b>no AI is involved in verifying it</b>. SlopProof writes one for every bug it
     reproduces, and a report only counts as CONFIRMED if its bundle passes again from scratch.</p></div>
+    <div class="seg" role="tablist" style="margin-top:18px">${BUNDLES.map((x) => `<button role="tab" class="${x === ex ? "active" : ""}" data-n="${x.name}">${esc(x.cve)} · ${esc(x.short)}</button>`).join("")}</div>
     <div class="proof-grid" id="p-grid"><div class="card"><div class="skeleton"></div></div><div class="card"><div class="skeleton"></div></div></div>`;
-  const [b, v] = await Promise.all([getJSON(exampleUrl(EXAMPLE_BUNDLE)), getJSON(exampleUrl(EXAMPLE_BUNDLE + ".verification"))]);
+  $$(".seg button", app).forEach((btn) => { btn.onclick = () => { location.hash = `#/proof/${btn.dataset.n}`; }; });
+  const [b, v] = await Promise.all([getJSON(exampleUrl(ex.name)), getJSON(exampleUrl(ex.name + ".verification"))]);
   const files = Object.entries(b.files).map(([p, c]) => `<details style="margin-top:8px"><summary><code>${esc(p)}</code>
     <span class="muted">${c.length} bytes</span></summary><pre class="file">${esc(c)}</pre></details>`).join("");
   $("#p-grid").innerHTML = `
-    <div class="card"><div class="kicker">Example: real CVE-2026-8926 · HackerOne #3735184</div>
-      <h2 style="font-size:20px;margin-top:8px">${esc(b.claim)}</h2>
+    <div class="card"><div class="kicker">Real ${esc(ex.cve)} · HackerOne #${esc(ex.report)}</div>
+      <h2 style="font-size:20px;margin-top:8px">${esc(ex.title)}</h2>
+      <div class="row wrap" style="margin-top:6px;font-size:13px"><a href="#/report/sandbox/${esc(ex.report)}">See the triage run that wrote it →</a></div>
       <div class="facts">
         ${fact("meh", `Commit <code>${esc(b.commit.slice(0, 12))}</code> of <a href="${esc(b.repo)}" target="_blank" rel="noopener">${esc(b.repo)}</a>`, `bundle <code>sha256:${esc(b.sha256.slice(0, 16))}</code>`)}
         ${fact("meh", "Check command, exits 0 only while the bug is present", `<code>${esc(b.check)}</code>`)}
       </div>${files}
+      <details style="margin-top:8px"><summary class="muted">The agent's claim, as sealed in the bundle</summary><pre class="file">${esc(b.claim)}</pre></details>
       <div class="row wrap" style="margin-top:16px"><button class="btn" id="p-dl">Download bundle</button>
         <span class="muted" style="font-size:13px">Re-run locally: <code>slopproof verify bundle.json --against ${esc(v.at_against.commit.slice(0, 12))}</code></span></div>
     </div>
@@ -39,7 +51,7 @@ ROUTES.proof = async () => {
           <button class="btn primary" id="p-run">Re-run live</button></div>
         <div class="term hidden" id="p-term"></div><div id="p-result"></div>`}
     </div>`;
-  $("#p-dl").onclick = () => download(`${EXAMPLE_BUNDLE}.json`, b);
+  $("#p-dl").onclick = () => download(`${ex.name}.json`, b);
   if (STATIC) return;
   let es = null;
   $("#p-run").onclick = async () => {
@@ -48,7 +60,7 @@ ROUTES.proof = async () => {
     term.textContent = "Starting a fresh sandbox…\n";
     $("#p-result").innerHTML = "";
     btn.disabled = true;
-    const r = await fetch(`/api/examples/${EXAMPLE_BUNDLE}/verify?passcode=${encodeURIComponent($("#p-pass").value)}`, { method: "POST" });
+    const r = await fetch(`/api/examples/${ex.name}/verify?passcode=${encodeURIComponent($("#p-pass").value)}`, { method: "POST" });
     const j = await r.json();
     if (!r.ok) { term.textContent += `${j.detail || "Failed."}\n`; btn.disabled = false; return; }
     const t0 = Date.now();

@@ -25,6 +25,7 @@ ROUTES.bench = async () => {
       </div>
       <div style="overflow-x:auto"><table class="bench"><thead><tr><th>Report</th><th>Ground truth</th><th>SlopProof</th>
         <th class="hide-sm">Text-only baseline</th><th class="hide-sm">Cost</th></tr></thead><tbody id="b-rows"></tbody></table></div>
+      <div class="more hidden" id="b-more"><button class="btn small" type="button"></button></div>
     </div>`;
 
   const b = await loadBench();
@@ -62,13 +63,16 @@ ROUTES.bench = async () => {
   const sandboxIds = new Set(b.sandbox.rows.map((r) => r.id));
   const baseOf = Object.fromEntries(b.baseline.rows.map((r) => [r.id, r.verdict === "FABRICATED" ? "close" : "keep"]));
   const sandboxRow = Object.fromEntries(b.sandbox.rows.map((r) => [r.id, r]));
-  let filter = "all";
+  let filter = "all", limit = 25;
   const draw = () => {
     const q = $("#b-q").value.trim().toLowerCase();
     const rows = b.static.rows.filter((r) => (filter === "all" || (filter === "sandbox" ? sandboxIds.has(r.id) : r.label === filter))
       && (!q || r.title.toLowerCase().includes(q) || r.id.includes(q))).sort((x, y) => y.created_at.localeCompare(x.created_at));
     $("#b-count").textContent = `${rows.length} reports · open one to see every step`;
-    $("#b-rows").innerHTML = rows.map((r) => {
+    const more = $("#b-more");
+    more.classList.toggle("hidden", rows.length <= limit);
+    $("button", more).textContent = `Show all ${rows.length} reports`;
+    $("#b-rows").innerHTML = rows.slice(0, limit).map((r) => {
       const sbr = sandboxRow[r.id];
       const v = sbr ? sbr.verdict : r.verdict;
       return `<tr data-href="#/report/${sbr ? "sandbox" : "static"}/${esc(r.id)}">
@@ -78,11 +82,13 @@ ROUTES.bench = async () => {
         <td class="hide-sm muted">${baseOf[r.id] || "–"}</td><td class="hide-sm mono">$${(sbr || r).usd.toFixed(3)}</td></tr>`;
     }).join("");
   };
-  $("#b-q").oninput = draw;
+  $("#b-q").oninput = () => { limit = 25; draw(); };
+  $("#b-more").onclick = () => { limit = Infinity; draw(); };
   $("#b-seg").onclick = (e) => {
     const btn = e.target.closest("button");
     if (!btn) return;
     filter = btn.dataset.f;
+    limit = 25;
     $$("#b-seg button").forEach((x) => x.classList.toggle("active", x === btn));
     draw();
   };
