@@ -184,6 +184,14 @@ def reproduce(tree: Path, project: str, report: str, claims: dict, analysis: dic
                 if tool == "run":
                     cmd = str(args.get("cmd", ""))
                     timeout = min(int(args.get("timeout", 300) or 300), 600)
+                    blocked = _hook(cmd, transcript)
+                    if blocked:
+                        # Hooks answer instead of the shell: the command is not run, the agent is redirected.
+                        emit({"stage": "reproduce", "type": "run", "step": step + 1, "cmd": cmd[:400]})
+                        emit({"stage": "reproduce", "type": "output", "step": step + 1, "exit_code": 2, "output": blocked})
+                        transcript.append({"tool": "run", "cmd": cmd, "exit_code": 2, "output": blocked, "hook": True})
+                        messages.append({"role": "tool", "tool_call_id": tc.id, "content": blocked})
+                        continue
                     emit({"stage": "reproduce", "type": "run", "step": step + 1, "cmd": cmd[:400]})
                     out = sb.run(cmd, timeout)
                     emit({"stage": "reproduce", "type": "output", "step": step + 1,
@@ -229,6 +237,31 @@ for, a cosmetic difference, or a problem only in code attacker input cannot reac
 Reply with one JSON object only:
 {"plain_way": "how the attacker could get the same result with intended use, or 'none'",
  "boundary": "the boundary crossed, or 'none'", "security_impact": true or false, "reason": "one or two sentences"}"""
+
+
+READ_ONLY = re.compile(r"^\s*(cd [^;&|]+(&&|;)\s*)?(cat|sed -n|grep|rg|find|ls|head|tail|wc|less|nl)\b")
+READ_BUDGET = 12
+
+
+def _hook(cmd: str, transcript: list[dict]) -> str | None:
+    """Rules checked at every command, like hooks in a coding agent. Returns a message instead of running, or None."""
+    runs = [t for t in transcript if t.get("tool") == "run" and not t.get("hook")]
+    if any(t["cmd"].strip() == cmd.strip() for t in runs):
+        return ("[hook] You already ran exactly this command; its output is above. Do not repeat it: use what you "
+                "learned and take the next step (write the harness or PoC, build it, run it).")
+    if re.search(r"\btail\s+-f\b|while\s+true|while\s+:\s*;", cmd):
+        return "[hook] Commands that never end are not allowed. Use a bounded loop with a timeout."
+    if READ_ONLY.search(cmd):
+        since_action = 0
+        for t in reversed(transcript):
+            if t.get("tool") == "write_file" or (t.get("tool") == "run" and not READ_ONLY.search(t.get("cmd", ""))):
+                break
+            since_action += 1
+        if since_action >= READ_BUDGET:
+            return (f"[hook] {since_action} reads in a row without writing or building anything. The relevant code "
+                    "and callers are already in your prompt. Stop reading: write the smallest harness or PoC that "
+                    "drives the reported code path, compile it with -fsanitize=address,undefined, and run it.")
+    return None
 
 
 def _check_reproduction(result: dict, project: str, report: str = "", ledger: Ledger | None = None) -> None:

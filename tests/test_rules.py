@@ -159,3 +159,15 @@ def test_resume_reads_finished_steps():
 def test_code_tokens_split_identifiers():
     toks = tokens("CURLOPT_NETRC parseNetrc")
     assert {"curlopt", "netrc", "parse", "curlopt_netrc", "parsenetrc"} <= set(toks)
+
+
+# ---- Agent hooks
+def test_hooks_block_repeats_endless_loops_and_endless_reading():
+    from slopproof.reproduce import READ_BUDGET, _hook
+    done = [{"tool": "run", "cmd": "grep -n x a.c", "exit_code": 0}]
+    assert "already ran" in _hook("grep -n x a.c", done)
+    assert "never end" in _hook("tail -f build.log", [])
+    reads = [{"tool": "run", "cmd": f"sed -n '{i},{i + 5}p' a.c", "exit_code": 0} for i in range(READ_BUDGET)]
+    assert "Stop reading" in _hook("cat b.c", reads)
+    assert _hook("cat b.c", reads + [{"tool": "write_file", "path": "/work/poc.c"}]) is None
+    assert _hook("clang poc.c -o poc", reads) is None
