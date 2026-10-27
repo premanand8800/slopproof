@@ -123,7 +123,7 @@ ROUTES.how = () => {
     <ol class="pipeline">
       <li><div><b>Extract every checkable claim</b><span>Files, functions, line numbers, quoted code, CVEs, URLs and the attack surface. Nemotron 3.5 Lightning.</span></div></li>
       <li><div><b>Check claims against the real code</b><span>The git tree as of the report's date. Quoted code is matched line by line, with a diff and git history, so code from an older version is not called invented.</span></div></li>
-      <li><div><b>Find the code the report is about</b><span>tree-sitter splits the project into functions and BM25 ranks them, even when a report names no file. Measured on 139 real CVEs: a fixed function is in the top 5 for 104.</span></div></li>
+      <li><div><b>Find the code the report is about</b><span>tree-sitter splits the project into functions and BM25 ranks them, even when a report names no file. Measured on 139 real CVEs: a fixed function is in the top 5 for 103. It also parses Python, Go, JavaScript and Rust.</span></div></li>
       <li><div><b>Check references and prior art</b><span>Tavily search and extract, judged by Nemotron 3 Super. Web search stops at the report's date when replaying the benchmark.</span></div></li>
       <li><div><b>Text screen</b><span>One Nemotron 3 Ultra call reads only the wording. It can vote, never decide, and its reasons are never shown as evidence.</span></div></li>
       <li><div><b>Static analysis and project policy</b><span>Nemotron 3 Ultra reads the real code and traces sizes, bounds and ownership. The project's own security policy is quoted for the maintainer.</span></div></li>

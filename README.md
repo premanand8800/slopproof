@@ -180,7 +180,7 @@ functions its fix commit changed; the search runs on the tree as of the report d
 | Fixed function found in the top… | 1 | 5 | 10 |
 |---|---|---|---|
 | Functions the report names (before) | 45 / 139 | 70 / 139 | 74 / 139 |
-| **Code search** | **61 / 139** | **104 / 139** | **113 / 139** |
+| **Code search** | **69 / 139** | **103 / 139** | **114 / 139** |
 | Reports that name no code: before | 0 / 16 | 0 / 16 | 0 / 16 |
 | Reports that name no code: **code search** | **5 / 16** | **10 / 16** | **10 / 16** |
 
@@ -219,7 +219,25 @@ real reports on its own (about 4 in 10 quotes for both), which is why it only lo
   behave as the report says: these are accurate reports that curl judged out of scope, not invented ones.
   SlopProof checks truth; deciding scope stays with the maintainer, helped by a quote from the project's own
   policy. (The text-only screen kept 55 of the 60 too.)
-- Build recipes are tuned for curl.
+- Build recipes are tuned for curl. For other projects the sandbox agent reads the build files itself; outside
+  curl and fluent-bit this is untested.
+
+### Beyond curl
+
+The benchmark is curl (C). Code search and the code checks also parse Python, Go, JavaScript and Rust
+(tree-sitter), and a pasted report that names a release is checked at that release. A handful of live static runs
+on the demo server, with report texts we wrote (one from a public advisory, two invented the way AI slop is):
+
+| Project | Report | Verdict |
+|---|---|---|
+| psf/requests (Python) | real CVE-2024-35195 (`verify=False` sticks to the connection pool), from the advisory | PLAUSIBLE: the code at v2.31.0 shows the pool reuse |
+| gin-gonic/gin (Go) | invented heap overflow via `memcpy` in `Context.Query()` | FABRICATED: the function and the code do not exist |
+| expressjs/express (JavaScript) | invented prototype pollution in `res.json()` | PLAUSIBLE, low priority: `deepMergeJson()` does not exist, but a related fix keeps a code-only close off |
+| fluent/fluent-bit (C, sandbox) | read past the end in the chunked parser | PLAUSIBLE: two callers lack the NUL terminator; not reproduced |
+
+These runs found and fixed three gaps that a curl-only benchmark could not: a release named without a date was
+checked at HEAD, `res.json` was looked up as `resjson`, and JavaScript functions assigned as
+`res.json = function () {}` were not indexed. Three runs are an example, not a measurement.
 
 ### Benchmark notes
 

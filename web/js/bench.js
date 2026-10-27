@@ -1,4 +1,16 @@
 "use strict";
+
+// Live runs outside the curl benchmark (kept on the demo server). Reports written by us; see README "Beyond curl".
+const BEYOND = [
+  { job: "5d238c7e8c3c", project: "psf/requests (Python)", what: "real CVE-2024-35195, written from the public advisory", verdict: "PLAUSIBLE", ok: true,
+    note: "Kept open: the code at v2.31.0 (the release the report names) shows the pool reuse it describes." },
+  { job: "b31796d9edea", project: "gin-gonic/gin (Go)", what: "invented “heap overflow in Context.Query()”", verdict: "FABRICATED", ok: true,
+    note: "parseQueryBuffer() and its memcpy do not exist in gin; Go has no memcpy." },
+  { job: "ce0af4d0ca30", project: "expressjs/express (JavaScript)", what: "invented “prototype pollution in res.json()”", verdict: "PLAUSIBLE",
+    note: "deepMergeJson() does not exist and res.json() (lib/response.js:236) calls JSON.stringify directly. Still kept open at low priority: a related fix exists, so code reading alone may not close it." },
+  { job: "cdc10e0ef32e", project: "fluent/fluent-bit (C, with sandbox)", what: "chunked-parser read past the end", verdict: "PLAUSIBLE",
+    note: "Two HTTP/1 callers pass the length without a NUL terminator; the sandbox did not reproduce it." },
+];
 // Benchmark: headline numbers, SlopProof against the text-only baseline, and every recorded run.
 
 function bar(label, value, max, cls) {
@@ -40,6 +52,11 @@ ROUTES.bench = async () => {
     <div class="stats" id="b-stats">${[1, 2, 3, 4].map(() => `<div class="stat"><div class="skeleton"></div></div>`).join("")}</div>
     <div id="b-score"></div>
     <div class="compare" id="b-compare"></div>
+    ${STATIC ? "" : `<div class="section-title"><h2>Beyond curl</h2><span class="muted" style="font-size:13px">live runs on other projects and languages</span></div>
+    <div class="card" style="padding:16px"><p class="muted" style="margin:0 0 10px;font-size:14px">The benchmark is curl (C). These runs show the same
+      pipeline on Python, Go and JavaScript projects. The reports are test reports we wrote: one from a public advisory, two invented
+      the way AI slop is. A handful of runs, not a benchmark.</p><div class="facts">${BEYOND.map((r) =>
+      fact(r.ok ? "good" : "meh", `<a href="#/run/${r.job}">${esc(r.project)}</a> · ${esc(r.what)} → <span class="vt ${r.verdict}">${r.verdict}</span>`, esc(r.note))).join("")}</div></div>`}
     <div class="section-title"><h2>All reports</h2><span class="muted" id="b-count" style="font-size:13px"></span></div>
     <div class="card" style="padding:16px">
       <div class="table-tools">

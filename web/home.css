@@ -57,3 +57,5 @@
   .sb-cell .n { font-size: 26px; }
 }
 .sb-head > div:nth-child(n+2) { padding-left: 15px; }
+
+button.ex { font: inherit; font-size: 13px; text-align: left; }

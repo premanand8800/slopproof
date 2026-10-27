@@ -44,7 +44,7 @@ NVIDIA Nemotron via Nebius Token Factory, with Tavily web search working.
   CURLINFO_EFFECTIVE_URL). Both proof bundles re-run as VERIFIED_AND_FIXED against curl's fix.
 - About $0.065 per report for the static checks (median 44 s).
 - Held out: 60 reports curl closed as not applicable, never seen during development; 2 closed.
-- Code search finds a function the CVE fix changed in its top 5 for 104 of 139 real reports (75%), against 70 when
+- Code search finds a function the CVE fix changed in its top 5 for 103 of 139 real reports (74%), against 70 when
   reading only the code a report names; for reports that name no code, 10 of 16 against 0.
 
 Benchmark notes:
@@ -72,3 +72,9 @@ More languages and build recipes, embeddings and an LLM reranker for code search
 
 ## Built with
 nvidia-nemotron, nebius-token-factory, tavily, python, fastapi, docker, addresssanitizer, tree-sitter
+
+### Beyond curl
+
+Code search and the code checks also parse Python, Go, JavaScript and Rust. Live runs on requests (a real CVE kept
+open), gin (an invented Go "memcpy overflow", FABRICATED) and express (an invented prototype pollution, kept open at
+low priority because a related fix exists) are linked from the Benchmark page. A handful of runs, not a benchmark.

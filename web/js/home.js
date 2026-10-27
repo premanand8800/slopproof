@@ -7,6 +7,22 @@ const EXAMPLES = [
   { id: "3735184", mode: "sandbox", label: ".netrc password leak, reproduced", kind: "real" },
 ];
 
+// A report to run live with one click: no passcode, static checks only, about a minute. Invented by us, AI-slop style.
+const LIVE_SAMPLE = {
+  repo: "https://github.com/gin-gonic/gin",
+  title: "Critical: heap buffer overflow in Context.Query() leads to remote code execution",
+  text: `A critical heap-based buffer overflow exists in gin's query parsing. In context.go, Context.Query() calls
+parseQueryBuffer(), which copies the raw query string into a fixed 1024-byte buffer with memcpy and no length check:
+
+    func (c *Context) parseQueryBuffer(raw string) {
+        var buf [1024]byte
+        memcpy(&buf[0], raw, len(raw)) // VULNERABLE LINE 412
+    }
+
+A query string longer than 1024 bytes overwrites adjacent heap memory, including function pointers in the Context
+struct, for remote code execution on any gin server. Reproduce: curl "http://localhost:8080/?q=$(python3 -c 'print("A"*5000)')"`,
+};
+
 ROUTES.home = async () => {
   app.innerHTML = `
     <section class="hero">
@@ -51,6 +67,8 @@ ROUTES.home = async () => {
       <div class="examples"><span class="muted" style="font-size:13px">Recorded runs:</span>
         ${EXAMPLES.map((e) => `<a class="ex" href="#/report/${e.mode}/${e.id}"><span class="tag ${e.kind}">${e.kind === "slop" ? "AI slop" : "real CVE"}</span>${esc(e.label)}</a>`).join("")}
       </div>
+      ${STATIC ? "" : `<div class="examples"><span class="muted" style="font-size:13px">Or run one live:</span>
+        <button class="ex" id="try-live" type="button"><span class="tag slop">Go</span>invented gin “memcpy overflow”, about a minute, no passcode</button></div>`}
       <div class="form-msg" id="formmsg"></div>
     </form>
 
@@ -104,6 +122,17 @@ ROUTES.home = async () => {
   const syncPass = () => $("#passcode").classList.toggle("hidden", !(health.sandbox_passcode && $("#sandbox").checked));
   $("#sandbox").onchange = syncPass;
   syncPass();
+
+  if ($("#try-live")) $("#try-live").onclick = () => {
+    $("#url").value = "";
+    $("#sandbox").checked = false;
+    syncPass();
+    $(".paste").open = true;
+    $("#repo").value = LIVE_SAMPLE.repo;
+    $("#ptitle").value = LIVE_SAMPLE.title;
+    $("#text").value = LIVE_SAMPLE.text;
+    $("#form").requestSubmit();
+  };
 
   $("#form").onsubmit = async (e) => {
     e.preventDefault();
