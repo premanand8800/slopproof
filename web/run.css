@@ -69,3 +69,9 @@ button.vchip:hover { border-color: var(--accent); color: var(--accent); }
 @media (prefers-reduced-motion: reduce) {
   .vsum .vbadge.vstamp, .vring { animation: none; }
 }
+
+/* Why a report can close, and a reminder that the reply is model-written. */
+.basis { margin-top: 10px; font-size: 14px; color: var(--ink-2); background: var(--card-2); border: 1px solid var(--line);
+  border-radius: 10px; padding: 10px 14px; }
+.basis b { color: var(--ink); }
+.reply-note { margin: 8px 0 6px; font-size: 13px; color: var(--muted); }

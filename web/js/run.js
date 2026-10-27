@@ -14,6 +14,20 @@ const STAGES = [
   { id: "reproduce", title: "Reproduce in a sandbox", tech: "Nemotron agent · Docker · ASan" },
   { id: "verdict", title: "Verdict and reply", tech: "Nemotron 3 Ultra · hard rules" },
 ];
+// What backs a close, in plain words, from the signals the run actually recorded. Only shown for a closing verdict.
+function closeBasis(run, v) {
+  if (!["NOT_REPRODUCED", "FABRICATED"].includes(v.verdict)) return "";
+  const reasons = [];
+  const repro = run.s.reproduce;
+  if ((run.repro && run.repro.outcome) === "not_reproduced") reasons.push("the sandbox ran the claim and the bug did not occur");
+  const prior = (run.web && run.web.prior_art) || {};
+  if (prior.already_fixed) reasons.push("web evidence shows this was already fixed in an earlier release");
+  else if (prior.known_issue) reasons.push("web evidence ties it to a known, handled issue");
+  if (run.screen && run.screen.close) reasons.push(`an independent text-only screen agrees (${Math.round((run.screen.confidence || 0) * 100)}%)`);
+  if ((run.analysis && run.analysis.claim_holds) === "no") reasons.push("reading the real code rules the claim out");
+  if (!reasons.length) return "";
+  return `<div class="basis"><b>Why this can close:</b> ${reasons.join("; ")}.</div>`;
+}
 const ACTIONS = {
   CONFIRMED: "Reproduced, and the proof re-ran from scratch. Treat it as a real vulnerability.",
   PLAUSIBLE: "Not disproved. A maintainer should look.",
@@ -126,12 +140,12 @@ class Run {
       case "claims": renderClaims(this, ev.claims, ts); break;
       case "ref": this.ref = ev.ref; this.now = `Exported the source tree at ${ev.ref.sha.slice(0, 12)}`; break;
       case "code": renderCode(this, ev.code, ts); break;
-      case "web": renderWeb(this, ev.web, ts); break;
-      case "screen": renderScreen(this, ev.screen, ts); break;
+      case "web": this.web = ev.web; renderWeb(this, ev.web, ts); break;
+      case "screen": this.screen = ev.screen; renderScreen(this, ev.screen, ts); break;
       case "search": renderSearch(this, ev.found, ts); break;
-      case "analysis": renderAnalysis(this, ev.analysis, ts); break;
+      case "analysis": this.analysis = ev.analysis; renderAnalysis(this, ev.analysis, ts); break;
       case "scope": renderPolicy(this, ev.scope, ts); break;
-      case "reproduce": renderRepro(this, ev, ts); break;
+      case "reproduce": if (ev.type === "finish") this.repro = { outcome: ev.outcome }; renderRepro(this, ev, ts); break;
       case "verdict": renderVerdict(this, ev, ts); break;
       case "memory": renderMemory(this, ev, ts); break;
       case "cost":
@@ -426,8 +440,10 @@ function renderVerdict(run, ev, ts) {
     <div class="vhead"><span class="vbadge">${esc(v.verdict)}</span><span class="muted">confidence ${Math.round((v.confidence || 0) * 100)}%</span></div>
     <h2>${esc(v.headline)}</h2>
     <div class="action">${esc(action)}</div>
+    ${closeBasis(run, v)}
     <div class="facts">${(v.findings || []).map((f) => fact(f.kind === "confirmation" ? "good" : f.kind === "contradiction" ? "bad" : "meh", esc(f.text))).join("")}</div>
     <div class="kicker" style="margin-top:18px">Suggested reply to the reporter</div>
+    <p class="reply-note">AI-generated from the evidence above. Read it against the findings before you post.</p>
     <div class="reply"><pre id="r-reply">${esc(v.maintainer_comment)}</pre><button class="btn small" id="r-copy-reply">Copy</button></div>
     <div id="r-bundle"></div>
     <details style="margin-top:14px"><summary class="muted">Cost $${(cost.total_usd || 0).toFixed(4)}${ev.seconds ? ` · ${fmtDur(ev.seconds)}` : ""} · per model</summary>

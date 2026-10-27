@@ -104,7 +104,7 @@ input:focus, textarea:focus { outline: 2px solid color-mix(in srgb, var(--accent
 .ex { display: inline-flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 99px; border: 1px solid var(--line);
   background: var(--card-2); color: var(--ink-2); font-size: 13px; cursor: pointer; }
 .ex:hover { border-color: var(--line-2); color: var(--ink); text-decoration: none; }
-.tag { display: inline-flex; align-items: center; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 99px; letter-spacing: .02em; white-space: nowrap; }
+.tag { display: inline-flex; align-items: center; font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 99px; letter-spacing: .02em; white-space: nowrap; }
 .tag.slop { background: var(--fab-soft); color: var(--fab); } .tag.real { background: var(--bad-soft); color: var(--bad); }
 .tag.invalid { background: var(--card-2); color: var(--muted); }
 .form-msg { margin-top: 12px; font-size: 14px; }
@@ -163,8 +163,8 @@ input:focus, textarea:focus { outline: 2px solid color-mix(in srgb, var(--accent
 .st .hd .title { font-weight: 600; flex: 1; min-width: 0; }
 .st .hd .title small { display: block; font-weight: 400; color: var(--muted); font-size: 13px; margin-top: 1px; }
 .st.pending .hd .title, .st.skipped .hd .title { color: var(--muted); font-weight: 500; }
-.chip { font: 11.5px "IBM Plex Mono", monospace; color: var(--muted); border: 1px solid var(--line); border-radius: 6px; padding: 2px 7px; white-space: nowrap; }
-.st .when { font: 12px "IBM Plex Mono", monospace; color: var(--muted); min-width: 48px; text-align: right; }
+.chip { font: 12.5px "IBM Plex Mono", monospace; color: var(--muted); border: 1px solid var(--line); border-radius: 6px; padding: 2px 7px; white-space: nowrap; }
+.st .when { font: 12.5px "IBM Plex Mono", monospace; color: var(--muted); min-width: 48px; text-align: right; }
 .st .chev { color: var(--muted); transition: transform .15s; }
 .st.open .chev { transform: rotate(90deg); }
 .st .bd { display: none; padding: 2px 16px 16px; border-top: 1px solid var(--line); }
