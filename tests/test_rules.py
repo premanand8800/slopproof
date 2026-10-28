@@ -274,3 +274,73 @@ def test_code_search_parses_python_go_javascript_and_rust():
     assert [(f["name"], f["calls"]) for f in go] == [("Do", ["deadline", "send"])]
     assert [(f["name"], f["calls"]) for f in js] == [("a", ["c"])]
     assert [(f["name"], f["calls"]) for f in rs] == [("main", ["helper", "read"])]
+
+
+# ---- Reproduction agent: self-check gate, web search, build-cache mount
+class VSandbox:
+    """A sandbox whose commands exit with the codes the test sets, for the verify self-check."""
+    def __init__(self, codes):
+        self.codes = codes
+
+    def run(self, cmd, timeout=300, pipefail=True):
+        return {"exit_code": self.codes.get(cmd, 0), "output": f"out[{cmd}]"}
+
+
+def test_verify_is_green_only_when_check_passes_and_control_fails():
+    from slopproof.reproduce import _run_verify
+    sb = VSandbox({"chk": 0, "ctl": 1})
+    text, ok = _run_verify(sb, "chk", "ctl")
+    assert ok and "GREEN" in text
+    # check does not pass -> not green
+    text, ok = _run_verify(VSandbox({"chk": 1, "ctl": 1}), "chk", "ctl")
+    assert not ok and "did not pass" in text
+    # control also passes -> the check does not distinguish the bug
+    text, ok = _run_verify(VSandbox({"chk": 0, "ctl": 0}), "chk", "ctl")
+    assert not ok and "control also passed" in text
+
+
+def test_verify_needs_both_a_check_and_a_control():
+    from slopproof.reproduce import _run_verify
+    text, ok = _run_verify(VSandbox({}), "chk", "")
+    assert not ok and "BOTH" in text
+
+
+def test_web_search_is_dated_and_never_fails_the_run(monkeypatch):
+    from slopproof import reproduce
+    from slopproof.webtools import ReplayRefused
+    seen = {}
+
+    def ok_search(query, ledger, as_of=None, depth="basic", max_results=5):
+        seen["as_of"] = as_of
+        return {"results": [{"title": "curl netrc", "url": "https://curl.se/x", "content": "docs"}]}
+    monkeypatch.setattr(reproduce.webtools, "search", ok_search)
+    out = reproduce._web_search("netrc option", None, "2026-01-02T00:00:00Z")
+    assert "curl netrc" in out and seen["as_of"].startswith("2026-01-02")
+
+    def refuse(*a, **k):
+        raise ReplayRefused("off in a replay")
+    monkeypatch.setattr(reproduce.webtools, "search", refuse)
+    assert "unavailable" in reproduce._web_search("q", None, "2026-01-02")
+
+    def boom(*a, **k):
+        raise RuntimeError("network down")
+    monkeypatch.setattr(reproduce.webtools, "search", boom)
+    assert "failed" in reproduce._web_search("q", None, None)
+
+
+def test_ccache_mount_is_off_by_default_and_opt_in(monkeypatch, tmp_path):
+    from slopproof.sandbox import _ccache_mount
+    monkeypatch.delenv("SLOPPROOF_CCACHE", raising=False)
+    assert _ccache_mount() == []
+    monkeypatch.setenv("SLOPPROOF_CCACHE", str(tmp_path / "cc"))
+    args = _ccache_mount()
+    assert "-v" in args and "CCACHE_DIR=/ccache" in args
+    assert any("/usr/lib/ccache" in a for a in args)  # clang/gcc route through ccache transparently
+    assert (tmp_path / "cc").is_dir()
+
+
+def test_agent_knows_there_is_no_network_and_has_the_new_tools():
+    from slopproof.reproduce import SYSTEM, TOOLS
+    names = {t["function"]["name"] for t in TOOLS}
+    assert {"web_search", "verify"} <= names
+    assert "NO internet" in SYSTEM and "web_search" in SYSTEM
