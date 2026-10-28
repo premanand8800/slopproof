@@ -12,6 +12,7 @@ const STAGES = [
   { id: "analysis", title: "Static analysis of the real code", tech: "Nemotron 3 Ultra" },
   { id: "policy", title: "Project security policy", tech: "quote-checked" },
   { id: "reproduce", title: "Reproduce in a sandbox", tech: "Nemotron agent · Docker · ASan" },
+  { id: "investigate", title: "Investigate what is still open", tech: "Nemotron agent · git · Tavily" },
   { id: "verdict", title: "Verdict and reply", tech: "Nemotron 3 Ultra · hard rules" },
 ];
 // What backs a close, in plain words, from the signals the run actually recorded. Only shown for a closing verdict.
@@ -25,6 +26,7 @@ function closeBasis(run, v) {
   else if (prior.known_issue) reasons.push("web evidence ties it to a known, handled issue");
   if (run.screen && run.screen.close) reasons.push(`an independent text-only screen agrees (${Math.round((run.screen.confidence || 0) * 100)}%)`);
   if ((run.analysis && run.analysis.claim_holds) === "no") reasons.push("reading the real code rules the claim out");
+  if (run.inv && run.inv.signals && run.inv.signals.refutes) reasons.push("the investigator found verified evidence that rules the claim out");
   if (!reasons.length) return "";
   return `<div class="basis"><b>Why this can close:</b> ${reasons.join("; ")}.</div>`;
 }
@@ -117,7 +119,7 @@ class Run {
       if (x.state === "pending") {
         x.state = "running";
         x.start = this.lastTs ?? ts;
-        if (st.id === "reproduce") x.open = true;
+        if (st.id === "reproduce" || st.id === "investigate") x.open = true;
         break;
       }
       if (x.state === "running") break;
@@ -146,11 +148,12 @@ class Run {
       case "analysis": this.analysis = ev.analysis; renderAnalysis(this, ev.analysis, ts); break;
       case "scope": renderPolicy(this, ev.scope, ts); break;
       case "reproduce": if (ev.type === "finish") this.repro = { outcome: ev.outcome }; renderRepro(this, ev, ts); break;
+      case "investigate": renderInvestigate(this, ev, ts); break;
       case "verdict": renderVerdict(this, ev, ts); break;
       case "memory": renderMemory(this, ev, ts); break;
       case "cost":
         this.cost = ev.usd;
-        $("#r-facts", this.root).innerHTML = `<dt>Cost so far</dt><dd>$${(ev.usd || 0).toFixed(3)}</dd>${this.steps ? `<dt>Commands</dt><dd>${this.steps}</dd>` : ""}`;
+        $("#r-facts", this.root).innerHTML = `<dt>Cost so far</dt><dd>$${(ev.usd || 0).toFixed(3)}</dd>${ev.credits ? `<dt>Tavily credits</dt><dd>${fmtCredits(ev.credits)}</dd>` : ""}${this.steps ? `<dt>Commands</dt><dd>${this.steps}</dd>` : ""}`;
         break;
       case "done":
         this.status = "done";
@@ -164,7 +167,7 @@ class Run {
         this.now = ev.message;
         break;
     }
-    const restoredStage = { claims: "claims", code: "code", web: "web", screen: "screen", search: "search", analysis: "analysis", scope: "policy", reproduce: "reproduce" }[ev.stage];
+    const restoredStage = { claims: "claims", code: "code", web: "web", screen: "screen", search: "search", analysis: "analysis", scope: "policy", reproduce: "reproduce", investigate: "investigate" }[ev.stage];
     if (ev.restored && restoredStage) {
       const x = this.s[restoredStage];
       x.sum = `${x.sum ? `${x.sum} · ` : ""}reused from the earlier run`;
@@ -420,21 +423,87 @@ function renderRepro(run, ev, ts) {
   x.open = true;
 }
 
+// The investigator: each tool call with its endpoint and target, the agent's reason, then its findings with
+// every piece of evidence marked verified (checked by code) or dropped.
+const fmtCredits = (c) => (Math.round(c * 10) / 10).toLocaleString();
+const INV_STATUS = { holds: ["good", "holds"], refuted: ["bad", "refuted"], unknown: ["meh", "unknown"] };
+const RECOMMEND = { close: "recommends closing", keep_open: "recommends keeping it open", confirm_needed: "recommends a sandbox reproduction" };
+
+function invEvidence(e) {
+  const where = e.kind === "code" ? `<code>${esc(e.path)}:${esc(e.line)}</code>` : e.kind === "git" ? `commit <code>${esc(e.commit)}</code>`
+    : `<a href="${esc(e.url)}" target="_blank" rel="noopener">${esc(String(e.url).replace(/^https?:\/\//, "").slice(0, 70))}</a>`;
+  return `<div class="iv-ev ${e.verified ? "ok" : "drop"}"><span class="iv-tag">${e.verified ? "✓ verified" : "✗ dropped"}</span> ${where}
+    <q>${esc(String(e.quote || "").slice(0, 300))}</q>${e.verified ? "" : `<span class="iv-why">${esc(e.why || "not found")}</span>`}</div>`;
+}
+
+function renderInvestigate(run, ev, ts) {
+  const x = run.s.investigate;
+  if (ev.type === "skipped") { run.set("investigate", "skipped", esc(ev.reason || "not needed"), "", ts); return; }
+  if (!run.ivLog || ev.type === "begin") run.ivLog = [];
+  if (ev.type === "begin") {
+    run.ivBudget = ev.budget;
+    run.ivLog.push(`<p class="muted iv-note">${ev.replay ? "Replay as of the report date: Tavily search is limited to pages published before it; extract, map, crawl and research read today's web and are refused." : "Live run: every Tavily endpoint is available."} Budget: ${ev.budget ? `${esc(ev.budget.calls)} tool calls` : ""}.</p>`);
+    run.now = "The investigator is choosing what to check…";
+  }
+  if (ev.type === "call") {
+    run.ivLog.push(`<div class="iv-step">${ev.thought ? `<div class="iv-thought">${esc(ev.thought)}</div>` : ""}
+      <div class="iv-call"><span class="iv-n">${esc(ev.step)}</span><span class="iv-ep ${/^Tavily/.test(ev.endpoint) ? "tv" : "git"}">${esc(ev.endpoint)}</span><span class="iv-target">${esc(ev.target)}</span></div>
+      ${ev.why ? `<div class="iv-why-line">${esc(ev.why)}</div>` : ""}<div class="iv-res" data-step="${esc(ev.step)}"></div></div>`);
+    run.now = `Investigator step ${ev.step}: ${ev.endpoint} · ${String(ev.target || "").slice(0, 80)}`;
+  }
+  if (ev.type === "result") {
+    const last = run.ivLog.length - 1;
+    const res = ev.refused ? `<span class="iv-refused">refused: reads today's web, off in a replay</span>`
+      : `<details><summary>${esc(ev.chars ?? (ev.preview || "").length)} chars${ev.credits ? ` · ${fmtCredits(ev.credits)} credits` : ""}</summary><pre>${esc(ev.preview || "")}</pre></details>`;
+    if (last >= 0) run.ivLog[last] = run.ivLog[last].replace(/<div class="iv-res" data-step="[^"]*"><\/div>/, `<div class="iv-res">${res}</div>`);
+  }
+  let state = "running", sum = `${run.ivLog.filter((l) => l.startsWith('<div class="iv-step"')).length} tool calls so far`;
+  let body = run.ivLog.join("");
+  if (ev.type === "finish") {
+    run.inv = ev;
+    const e = ev.evidence || { verified: 0, dropped: 0 };
+    const findings = (ev.findings || []).map((f) => {
+      const [k, label] = INV_STATUS[f.status] || INV_STATUS.unknown;
+      const was = f.claimed_status ? ` (claimed ${esc(f.claimed_status)}; no evidence survived the check)` : "";
+      return fact(k, `<b>${esc(label)}</b>${was}: ${esc(f.claim)}`, (f.evidence || []).map(invEvidence).join(""));
+    }).join("");
+    const steps = (ev.steps || []);
+    if (steps.length && !run.ivLog.some((l) => l.startsWith('<div class="iv-step"'))) {
+      // A restored investigation: rebuild its steps from the saved result.
+      for (const st of steps) {
+        renderInvestigate(run, { ...st, type: "call" }, ts);
+        renderInvestigate(run, { type: "result", ...st }, ts);
+      }
+      body = run.ivLog.join("");
+    }
+    state = "done";
+    sum = `${esc(RECOMMEND[ev.recommend] || ev.recommend)} · ${e.verified} verified, ${e.dropped} dropped evidence · ${ev.calls} calls${ev.credits ? ` · ${fmtCredits(ev.credits)} credits` : ""}${ev.stopped ? ` · ${esc(ev.stopped)}` : ""}`;
+    body += `<div class="iv-findings"><div class="kicker" style="margin:14px 0 6px">Findings: evidence is checked by code, never taken on the agent's word</div>
+      ${ev.summary ? `<p class="iv-summary">${esc(ev.summary)}</p>` : ""}<div class="facts">${findings || fact("meh", "No findings reported")}</div></div>`;
+    run.now = "Writing the verdict…";
+  }
+  if (x.state === "pending") x.start = run.lastTs ?? ts;
+  run.set("investigate", state, sum, `<div class="iv">${body}</div>`, ts);
+  x.open = true;
+}
+
 function renderVerdict(run, ev, ts) {
   const v = ev.verdict, cost = ev.cost || { total_usd: 0, by_model: {} };
-  for (const id of ["memory", "policy", "reproduce", "screen", "search"]) {
+  for (const id of ["memory", "policy", "reproduce", "investigate", "screen", "search"]) {
     if (id === "memory" && run.s.memory.state === "pending") {
       run.set("memory", "skipped", run.recorded ? "not used in benchmark runs" : "nothing remembered for this project yet", "", ts);
       continue;
     }
     if (run.s[id].state === "pending" || run.s[id].state === "running") {
       if (id === "reproduce" && run.steps) run.set(id, "warn", `stopped without a result · ${run.steps} commands`, undefined, ts);
+      else if (id === "investigate") run.set(id, "skipped", run.recorded && !run.inv ? "not part of this recorded run" : `not needed: the verdict is ${esc(v.verdict)}`, "", ts);
       else run.set(id, "skipped", id === "reproduce" ? "not run for this report" : "not recorded for this run", "", ts);
     }
   }
   run.set("verdict", "done", `<span class="vt ${esc(v.verdict)}">${esc(v.verdict)}</span>`, "", ts);
   const rows = Object.entries(cost.by_model || {}).map(([m, c]) =>
-    `<tr><td class="mono">${esc(m)}</td><td>${c.calls}</td><td>${c.in.toLocaleString()} / ${c.out.toLocaleString()}</td><td>$${c.usd.toFixed(4)}</td></tr>`).join("");
+    `<tr><td class="mono">${esc(m)}</td><td>${c.calls}</td><td>${c.credits != null ? `${fmtCredits(c.credits)} credits` : `${c.in.toLocaleString()} / ${c.out.toLocaleString()}`}</td><td>$${c.usd.toFixed(4)}</td></tr>`).join("");
+  const credits = cost.tavily_credits ?? Object.entries(cost.by_model || {}).reduce((a, [, c]) => a + (c.credits || 0), 0);
   const action = v.priority === "low" ? "Not disproved, but low priority: handle after the rest of the queue." : ACTIONS[v.verdict] || "";
   $("#r-verdict", run.root).innerHTML = `<div class="card verdict v-${esc(v.verdict)}">
     <div class="vhead"><span class="vbadge">${esc(v.verdict)}</span><span class="muted">confidence ${Math.round((v.confidence || 0) * 100)}%</span></div>
@@ -446,8 +515,8 @@ function renderVerdict(run, ev, ts) {
     <p class="reply-note">AI-generated from the evidence above. Read it against the findings before you post.</p>
     <div class="reply"><pre id="r-reply">${esc(v.maintainer_comment)}</pre><button class="btn small" id="r-copy-reply">Copy</button></div>
     <div id="r-bundle"></div>
-    <details style="margin-top:14px"><summary class="muted">Cost $${(cost.total_usd || 0).toFixed(4)}${ev.seconds ? ` · ${fmtDur(ev.seconds)}` : ""} · per model</summary>
-      <table class="ledger"><tr><th>Model</th><th>Calls</th><th>Tokens in / out</th><th>USD</th></tr>${rows}</table></details></div>`;
+    <details style="margin-top:14px"><summary class="muted">Cost $${(cost.total_usd || 0).toFixed(4)}${credits ? ` (${fmtCredits(credits)} Tavily credits)` : ""}${ev.seconds ? ` · ${fmtDur(ev.seconds)}` : ""} · per model</summary>
+      <table class="ledger"><tr><th>Model or tool</th><th>Calls</th><th>Tokens in / out</th><th>USD</th></tr>${rows}</table></details></div>`;
   // The answer first: a one-line verdict above the timeline, linking down to the evidence.
   const pct = Math.round((v.confidence || 0) * 100);
   $("#r-summary", run.root).innerHTML = `<div class="vsum v-${esc(v.verdict)}">
@@ -465,6 +534,7 @@ function renderVerdict(run, ev, ts) {
   $("#r-copy-reply", run.root).onclick = () => navigator.clipboard.writeText($("#r-reply", run.root).textContent).then(() => toast("Reply copied"));
   const dl = $("#r-facts", run.root);
   dl.innerHTML = `<dt>Verdict</dt><dd class="vt ${esc(v.verdict)}">${esc(v.verdict)}</dd><dt>Cost</dt><dd>$${(cost.total_usd || 0).toFixed(3)}</dd>
+    ${credits ? `<dt>Tavily credits</dt><dd>${fmtCredits(credits)}</dd>` : ""}
     ${run.ref ? `<dt>Tree</dt><dd>${esc(run.ref.sha.slice(0, 12))}</dd>` : ""}<dt>Commands</dt><dd>${run.steps}</dd>`;
   if (!run.recorded) rememberRun({ id: run.id, verdict: v.verdict, title: $("#r-title", run.root).textContent });
 }
@@ -577,6 +647,12 @@ ROUTES.report = async ([mode, id]) => {
     evs.push({ stage: "reproduce", type: "finish", outcome: rep.outcome, bundle: (rep.bundle_verification || {}).verdict,
       bundle_sha: rep.bundle && rep.bundle.sha256 });
   }
+  const inv = res.investigation;
+  if (inv) {
+    evs.push({ stage: "investigate", type: "begin", replay: inv.replay, budget: { calls: Math.max(inv.calls || 0, 14) } });
+    for (const st of inv.steps || []) evs.push({ stage: "investigate", ...st, type: "call" }, { stage: "investigate", ...st, type: "result" });
+    evs.push({ stage: "investigate", ...inv, steps: [], type: "finish" });
+  }
   evs.push({ stage: "verdict", verdict: res.verdict, cost: res.cost, seconds: res.seconds });
 
   let i = 0, timer = null, over = false;
@@ -604,8 +680,8 @@ ROUTES.report = async ([mode, id]) => {
   // Replay: events one by one, so the stages light up in order. Sandbox steps are minor and go quicker;
   // the whole replay stays under about 12 seconds.
   const STAGE_OF = { report: "report", claims: "claims", ref: "code", code: "code", search: "search", web: "web", screen: "screen",
-    analysis: "analysis", scope: "policy", reproduce: "reproduce", verdict: "verdict" };
-  const minor = (ev) => ev.stage === "ref" || (ev.stage === "reproduce" && !["begin", "finish"].includes(ev.type));
+    analysis: "analysis", scope: "policy", reproduce: "reproduce", investigate: "investigate", verdict: "verdict" };
+  const minor = (ev) => ev.stage === "ref" || (["reproduce", "investigate"].includes(ev.stage) && !["begin", "finish"].includes(ev.type));
   const majors = evs.filter((ev) => !minor(ev)).length, minors = evs.length - majors;
   const big = 420, small = Math.max(40, Math.min(250, minors ? (11000 - majors * big) / minors : 0));
   const delays = evs.map((ev) => (minor(ev) ? small : ev.stage === "verdict" ? 600 : big));

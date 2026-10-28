@@ -321,6 +321,8 @@ BENCH_FILES = {
     "static": ("results_static_final.jsonl", "results_static.jsonl"),
     "sandbox": ("results_sandbox.jsonl",),
     "baseline": ("results_baseline.jsonl",),
+    # The investigator run over every report the static run left open, and over the held-out set.
+    "investigator": ("results_static_investigator.jsonl", "results_holdout_investigator.jsonl"),
 }
 
 
@@ -361,10 +363,12 @@ def stored_run(r: dict, bodies: dict[str, str]) -> dict:
 
 
 def report_bodies(bench_dir: Path = BENCH) -> dict[str, str]:
-    path = bench_dir / "dataset.jsonl"
-    if not path.exists():
-        return {}
-    return {d["id"]: d["body"] for d in map(json.loads, path.read_text().splitlines()) if d}
+    bodies = {}
+    for name in ("holdout.jsonl", "dataset.jsonl"):
+        path = bench_dir / name
+        if path.exists():
+            bodies |= {d["id"]: d["body"] for d in map(json.loads, path.read_text().splitlines()) if d}
+    return bodies
 
 
 @app.get("/api/bench/{mode}/{report_id}")
