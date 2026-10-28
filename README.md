@@ -322,6 +322,15 @@ tied to curl.
   sandbox, but its check grepped `curl -v` output that also matched the header sent to the first host and had no
   control, so it stays PLAUSIBLE rather than CONFIRMED.
 - **Sandbox subset.** The sandbox numbers come from 27 of the 197 reports (19 slop, 8 real), not the full set.
+- **Sandbox re-run with the improved agent (a test, served through OpenRouter, not Token Factory).**
+  `bench/results_sandbox_v2_openrouter.jsonl`: the 6 real CVEs the first sandbox run missed and 6 slop reports,
+  after the agent got no-network guidance, a dated `web_search` tool, a verify step before it may finish, and a
+  build cache. No real report was closed, no slop report was confirmed, and one more slop report (#3117697) was
+  closed with a run. One real report (#3459417, bearer token on a cross-protocol redirect) came back CONFIRMED,
+  but we do not count it: re-run at curl's fix (`1a822275d3`), its check still passes, because it greps
+  `curl -v` output that also shows the token sent to the first host, and its control used a different option
+  instead of the safe case. The same lesson as #3583983: an agent-chosen control can differ in the wrong way,
+  which is why a proof is only counted once it re-runs as VERIFIED_AND_FIXED against the project's own fix.
 
 ### Run the benchmark
 
