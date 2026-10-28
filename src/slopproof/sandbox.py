@@ -9,8 +9,23 @@ from pathlib import Path
 
 from .codecheck import CACHE
 
-IMAGE = "slopproof-sandbox:latest"
+# SLOPPROOF_IMAGE lets a benchmark use a separate sandbox image without rebuilding the one the live demo runs.
+IMAGE = os.environ.get("SLOPPROOF_IMAGE", "slopproof-sandbox:latest")
 OUTPUT_LIMIT = 6000
+
+
+def _ccache_mount() -> list[str]:
+    """Docker args for a shared ccache, when SLOPPROOF_CCACHE names a directory. Empty otherwise (the default)."""
+    d = os.environ.get("SLOPPROOF_CCACHE")
+    if not d:
+        return []
+    p = Path(d).expanduser()
+    p.mkdir(parents=True, exist_ok=True)
+    os.chmod(p, 0o777)  # the container's unprivileged runner (uid 1000) must be able to write it
+    # Route clang/gcc through ccache transparently (via /usr/lib/ccache on PATH), so build commands and proof
+    # bundles stay plain and portable; ccache only ever runs when this shared cache is mounted.
+    path = "/usr/lib/ccache:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+    return ["-v", f"{p}:/ccache", "-e", "CCACHE_DIR=/ccache", "-e", "CCACHE_MAXSIZE=5G", "-e", f"PATH={path}"]
 
 
 class Sandbox:
@@ -22,11 +37,14 @@ class Sandbox:
         shutil.copytree(tree, self.workdir / "repo", symlinks=True)
         # SLOPPROOF_RUNTIME=runsc runs the container under gVisor, which gives it its own kernel.
         runtime = os.environ.get("SLOPPROOF_RUNTIME")
+        # SLOPPROOF_CCACHE=<dir> mounts a shared ccache so repeated builds of the same project are fast. It is a
+        # writable bind mount, so it is opt-in (off in the live deployment) and only ever holds compiler cache.
+        cache = _ccache_mount()
         subprocess.run([
             "docker", "run", "-d", "--rm", "--name", self.name, *(["--runtime", runtime] if runtime else []),
             "--network", "none", "--memory", memory, "--cpus", cpus, "--pids-limit", "1024",
             "--security-opt", "no-new-privileges", "--cap-drop", "ALL",
-            "--read-only", "--tmpfs", "/tmp:rw,exec,size=1g",
+            "--read-only", "--tmpfs", "/tmp:rw,exec,size=1g", *cache,
             "-v", f"{self.workdir}:/work", "-w", "/work/repo", IMAGE, "sleep", "infinity",
         ], check=True, capture_output=True)
 
