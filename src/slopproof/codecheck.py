@@ -119,6 +119,46 @@ def best_match(quote: str, files: list[Path], tree: Path, texts: dict[Path, str]
     return best
 
 
+_LINE_NO = re.compile(r"^\s*\d{1,6}(?:\s{2,}|:\s?|\t)")
+
+
+def quote_near(tree: Path, rel: str, line: int | None, quote: str, radius: int = 15) -> dict:
+    """Is this quote real code at this path, near this line, in this tree? For evidence an agent cites.
+
+    Line numbers the agent copied from tool output are removed first. The same thresholds as a report's quotes:
+    90 or more is verbatim. A quote too short or generic to identify code ("}", "return 0;") never verifies.
+    """
+    rel = str(rel or "").strip().lstrip("/")
+    path = (tree / rel).resolve()
+    if not rel or not path.is_file() or not path.is_relative_to(tree.resolve()):
+        return {"ok": False, "why": f"{rel or 'no path'} is not a file in this tree"}
+    q_lines = [_LINE_NO.sub("", ln) for ln in quote.splitlines()]
+    q_lines = [ln for ln in q_lines if ln.strip() and ln.strip() not in ("...", "…")]
+    q = _norm("\n".join(q_lines))
+    if len(q) < 10 or not re.search(r"[A-Za-z_]\w{2,}", q):
+        return {"ok": False, "why": "quote too short to identify code"}
+    lines = path.read_text(errors="replace").splitlines()
+    n = max(1, len(q_lines))
+    centre = line if isinstance(line, int) and line > 0 else None
+    lo = max(0, (centre - 1 - radius) if centre else 0)
+    hi = min(len(lines), (centre + radius + n) if centre else len(lines))
+    best = (0.0, None)
+    for i in range(lo, max(lo + 1, hi - n + 1)):
+        window = _norm("\n".join(lines[i:i + n]))
+        if not window:
+            continue
+        score = 100.0 if q in window else fuzz.ratio(q, window)
+        if score < 90 and len(q) <= len(window):
+            score = max(score, fuzz.partial_ratio(q, window))
+        if score > best[0]:
+            best = (score, i + 1)
+        if score == 100.0:
+            break
+    ok = best[0] >= 90
+    return {"ok": ok, "score": round(best[0], 1), "line": best[1],
+            "why": "" if ok else (f"not found within {radius} lines of {rel}:{line}" if centre else f"not found in {rel}")}
+
+
 def _excerpt(tree: Path, rel: str, start: int, end: int) -> str:
     lines = (tree / rel).read_text(errors="replace").splitlines()
     start, end = max(1, start), min(len(lines), end)

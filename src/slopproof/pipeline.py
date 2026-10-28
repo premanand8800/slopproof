@@ -1,5 +1,7 @@
 """End-to-end triage of one report. Emits progress events for the UI and CLI."""
 
+import json
+import os
 import re
 import time
 from collections.abc import Callable
@@ -7,9 +9,10 @@ from concurrent.futures import ThreadPoolExecutor
 
 import httpx
 
-from . import codecheck, codesearch, memory, webcheck
+from . import codecheck, codesearch, memory, webcheck, webtools
 from .analyze import analyze_deep
 from .extract import extract_claims
+from .investigate import investigate, signals
 from .llm import MODELS, Ledger
 from .reproduce import reproduce
 from .scope import check_scope
@@ -34,7 +37,8 @@ def fetch_report(url: str) -> dict:
 
 def triage(title: str, body: str, repo_url: str, created_at: str | None = None,
            run_sandbox: bool = True, emit: Callable[[dict], None] = lambda e: None,
-           replay: bool = False, resume: dict | None = None, run_id: str | None = None) -> dict:
+           replay: bool = False, resume: dict | None = None, run_id: str | None = None,
+           run_investigator: bool = True) -> dict:
     """Triage one report.
 
     replay=True is for the benchmark: web evidence is limited to pages published before the report,
@@ -53,7 +57,8 @@ def triage(title: str, body: str, repo_url: str, created_at: str | None = None,
         """Reuse a saved result, or compute it; either way emit it so the run's timeline is complete."""
         value = done[key] if key in done else compute()
         emit({"stage": stage, field: value, **({"restored": True} if key in done else {})})
-        emit({"stage": "cost", "usd": ledger.summary()["total_usd"]})
+        cost = ledger.summary()
+        emit({"stage": "cost", "usd": cost["total_usd"], "credits": cost["tavily_credits"]})
         return value
 
     claims = step("claims", "claims", "claims", lambda: extract_claims(title, body, ledger))
@@ -139,11 +144,27 @@ def triage(title: str, body: str, repo_url: str, created_at: str | None = None,
     evidence = {"claims": claims, "ref": ref, "code_checks": code, "web_checks": web, "static_analysis": analysis,
                 "reproduction": {k: v for k, v in (repro or {}).items() if k != "transcript"} or "not run"}
     # The screen's vote is kept out of the evidence so the verdict model stays an independent second vote.
-    raw = scrub_cves(decide(title, body, evidence, ledger), allowed_cves(f"{title}\n{body}", web))
+    allowed = allowed_cves(f"{title}\n{body}", web)
+    raw = scrub_cves(decide(title, body, evidence, ledger), allowed)
     verdict = apply_guards(raw, analysis, repro, web, text_screen)
+    investigation = done.get("investigation")
+    if verdict["verdict"] == "PLAUSIBLE" and (investigation is not None or (
+            run_investigator and os.environ.get("SLOPPROOF_INVESTIGATE", "on") != "off")):
+        if investigation is None:
+            investigation = investigate(title, body, project, claims, code, web, analysis, found, verdict, tree,
+                                        bare, ref["sha"], ledger, as_of, emit)
+            emit({"stage": "checkpoint", "key": "investigation", "value": investigation})
+        else:
+            emit({"stage": "investigate", "type": "finish", "restored": True, **investigation})
+        raw, verdict = decide_again(title, body, evidence, raw, investigation, analysis, repro, web, text_screen,
+                                    ledger, allowed)
+    elif verdict["verdict"] != "PLAUSIBLE":
+        emit({"stage": "investigate", "type": "skipped", "reason": f"not needed: the verdict is {verdict['verdict']}"})
+    feedback = send_feedback(ledger, verdict, web, investigation)
     result = {"title": title, "project": project, "ref": ref, "claims": claims, "code": code, "web": web,
               "screen": text_screen, "search": found, "scope": policy,
-              "analysis": analysis, "reproduction": repro, "verdict": verdict, "cost": ledger.summary(), "ledger": ledger.calls,
+              "analysis": analysis, "reproduction": repro, "investigation": investigation, "verdict": verdict,
+              "tavily_feedback": feedback, "cost": ledger.summary(), "ledger": ledger.calls,
               "seconds": round(time.time() - t0, 1)}
     try:
         learned = memory.consolidate(run_id or f"run-{int(t0)}", result, bare, repo_url)
@@ -155,6 +176,45 @@ def triage(title: str, body: str, repo_url: str, created_at: str | None = None,
     return result
 
 
+def for_verdict(investigation: dict) -> dict:
+    """The investigation as the verdict model sees it: only evidence that code verified."""
+    return {"note": "Each piece of evidence below was checked by code against the source tree, the git history "
+                    "or the pages a tool returned in this run; unverified evidence was removed.",
+            "recommend": investigation.get("recommend"), "summary": investigation.get("summary"),
+            "findings": [{"claim": f["claim"], "status": f["status"],
+                          "evidence": [e for e in f["evidence"] if e.get("verified")]}
+                         for f in investigation.get("findings") or []]}
+
+
+def decide_again(title: str, body: str, evidence: dict, raw: dict, investigation: dict, analysis: dict | None,
+                 repro: dict | None, web: dict | None, text_screen: dict | None, ledger: Ledger,
+                 allowed: set[str]) -> tuple[dict, dict]:
+    """After an investigation: the verdict model decides again only when it brought a verified refutation (the
+    one thing that can change an open verdict into a close); either way the guards see the findings."""
+    if investigation.get("signals", {}).get("refutes"):
+        raw = scrub_cves(decide(title, body, {**evidence, "investigation": for_verdict(investigation)}, ledger),
+                         allowed)
+    return raw, apply_guards(raw, analysis, repro, web, text_screen, investigation)
+
+
+_URL = re.compile(r"https?://[^\s)\]\"'<>]+")
+
+
+def send_feedback(ledger: Ledger, verdict: dict, web: dict | None, investigation: dict | None) -> list[dict]:
+    """Tell Tavily, for each search this run made, which of its results the verdict or the investigator used."""
+    if os.environ.get("SLOPPROOF_TAVILY_FEEDBACK", "on") == "off":
+        return []
+    w = web or {}
+    used = list((investigation or {}).get("used_urls") or [])
+    used += _URL.findall(json.dumps({k: verdict.get(k) for k in ("headline", "findings", "maintainer_comment")}))
+    used += [x.get("evidence_url") for x in w.get("cves") or []] + [(w.get("prior_art") or {}).get("evidence_url")]
+    used += [u.get("url") for u in w.get("urls") or [] if u.get("supports_claim") is not None]
+    try:
+        return webtools.feedback_for_run(ledger, [u for u in used if u], verdict.get("verdict", ""))
+    except Exception:  # noqa: BLE001 - feedback never fails a run
+        return []
+
+
 def resume_from_events(events: list[dict]) -> dict:
     """The finished steps of an earlier run, read back from its saved events."""
     fields = {"claims": "claims", "ref": "ref", "code": "code", "web": "web", "screen": "screen",
@@ -163,8 +223,8 @@ def resume_from_events(events: list[dict]) -> dict:
     for ev in events:
         if ev.get("stage") in fields and fields[ev["stage"]] in ev:
             done[ev["stage"]] = ev[fields[ev["stage"]]]
-        if ev.get("stage") == "checkpoint" and ev.get("key") == "reproduction":
-            done["reproduction"] = ev["value"]
+        if ev.get("stage") == "checkpoint" and ev.get("key") in ("reproduction", "investigation"):
+            done[ev["key"]] = ev["value"]
     return done
 
 
@@ -182,7 +242,7 @@ SCREEN_DISSENT = 0.8
 
 
 def apply_guards(verdict: dict, analysis: dict | None, repro: dict | None, web: dict | None = None,
-                 text_screen: dict | None = None) -> dict:
+                 text_screen: dict | None = None, investigation: dict | None = None) -> dict:
     """Hard rules the model cannot override.
 
     CONFIRMED needs a sandbox reproduction. Closing (NOT_REPRODUCED, FABRICATED) needs one of:
@@ -193,6 +253,10 @@ def apply_guards(verdict: dict, analysis: dict | None, repro: dict | None, web: 
     bypass or regression of that fix. A prior-art check that failed counts as unknown, not as "no prior art".
     Nor is it enough when the text screen confidently votes to keep the report open: two independent reads
     then disagree, and in our benchmark every real CVE closed on code alone was one the screen backed.
+    The investigator's findings count only where code verified their evidence. A verified refutation can stand in
+    for the code ruling the claim out, under the same conditions, and only if the static analysis did not find the
+    claim holds (two code reads that disagree settle nothing). A verified finding that the claim holds blocks
+    every close.
     """
     v = dict(verdict)
     v["model_verdict"] = verdict.get("verdict")
@@ -205,19 +269,22 @@ def apply_guards(verdict: dict, analysis: dict | None, repro: dict | None, web: 
     # A failed screen has no confidence, so it never counts as a vote to keep the report open.
     ts = text_screen or {}
     screen_keeps = ts.get("close") is False and (ts.get("confidence") or 0) >= SCREEN_DISSENT
-    may_close = outcome == "not_reproduced" or screen_close or (
-        code_rules_out and not known_area and not prior_unknown and not screen_keeps)
+    inv = signals((investigation or {}).get("findings") or [], (investigation or {}).get("recommend"))
+    inv_rules_out = inv["refutes"] and (analysis or {}).get("claim_holds") != "yes"
+    code_close = (code_rules_out or inv_rules_out) and not known_area and not prior_unknown and not screen_keeps
+    may_close = (outcome == "not_reproduced" or screen_close or code_close) and not inv["holds"]
     if v["model_verdict"] == "CONFIRMED" and outcome != "reproduced":
         v["verdict"] = "PLAUSIBLE"
         v["headline"] = "[Not yet reproduced] " + v.get("headline", "")
     elif v["model_verdict"] in ("NOT_REPRODUCED", "FABRICATED") and not may_close:
         v["verdict"] = "PLAUSIBLE"
         v["priority"] = "low"
-        why = ("a related bug was fixed before, so this may be a bypass; reproduce before closing" if known_area
+        why = ("the investigator verified evidence that the claim holds; reproduce before closing" if inv["holds"]
+               else "a related bug was fixed before, so this may be a bypass; reproduce before closing" if known_area
                else "the prior-art check failed, so a related fixed bug is not ruled out; reproduce before closing"
-               if code_rules_out and prior_unknown
+               if (code_rules_out or inv_rules_out) and prior_unknown
                else "the code reading rules the claim out but the text screen finds it credible; reproduce before closing"
-               if code_rules_out and screen_keeps
+               if (code_rules_out or inv_rules_out) and screen_keeps
                else "references look wrong, but nothing rules the claim out yet")
         v["headline"] = f"[Low priority: {why}] " + v.get("headline", "")
     elif v["verdict"] == "PLAUSIBLE" and screen_close:
