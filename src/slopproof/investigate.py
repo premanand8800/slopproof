@@ -580,7 +580,7 @@ def investigate(title: str, body: str, project: str, claims: dict, code: dict, w
         "evidence": {"verified": sum(e["verified"] for e in evs), "dropped": sum(not e["verified"] for e in evs)},
         "usd": round(summary["total_usd"] - usd0, 5), "credits": summary["tavily_credits"] - credits0,
         "used_urls": sorted({e["url"] for e in evs if e["verified"] and e.get("kind") == "web"}),
-        "replay": bool(as_of),
+        "replay": bool(as_of), "budget": {"calls": max_calls, "seconds": wall},
     }
     if not final:
         result["stopped"] = stopped or "no report from the agent"

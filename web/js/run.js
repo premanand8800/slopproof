@@ -649,7 +649,7 @@ ROUTES.report = async ([mode, id]) => {
   }
   const inv = res.investigation;
   if (inv) {
-    evs.push({ stage: "investigate", type: "begin", replay: inv.replay, budget: { calls: Math.max(inv.calls || 0, 14) } });
+    evs.push({ stage: "investigate", type: "begin", replay: inv.replay, budget: inv.budget || { calls: 12 } });
     for (const st of inv.steps || []) evs.push({ stage: "investigate", ...st, type: "call" }, { stage: "investigate", ...st, type: "result" });
     evs.push({ stage: "investigate", ...inv, steps: [], type: "finish" });
   }
