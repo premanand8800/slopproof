@@ -28,10 +28,10 @@ Nemotron on Nebius Token Factory, web search working; see [Benchmark notes](#ben
 | | SlopProof (static checks) | Text-only baseline (same model) |
 |---|---|---|
 | Real CVE reports wrongly closed | **0 of 148** | 0 of 148 |
-| AI-slop reports closed | 21 of 49 (43%) | 31 of 49 (63%) |
+| AI-slop reports closed | **24 of 49** (49%) with the investigator; 21 of 49 without | 31 of 49 (63%) |
 | Closes whose stated reason is false | Reasons cite `file:line` or a source (the manual check of 24 headlines was on the v1 run) | **13 of 31**, verified against the git tree |
-| Slop closed or sent to the bottom of the queue | 38 of 49 (78%), vs 6 of 148 real | - |
-| Cost per report | $0.065 on average, median 44 s | $0.0014 |
+| Slop closed or sent to the bottom of the queue | 40 of 49 (82%), vs 7 of 148 real | - |
+| Cost per report | $0.065 for the fixed checks (median 44 s), $0.14 with the investigator | $0.0014 |
 
 With the sandbox (27-report sample: 19 slop, 8 real; $0.12 to $1.13 and 3 to 35 minutes each): **9 of 19 slop
 reports closed with a run that exercised the claim, 0 of 8 real ones closed**, and two real CVEs reproduced and
@@ -96,12 +96,17 @@ That moves the cost of proof to whoever makes the claim. The live demo re-runs t
 
 ### From proof to fix: and why the agent's patch is never trusted on its word
 
-For a verified bundle, a Nemotron Ultra agent writes a patch with exact edits in the sandbox. SlopProof then
-applies it in a fresh sandbox (the bundle's check must stop passing) and runs the project's own tests for the area
-it touched, before and after. On the `.netrc` CVE the agent's three-line patch stops the leak, but SlopProof's test
-step found it breaks two of curl's 22 netrc tests (680, 1304), so it is reported as `FIX_BREAKS_TESTS`, not as a
-fix. A repair round that feeds the failing tests back to the agent is in progress. curl's own fix was a parser
-rewrite (`4ae1d7cc2643`, 581 lines).
+For a verified bundle, a Nemotron Ultra agent writes a patch with exact edits in the sandbox, and runs the bug
+check and the project's own related tests inside its own loop before it may finish. SlopProof does not take its
+word: the patch is applied in a fresh sandbox (the bundle's check must stop passing), and the related tests run
+before and after, each in a fresh build. curl's own fix is never shown to the agent; it is compared afterwards.
+
+On the `.netrc` CVE (#3735184) the result is **FIX_VERIFIED** on the first attempt: the bug check fails with the
+patch, **22 of 22 related curl tests pass** before and after, and a comparison with curl's fix (`4ae1d7cc2643`, a
+581-line parser rewrite) finds the same root cause and the same behaviour for the reported bug. 38 tool calls,
+13 minutes including the independent re-checks, $0.29 (`examples/bundles/curl-3735184-netrc.fix.json`,
+`slopproof fix`). An earlier version of the agent stopped the leak but broke two netrc tests and was reported as
+`FIX_BREAKS_TESTS`; the fix was to run the tests inside the agent's loop, not only after it.
 
 ## Memory: learning across runs, without being taught by attackers
 
@@ -294,6 +299,11 @@ tied to curl.
 
 ### Benchmark notes
 
+- **Investigator run.** `bench/results_static_investigator.jsonl` (`bench/run_investigate.py`): the investigator
+  ran on the 176 reports the fixed checks left open, as of each filing date (Tavily search with `end_date` only;
+  extract, map, crawl and research are refused in a replay). It closed 3 more slop reports, each with at least two
+  verified quotes, and closed no real report: 0 of 148. On the 60 held-out reports it changed nothing (2 closed).
+  $0.089 and 0.5 Tavily credits per investigated report.
 - **Headline run.** The numbers above are the final run (`bench/results_static_final.jsonl`): current code,
   NVIDIA Nemotron on Nebius Token Factory, Tavily web search working. 197 reports: 0 of 148 real CVE reports
   wrongly closed, 21 of 49 AI slop closed, $0.065 per report on average.

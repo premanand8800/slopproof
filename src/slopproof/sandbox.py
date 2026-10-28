@@ -56,9 +56,9 @@ class Sandbox:
                        "grep -n or sed -n 'A,Bp' instead of whole files] ...\n" + out[-(OUTPUT_LIMIT - 1500):])
         return {"exit_code": code, "output": out}
 
-    def background(self, cmd: str) -> None:
-        """Start a long command (a build) detached; exit code lands in /work/build.done."""
-        script = f"cd /work/repo && ( {cmd} ) > /work/build.log 2>&1; echo $? > /work/build.done"
+    def background(self, cmd: str, tag: str = "build") -> None:
+        """Start a long command (a build) detached; output goes to /work/{tag}.log, exit code to /work/{tag}.done."""
+        script = f"cd /work/repo && ( {cmd} ) > /work/{tag}.log 2>&1; echo $? > /work/{tag}.done"
         subprocess.run(["docker", "exec", "-d", self.name, "bash", "-lc", script], check=True)
 
     def write(self, path: str, content: str) -> str:

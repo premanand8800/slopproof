@@ -4,7 +4,7 @@
 // Shipped proof bundles of real bugs the sandbox agent reproduced (two curl CVEs, one mxml bug). Each has a
 // recorded verification at the reported commit and at the project's fix.
 const BUNDLES = [
-  { name: "curl-3735184-netrc", report: "3735184", cve: "CVE-2026-8926", short: ".netrc password leak",
+  { name: "curl-3735184-netrc", report: "3735184", cve: "CVE-2026-8926", short: ".netrc password leak", fix: true,
     title: "curl sends the .netrc password of user alice when the URL names user bob" },
   { name: "curl-4041053-effective-url", report: "4041053", cve: "CVE-2026-94266", short: "password in effective URL",
     title: "curl returns the URL with the password still in it from CURLINFO_EFFECTIVE_URL" },
@@ -35,6 +35,54 @@ function verifySeal(v) {
     (v.problems && v.problems.length ? `<div class="facts">${v.problems.map((p) => fact("bad", esc(p))).join("")}</div>` : "");
 }
 
+// The fix agent's recorded result for a bundle: its patch, the check re-run with it in a fresh sandbox, curl's own
+// related tests before and after, and the comparison with curl's fix (made only after the agent finished).
+function diffHtml(patch) {
+  return patch.split("\n").filter((l) => !/^(diff --git|index )/.test(l)).map((l) => {
+    const cls = l.startsWith("+++") || l.startsWith("---") ? "dh" : l.startsWith("@@") ? "dh" : l[0] === "+" ? "da" : l[0] === "-" ? "dd" : "";
+    return cls ? `<span class="${cls}">${esc(l)}</span>` : esc(l);
+  }).join("\n");
+}
+
+function fixCard(f) {
+  const t = f.tests || {}, after = t.after || {}, before = t.before || {};
+  const gone = f.verification && f.verification.built && !f.verification.bug_present;
+  const testsOk = t.ids && t.ids.length && !(t.new_failures || []).length && after.ok === after.total;
+  const proven = f.verdict === "FIX_VERIFIED" && gone && testsOk;
+  const c = f.comparison || {};
+  const added = (f.patch.match(/^\+(?!\+\+)/gm) || []).length, removed = (f.patch.match(/^-(?!--)/gm) || []).length;
+  const yn = (b) => (b ? "yes" : "no");
+  const head = proven
+    ? `<div class="seal" title="Checked from scratch with no model involved: the bundle's check and curl's own tests">
+      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M12 2 3 6v6c0 5 3.8 9.3 9 10 5.2-.7 9-5 9-10V6l-9-4Z" fill="currentColor" opacity=".18"/><path d="M12 2 3 6v6c0 5 3.8 9.3 9 10 5.2-.7 9-5 9-10V6l-9-4Z" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="m8.5 12.2 2.4 2.4 4.6-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span><b>FIX_VERIFIED</b><small>bug gone · curl tests pass</small></span></div>`
+    : `<div class="facts">${fact("bad", `<b>${esc(f.verdict)}</b>`, (t.new_failures || []).length ? `breaks curl tests ${esc(t.new_failures.join(", "))} that passed before` : "")}</div>`;
+  return `<div class="card fix-card"><div class="kicker">Agent-written fix · checked end to end</div>
+    <h2 style="font-size:20px;margin-top:8px">${proven ? "Bug proved, patch written, bug gone, curl's own tests still pass" : "The agent's patch did not pass every check"}</h2>
+    <p class="muted" style="font-size:13px;margin:6px 0 0">A Nemotron 3 Ultra agent wrote this patch (+${added} −${removed} lines) in the sandbox where the bug reproduces,
+    running the bug check and curl's related tests inside its own loop. Its word is not taken: the patch is applied in a fresh sandbox,
+    the bundle's check is re-run, and curl's tests run before and after, each in a fresh build. curl's own fix was never shown to it.</p>
+    ${head}
+    <div class="vres-pair">
+      <div class="vres ${gone ? "gone" : "present"}"><div class="vres-head"><span>Check with the patch</span><code>${esc((f.verification?.commit || "").slice(0, 12))}</code></div>
+        <div class="vres-state">${gone ? "✓ bug gone with patch" : "✗ bug still present"}</div>
+        <div class="vres-sub">check exit ${esc(f.verification?.exit_code)} · ${esc(f.verification?.seconds)}s in a fresh sandbox</div></div>
+      <div class="vres ${testsOk ? "gone" : "present"}"><div class="vres-head"><span>curl's related tests</span><code>${esc((t.ids || []).length)} tests</code></div>
+        <div class="vres-state">${testsOk ? "✓" : "✗"} ${esc(after.ok)}/${esc(after.total)} pass</div>
+        <div class="vres-sub">${esc(before.ok)}/${esc(before.total)} before the patch · fresh build each</div></div>
+    </div>
+    <details style="margin-top:12px" open><summary><b>The patch</b> <span class="muted">${esc(f.steps)} agent steps · ${esc(f.agent_seconds ?? f.seconds)}s${f.cost ? ` · $${esc(f.cost.total_usd.toFixed(2))}` : ""}</span></summary>
+      <pre class="file diff">${diffHtml(f.patch)}</pre></details>
+    ${f.comparison ? `<div class="kicker" style="margin-top:16px">Compared with curl's fix <code>${esc((f.upstream_fix || "").slice(0, 12))}</code>, after the agent finished</div>
+    <div class="facts">
+      ${fact(c.same_root_cause ? "good" : "meh", `Same root cause: <b>${yn(c.same_root_cause)}</b> · same location: <b>${yn(c.same_location)}</b>${c.same_behaviour_for_reported_bug != null ? ` · same behaviour for the reported bug: <b>${yn(c.same_behaviour_for_reported_bug)}</b>` : ""}`, esc(c.summary))}
+      ${c.upstream_extra ? fact("meh", "curl's fix also changes", esc(c.upstream_extra)) : ""}
+      ${fact(/^none/i.test(c.agent_patch_risks || "") ? "good" : "bad", "Gaps in the agent's patch for this bug", esc(c.agent_patch_risks))}
+    </div>` : ""}
+    <details style="margin-top:8px"><summary class="muted">Related tests run</summary><p class="muted" style="font-size:13px">${esc((t.ids || []).join(" "))}</p></details>
+  </div>`;
+}
+
 ROUTES.proof = async (parts) => {
   const ex = BUNDLES.find((x) => x.name === parts[0]) || BUNDLES[0];
   app.innerHTML = `<div class="page-head"><h1>Proof bundles</h1>
@@ -43,9 +91,11 @@ ROUTES.proof = async (parts) => {
     sandbox in about two minutes, and <b>no AI is involved in verifying it</b>. SlopProof writes one for every bug it
     reproduces, and a report only counts as CONFIRMED if its bundle passes again from scratch.</p></div>
     <div class="seg" role="tablist" style="margin-top:18px">${BUNDLES.map((x) => `<button role="tab" class="${x === ex ? "active" : ""}" data-n="${x.name}">${esc(x.cve)} · ${esc(x.short)}</button>`).join("")}</div>
-    <div class="proof-grid" id="p-grid"><div class="card"><div class="skeleton"></div></div><div class="card"><div class="skeleton"></div></div></div>`;
+    <div class="proof-grid" id="p-grid"><div class="card"><div class="skeleton"></div></div><div class="card"><div class="skeleton"></div></div></div>
+    <div id="p-fix"></div>`;
   $$(".seg button", app).forEach((btn) => { btn.onclick = () => { location.hash = `#/proof/${btn.dataset.n}`; }; });
-  const [b, v] = await Promise.all([getJSON(exampleUrl(ex.name)), getJSON(exampleUrl(ex.name + ".verification"))]);
+  const [b, v, fx] = await Promise.all([getJSON(exampleUrl(ex.name)), getJSON(exampleUrl(ex.name + ".verification")),
+    ex.fix ? getJSON(exampleUrl(ex.name + ".fix")).catch(() => null) : null]);
   const cmd = v.command || `slopproof verify ${ex.name}.json --against ${v.at_against ? v.at_against.commit : ""}`;
   const files = Object.entries(b.files).map(([p, c]) => `<details style="margin-top:8px"><summary><code>${esc(p)}</code>
     <span class="muted">${c.length} bytes</span></summary><pre class="file">${esc(c)}</pre></details>`).join("");
@@ -69,6 +119,7 @@ ROUTES.proof = async (parts) => {
         <div class="row"><button class="btn primary" id="p-run">Re-run live</button></div>
         <div class="term hidden" id="p-term"></div><div id="p-result"></div>`}
     </div>`;
+  if (fx && fx.patch) $("#p-fix").innerHTML = fixCard(fx);
   $("#p-dl").onclick = () => download(`${ex.name}.json`, b);
   $("#p-copy").onclick = () => copyText(cmd);
   if (STATIC) return;

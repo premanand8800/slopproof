@@ -74,19 +74,25 @@ def _run_at(bundle: dict, ref: str, emit: Callable[[str], None], patch: str | No
         if bundle.get("setup"):
             sb.run(bundle["setup"], timeout=600)
         emit("running the check ...")
-        res = sb.run(bundle["check"], timeout=300, pipefail=False)
-        matched = bool(re.search(bundle["expect_output"], res["output"], re.M)) if bundle.get("expect_output") else True
-        out = {"commit": sha, "built": True, "exit_code": res["exit_code"], "output": res["output"][-3000:]}
-        control_ok = True
-        if bundle.get("control"):  # old bundles have none; the bug shows only if the safe case does not pass
-            ctl = sb.run(bundle["control"], timeout=300, pipefail=False)
-            out["control_exit_code"], out["control_output"] = ctl["exit_code"], ctl["output"][-1500:]
-            control_ok = ctl["exit_code"] != 0
-        out["bug_present"] = res["exit_code"] == 0 and matched and control_ok
+        out = {"commit": sha, "built": True, **run_check(sb, bundle)}
         out["seconds"] = round(time.time() - t0)
         return out
     finally:
         sb.close()
+
+
+def run_check(sb: Sandbox, bundle: dict) -> dict:
+    """Run the bundle's check (and control) once in a sandbox where the project is built and the files are in place."""
+    res = sb.run(bundle["check"], timeout=300, pipefail=False)
+    matched = bool(re.search(bundle["expect_output"], res["output"], re.M)) if bundle.get("expect_output") else True
+    out = {"exit_code": res["exit_code"], "output": res["output"][-3000:]}
+    control_ok = True
+    if bundle.get("control"):  # old bundles have none; the bug shows only if the safe case does not pass
+        ctl = sb.run(bundle["control"], timeout=300, pipefail=False)
+        out["control_exit_code"], out["control_output"] = ctl["exit_code"], ctl["output"][-1500:]
+        control_ok = ctl["exit_code"] != 0
+    out["bug_present"] = res["exit_code"] == 0 and matched and control_ok
+    return out
 
 
 def verify(bundle: dict, against: str | None = None, emit: Callable[[str], None] = lambda m: None) -> dict:

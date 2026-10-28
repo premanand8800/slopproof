@@ -42,7 +42,7 @@ analysis, the reproduction agent and the verdict. Tavily search and extract, wit
 197 public curl HackerOne reports (49 AI slop, 148 real CVEs), each replayed as of its filing date. Final run on
 NVIDIA Nemotron via Nebius Token Factory, with Tavily web search working.
 - 0 of 148 real CVE reports wrongly closed.
-- 21 of 49 slop reports closed, each with checked evidence; 38 of 49 closed or moved to the bottom of the queue.
+- 24 of 49 slop reports closed with the investigator (21 without), each with checked evidence; 40 of 49 closed or moved to the bottom of the queue, against 7 of 148 real.
 - Text-only baseline (same model): closes 31 of 49, but 13 of its 31 closing reasons are false.
 - Sandbox (27-report sample, 19 slop and 8 real): 9 of 19 slop closed with a run, 0 of 8 real closed, and two real
   CVEs reproduced and proved: #3735184 (.netrc credential leak, 161 s for $0.31) and #4041053 (.netrc password in

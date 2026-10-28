@@ -73,3 +73,9 @@ html.pal-open { overflow: hidden; }
   border-color: color-mix(in srgb, var(--term-ink) 25%, transparent); }
 .cmd .btn:hover { border-color: color-mix(in srgb, var(--term-ink) 45%, transparent); }
 @media (max-width: 480px) { .vres-pair { grid-template-columns: minmax(0, 1fr); } }
+/* Proof page: the agent-written fix and its diff */
+.fix-card { margin-top: 20px; min-width: 0; }
+.fix-card pre.file { max-height: 360px; overflow: auto; font-size: 12px; background: var(--card-2); padding: 10px; border-radius: 8px; margin-top: 8px; }
+pre.diff .da { color: var(--ok); background: var(--ok-soft); display: inline-block; min-width: 100%; }
+pre.diff .dd { color: var(--bad); background: var(--bad-soft); display: inline-block; min-width: 100%; }
+pre.diff .dh { color: var(--muted); }

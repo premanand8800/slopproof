@@ -44,6 +44,46 @@ def verify_main(argv: list[str]) -> None:
     sys.exit(0 if res["verdict"].startswith("VERIFIED") else 1)
 
 
+def fix_main(argv: list[str]) -> None:
+    from pathlib import Path
+
+    from .bundle import load
+    from .fix import propose_fix
+    from .llm import Ledger
+
+    ap = argparse.ArgumentParser(prog="slopproof fix", description=(
+        "Have the agent write a patch for a proof bundle's bug, then verify it in a fresh sandbox: the check must "
+        "stop passing and the project's related tests that passed before must still pass."))
+    ap.add_argument("bundle", help="path to a proof bundle JSON")
+    ap.add_argument("--report", required=True, help="the original report: a text file, or a report URL")
+    ap.add_argument("--upstream", help="the project's own fix commit, compared with the agent's patch afterwards "
+                                       "(never shown to the agent)")
+    ap.add_argument("--rounds", type=int, default=2, help="attempts when the patch breaks tests (default 2)")
+    ap.add_argument("--out", help="write the result JSON here")
+    a = ap.parse_args(argv)
+    report = Path(a.report).read_text() if Path(a.report).is_file() else fetch_report(a.report)["body"]
+    ledger = Ledger()
+
+    def log(e: dict) -> None:
+        if e.get("type") == "run":
+            print(f"  $ {e['cmd'][:160]}", file=sys.stderr)
+        elif e.get("type") == "output":
+            tail = e["output"].strip().splitlines()[-2:]
+            print(f"    -> exit {e['exit_code']}: {' | '.join(tail)[:200]}", file=sys.stderr)
+        elif e.get("type") in ("write", "log"):
+            print(f"  {e.get('path') or e.get('message')}", file=sys.stderr)
+        elif e.get("stage") == "cost":
+            print(f"  [cost ${e['usd']:.3f}]", file=sys.stderr)
+
+    res = propose_fix(load(a.bundle), report, ledger, emit=log, upstream_fix=a.upstream, rounds=a.rounds)
+    res["cost"] = ledger.summary()
+    if a.out:
+        Path(a.out).write_text(json.dumps(res, indent=1, default=str) + "\n")
+    t = res.get("tests") or {}
+    print(f"{res.get('verdict')} · tests {(t.get('after') or {}).get('ok')}/{(t.get('after') or {}).get('total')} · "
+          f"{res.get('seconds')}s · ${res['cost']['total_usd']:.3f}")
+
+
 def memory_main(argv: list[str]) -> None:
     from . import memory
 
@@ -71,6 +111,8 @@ def memory_main(argv: list[str]) -> None:
 def main() -> None:
     if sys.argv[1:2] == ["verify"]:
         return verify_main(sys.argv[2:])
+    if sys.argv[1:2] == ["fix"]:
+        return fix_main(sys.argv[2:])
     if sys.argv[1:2] == ["memory"]:
         return memory_main(sys.argv[2:])
     ap = argparse.ArgumentParser(prog="slopproof")

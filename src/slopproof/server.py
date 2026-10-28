@@ -318,7 +318,8 @@ def result(job_id: str):
 # The headline file for each mode first, then older runs kept for transparency. A recorded run is looked up in
 # that order, so a link to a report scored only in an older run still opens.
 BENCH_FILES = {
-    "static": ("results_static_final.jsonl", "results_static.jsonl"),
+    # Headline: the full static pipeline, the investigator included (rows the fixed checks closed are unchanged).
+    "static": ("results_static_investigator.jsonl", "results_static_final.jsonl", "results_static.jsonl"),
     "sandbox": ("results_sandbox.jsonl",),
     "baseline": ("results_baseline.jsonl",),
     # The investigator run over every report the static run left open, and over the held-out set.
