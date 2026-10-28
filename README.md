@@ -306,9 +306,9 @@ tied to curl.
   extract, map, crawl and research are refused in a replay). It closed 3 more slop reports, each with at least two
   verified quotes, and closed no real report: 0 of 148. On the 60 held-out reports it changed nothing (2 closed).
   $0.089 and 0.5 Tavily credits per investigated report.
-- **Headline run.** The numbers above are the final run (`bench/results_static_final.jsonl`): current code,
-  NVIDIA Nemotron on Nebius Token Factory, Tavily web search working. 197 reports: 0 of 148 real CVE reports
-  wrongly closed, 21 of 49 AI slop closed, $0.065 per report on average.
+- **Fixed checks without the investigator.** `bench/results_static_final.jsonl`: current code, NVIDIA Nemotron
+  on Nebius Token Factory, Tavily web search working. 197 reports: 0 of 148 real CVE reports wrongly closed, 21 of
+  49 AI slop closed, $0.065 per report on average. The headline (24 of 49) adds the investigator run above.
 - **Earlier runs, kept for transparency.** `results_static.jsonl` (v1, an older pipeline, 196 reports) rescored
   with the current guards: 0 of 147 real closed, 22 of 49 slop closed. `results_static_v2.jsonl` is a partial
   cross-check through OpenRouter (100 reports). `results_static_v3.jsonl` ran while the Tavily quota was exhausted,
