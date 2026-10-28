@@ -140,6 +140,10 @@ report URL ──► 1. Extract claims ─────────── Nemotro
                   (no network, capped CPU/memory/pids, all capabilities dropped)
            ──► 6. Verdict ────────────────── Nemotron 3 Ultra
                   CONFIRMED · PLAUSIBLE · NOT_REPRODUCED · FABRICATED, findings, suggested reply, cost
+           ──► 7. Investigate (still open) ── Nemotron 3 Ultra agent + git + every Tavily endpoint
+                  decides what to look at next; its evidence is checked in code; a verified refutation
+                  can be the second close signal, a verified "claim holds" blocks any close
+           ──► 8. Tavily feedback ─────────── which search results the verdict actually cited
 ```
 
 Rules the system holds itself to:
@@ -150,6 +154,9 @@ Rules the system holds itself to:
   A close needs the verdict model plus one more signal: a sandbox run, the code ruling the claim out, or the text
   screen agreeing. When prior art shows the same area had a real bug, reading the code is not enough, since the
   report may be a bypass of that fix.
+- **An agent's evidence is checked, not believed.** The investigator's quotes must be in the pinned tree near the
+  cited line, in a page a tool returned in that run, or in a commit before the pinned one; the rest is dropped and
+  shown as dropped.
 - **A buggy PoC proves nothing.** Passing user input as a format string in *your own* test program is not a curl bug.
 
 ### Why a fixed pipeline with agents inside, not one agent deciding everything
@@ -164,7 +171,26 @@ fixed, and the open-ended work goes to agents that write, run and test code in f
 - **Fix agent** (tool calls `run`, `edit`, `finish`): writes a patch where the bug reproduces; the patch counts only
   if the bundle check stops passing in a fresh sandbox and the project's own related tests still pass. Failing
   tests are given back to the agent for another attempt.
+- **Investigator** (Nemotron 3 Ultra, 12 tool calls, `src/slopproof/investigate.py`): runs only when the fixed
+  pipeline's verdict is still open, and decides what to look at next. Code tools work on the tree and history
+  pinned to the report's commit (`search_code`, `read_function`, `read_lines`, `grep_code`, `git_log_search`
+  for `git log -S`, `git_show` for commits before the pinned one); web tools are Tavily (`web_search`,
+  `read_pages` = extract with a question, `map_docs`, `crawl_docs`, `deep_research` = research with a JSON schema,
+  once per run). It reports findings (the report's claims, each `holds`, `refuted` or `unknown`) with evidence,
+  and code checks every quote: code against the tree near the cited line (the same fuzzy match as report quotes),
+  web quotes against the content a tool returned in that run, git quotes against commits before the pinned one.
+  Unverified evidence is dropped and shown struck through; a finding left without evidence becomes unknown. In
+  the guards a verified refutation can stand in for "the code rules the claim out", under the same conditions
+  (no known area, prior-art search worked, no confident text-screen dissent, and the static analysis did not find
+  the claim holds), and only if it is well cited: at least two verified quotes and more verified than dropped. A
+  verified "holds" blocks every close. It can never produce CONFIRMED. Hooks stop repeated greps and re-reads, and
+  in a replay the endpoints that read today's web are refused as a tool result, so the agent carries on with dated
+  search and code.
 - **Code analysis** asks for more code by name (`read_next`); it is fetched from the real tree for a second pass.
+
+The investigator is the one place where an agent chooses what to check. It comes after the fixed checks, never
+instead of them, and it can only add evidence: it cannot skip a check, and what it says counts only as far as code
+can verify it.
 
 A step that fails (a web search, memory) counts as unknown, and unknown blocks a close: a failure makes SlopProof
 more careful, never wrong.
@@ -315,13 +341,24 @@ replay a dataset of hundreds of reports for a few dollars. Every run records a p
 
 ## How we use Tavily
 
-Tavily is how SlopProof checks the outside world, not decoration:
+Tavily is how SlopProof checks the outside world, not decoration. Every call goes through
+`src/slopproof/webtools.py`, which counts its credits in the run's cost ledger (shown in the run page's cost box)
+and refuses the endpoints that read today's web during a benchmark replay:
 
-- **CVE verification**: `search` for every cited CVE; Nemotron Super decides whether it exists, affects the
-  project, and is the same issue (slop often recycles old, fixed CVEs).
-- **Source verification**: `extract` on every cited URL, then a check that the page supports the claim.
-- **Prior art**: `search` for the same issue already reported, fixed, or documented as intended behaviour.
-- **Time travel**: `end_date` lets the benchmark judge each report with only the web as it was that day.
+| Endpoint | Used for |
+|---|---|
+| `search` | Every cited CVE (does it exist, is it this project, is it the same bug); prior art (the same issue already reported, fixed or documented); the investigator's `web_search`, optionally limited to the project's own domains. In a replay: `end_date` = the filing date, hackerone.com and the slop-list gist excluded, `search_depth` basic. |
+| `extract` | Every URL a report cites, judged against the claim; the investigator's `read_pages`, which passes a question so only the relevant chunks come back; in live runs, the project's security policy page when its tree has no policy file (the scope check's quote is then checked against that page). |
+| `map` | The investigator's `map_docs`: list a project's documentation pages matching what it looks for (security policy, advisories, an option's docs). |
+| `crawl` | The investigator's `crawl_docs`: read the project's own docs or security pages under a URL, following instructions, in chunks. Crawled text can be quoted as evidence. |
+| `research` | The investigator's `deep_research`, at most once per run, with a JSON `output_schema` (already reported or fixed? documented behaviour? key sources). Its answer is a lead, never evidence: the agent must quote the source pages themselves. |
+| `feedback` | After the verdict, for every search the run made: which of its results the verdict or the investigator actually cited (score 1) or that none were (score 0). |
+
+- **Time travel**: `end_date` lets the benchmark judge each report with only the web as it was that day. `extract`,
+  `map`, `crawl` and `research` return today's web and cannot be limited to a date, so in a replay they are refused
+  and the investigator gets the refusal as a tool result. In replays the investigator also drops search results
+  that talk about the benchmark's own labels (pages listing AI-slop reports or linking HackerOne reports).
+- **Verified quotes**: a web quote the investigator cites must appear in content a Tavily call returned in that run.
 
 ## Related work and how SlopProof differs
 
@@ -376,10 +413,12 @@ src/slopproof/
   codecheck.py  claims vs. the real git tree; source excerpts for the reasoning model
   codesearch.py find the functions a report is about (tree-sitter + BM25)
   screen.py     text-only vote
+  webtools.py   every Tavily endpoint (search, extract, map, crawl, research, feedback), credits in the ledger
   webcheck.py   Tavily CVE, URL and prior-art checks
   analyze.py    static analysis on real code
   sandbox.py    Docker sandbox (no network, caps dropped, resource limits)
   reproduce.py  Nemotron Ultra reproduction agent
+  investigate.py Nemotron Ultra investigator for open reports; its evidence checked in code
   verdict.py    final decision and maintainer reply
   pipeline.py   orchestration and progress events
   server.py     FastAPI + server-sent events
