@@ -6,12 +6,15 @@ import time
 from collections.abc import Callable
 from pathlib import Path
 
+from . import webtools
 from .llm import Ledger, chat, chat_json
 from .sandbox import Sandbox
 
 MAX_STEPS = 40
 WALL_SECONDS = 25 * 60
 UNKNOWN_PROJECT_SECONDS = 12 * 60
+WEB_SEARCH_BUDGET = 5  # the agent may look up docs this many times (protects the Tavily budget)
+VERIFY_GATE_TRIES = 2  # finish(reproduced) is refused this many times until a self-check passes
 
 # Build commands started in the background as soon as the sandbox is up, while the agent reads code.
 BUILDS = {
@@ -54,8 +57,16 @@ Your job is to find out whether the reported bug is REAL by reproducing it, not 
 
 Environment:
 - A Linux container with the project's source at /work/repo, checked out at the commit the reporter was looking at.
-- No internet. Loopback works, so you can run local test servers with python3 or nc on 127.0.0.1.
-- Tools: clang, gcc, make, autotools, cmake, python3, OpenSSL and common -dev libraries.
+- NO internet. apt-get, pip install, wget, and downloading any dependency WILL FAIL every time. Never try them: it
+  only wastes tool calls. Build and test with what is already installed.
+- Already installed: clang, gcc, make, autotools, cmake, gdb, valgrind, python3, netcat (nc), and the -dev libraries
+  OpenSSL, zlib, libpsl, nghttp2, brotli, zstd and gsasl. If the bug needs a library that is NOT in this list, you
+  cannot install it: build a harness that stubs or drives only the vulnerable function instead, or report inconclusive.
+- Loopback works. For a bug that needs a server (a redirect, an early-hints 103 response, a crafted protocol reply),
+  write the smallest server yourself with python3 (http.server, socketserver, or a raw socket) or nc on 127.0.0.1,
+  and run curl against it. You do not need the real internet for any of this.
+- A web_search tool is available (it reads the web as of the report's filing date) for curl option names, protocol
+  details and documented behaviour. Use it instead of guessing an option or grepping the source for CLI flags.
 
 Rules:
 1. Build the project with AddressSanitizer and UndefinedBehaviorSanitizer when it is C or C++.
@@ -67,9 +78,10 @@ Rules:
    wrong behaviour (for example a leaked credential in captured traffic) produced by the project.
 5. If the report has no concrete reproduction, design the most direct test you can for the claim.
 6. Read the relevant source before writing a PoC. Check the bounds, lengths and states the report ignores.
-7. Stay efficient: you have 40 tool calls in total. The relevant source is already in the prompt: read more only
-   if you must, and batch reads into one command (grep -n, sed -n for several ranges). Aim to have a PoC running
-   by tool call 10. The build runs in the background, so write the PoC while it builds. Call finish as soon as you have strong evidence either way.
+7. Stay efficient: you have 40 tool calls in total. The relevant source and its callers are ALREADY in the prompt:
+   do not re-read files you have already been shown. Read more only if you must, and batch reads into one command
+   (grep -n, sed -n for several ranges). Aim to have a PoC running by tool call 8. The build runs in the background,
+   so write the PoC while it builds. Call finish as soon as you have strong evidence either way.
 8. Never modify the project's source files: you test the code as reported, you do not fix it. One build is
    enough; do not rebuild in other configurations unless the first build cannot reach the code path.
 9. Call finish as soon as a sanitizer report, assertion or crash in project code shows the bug.
@@ -81,6 +93,14 @@ Rules:
    (for example the same request without the encoding trick, or the same option used directly). If the
    plain way already gives the same result, the behaviour is by design: the outcome is not_reproduced.
    A sanitizer report or crash with its stack in project code always counts as impact.
+13. Bugs triggered by depth or size (deep nesting, recursion, many iterations, a large input) need a LARGE count to
+   trigger: a handful of levels will not overflow a stack. Use tens of thousands and build the structure iteratively
+   (a loop), not by hand. If a first run does not crash, increase the count before concluding anything.
+14. Before you call finish with "reproduced", call the verify tool with your check_command and control_check. It runs
+   both in this sandbox and tells you whether the check passes (bug present) AND the control fails (safe case). A
+   report is only confirmed when both hold, so fix your check until verify is green. A check that also passes on the
+   safe case (for example grepping output that is printed either way, like a header echoed to the FIRST host before a
+   redirect) proves nothing.
 
 Call finish with outcome:
 - "reproduced": you triggered the claimed bug through a real code path, with evidence. Also give check_command:
@@ -102,6 +122,21 @@ TOOLS = [
         "name": "write_file", "description": "Write a file inside /work (for example /work/poc.c).",
         "parameters": {"type": "object", "properties": {
             "path": {"type": "string"}, "content": {"type": "string"}}, "required": ["path", "content"]}}},
+    {"type": "function", "function": {
+        "name": "web_search", "description": (
+            "Search the web (as of the report's filing date) for curl option names, protocol details or documented "
+            "behaviour. Returns titles, URLs and snippets. Use it instead of guessing a CLI flag."),
+        "parameters": {"type": "object", "properties": {
+            "query": {"type": "string"}}, "required": ["query"]}}},
+    {"type": "function", "function": {
+        "name": "verify", "description": (
+            "Dry-run your proof before finishing: runs check_command and control_check in THIS sandbox and reports "
+            "both exit codes. The bug is proven only when the check exits 0 (bug present) and the control exits "
+            "non-zero (safe case). Call this before finish with outcome 'reproduced'."),
+        "parameters": {"type": "object", "properties": {
+            "check_command": {"type": "string", "description": "exits 0 iff the bug is present"},
+            "control_check": {"type": "string", "description": "the SAME check on the safe case; must exit non-zero"}},
+            "required": ["check_command", "control_check"]}}},
     {"type": "function", "function": {
         "name": "finish", "description": "Report the result of the reproduction attempt.",
         "parameters": {"type": "object", "properties": {
@@ -130,7 +165,7 @@ TOOLS = [
 
 def reproduce(tree: Path, project: str, report: str, claims: dict, analysis: dict, context: str,
               ledger: Ledger, emit: Callable[[dict], None], repo_url: str | None = None, sha: str | None = None,
-              remembered_build: str | None = None) -> dict:
+              remembered_build: str | None = None, as_of: str | None = None) -> dict:
     proj = project.split("/")[-1]
     recipe = RECIPES.get(proj, GENERIC_RECIPE)
     if remembered_build and proj not in RECIPES:
@@ -152,6 +187,9 @@ def reproduce(tree: Path, project: str, report: str, claims: dict, analysis: dic
     if proj in BUILDS:
         sb.background(BUILDS[proj])
     transcript = []
+    web_searches = 0  # web_search calls so far, capped at WEB_SEARCH_BUDGET
+    verify_ok = False  # a self-check has shown check passes and control fails
+    finish_refusals = 0
     t0 = time.time()
     try:
         for step in range(MAX_STEPS):
@@ -176,6 +214,20 @@ def reproduce(tree: Path, project: str, report: str, claims: dict, analysis: dic
                     args = {}
                 tool = tc.function.name
                 if tool == "finish":
+                    left = MAX_STEPS - step
+                    # Mirror the fix agent: do not accept a "reproduced" verdict whose proof has not passed a
+                    # self-check in this sandbox. Send the agent back to verify (a bad control is the usual slip).
+                    if (args.get("outcome") == "reproduced" and not verify_ok
+                            and finish_refusals < VERIFY_GATE_TRIES and left > 2):
+                        finish_refusals += 1
+                        nudge = ("finish REFUSED: run the verify tool first. A reproduction counts only after a "
+                                 "self-check shows your check_command exits 0 (bug present) AND your control_check "
+                                 "exits non-zero (safe case). Call verify with both, fix the check if it is not green, "
+                                 "then finish.")
+                        emit({"stage": "reproduce", "type": "output", "step": step + 1, "exit_code": 2, "output": nudge})
+                        transcript.append({"tool": "finish", "refused": True, "output": nudge})
+                        messages.append({"role": "tool", "tool_call_id": tc.id, "content": nudge})
+                        continue
                     result = {"outcome": args.get("outcome", "inconclusive"), "explanation": args.get("explanation", ""),
                               "evidence": args.get("evidence", ""), "poc": args.get("poc", ""),
                               "impact": args.get("impact", "none"), "baseline": args.get("baseline", ""),
@@ -211,6 +263,23 @@ def reproduce(tree: Path, project: str, report: str, claims: dict, analysis: dic
                     emit({"stage": "reproduce", "type": "write", "step": step + 1, "path": path, "content": body[:3000]})
                     content = sb.write(path, body)
                     transcript.append({"tool": "write_file", "path": path, "content": body})
+                elif tool == "web_search":
+                    query = str(args.get("query", ""))
+                    if web_searches >= WEB_SEARCH_BUDGET:
+                        content = f"[web_search budget of {WEB_SEARCH_BUDGET} used up] Work from the source and your tests."
+                    else:
+                        web_searches += 1
+                        emit({"stage": "reproduce", "type": "web_search", "step": step + 1, "query": query[:200]})
+                        content = _web_search(query, ledger, as_of)
+                    transcript.append({"tool": "web_search", "query": query, "output": content})
+                elif tool == "verify":
+                    check = str(args.get("check_command", "")).strip()
+                    control = str(args.get("control_check", "")).strip()
+                    content, verify_ok = _run_verify(sb, check, control)
+                    emit({"stage": "reproduce", "type": "output", "step": step + 1,
+                          "exit_code": 0 if verify_ok else 1, "output": content})
+                    transcript.append({"tool": "verify", "check": check, "control": control, "output": content,
+                                       "ok": verify_ok})
                 else:
                     content = f"unknown tool {tool}"
                 messages.append({"role": "tool", "tool_call_id": tc.id, "content": content})
@@ -222,6 +291,40 @@ def reproduce(tree: Path, project: str, report: str, claims: dict, analysis: dic
                 "poc": "", "steps": len(transcript), "seconds": round(time.time() - t0), "transcript": transcript}
     finally:
         sb.close()
+
+
+def _web_search(query: str, ledger: Ledger, as_of: str | None) -> str:
+    """A dated web lookup for the agent (curl option names, protocol details). Never fails the run."""
+    try:
+        res = webtools.search(query, ledger, as_of=as_of, depth="basic", max_results=5)
+    except webtools.ReplayRefused as e:
+        return f"[web_search unavailable: {e}]"
+    except Exception as e:  # noqa: BLE001 - a lookup failure is not fatal
+        return f"[web_search failed: {str(e)[:200]}]"
+    lines = []
+    for r in (res.get("results") or [])[:5]:
+        if isinstance(r, dict):
+            lines.append(f"- {r.get('title', '')[:120]} ({r.get('url', '')})\n  {(r.get('content') or '')[:400]}")
+    return "\n".join(lines) or "[no results]"
+
+
+def _run_verify(sb: Sandbox, check: str, control: str) -> tuple[str, bool]:
+    """Run the proposed check and control in the live sandbox (as the proof bundle later will) and report both.
+
+    Green when the check exits 0 (bug present) and the control exits non-zero (safe case)."""
+    if not check or not control:
+        return ("verify needs BOTH a check_command and a control_check. A confirmed report must show the check "
+                "passing on the bug and failing on the safe case."), False
+    c = sb.run(check, timeout=300, pipefail=False)
+    k = sb.run(control, timeout=300, pipefail=False)
+    ok = c["exit_code"] == 0 and k["exit_code"] != 0
+    verdict = ("GREEN: check passes on the bug and fails on the safe case; this would be confirmed." if ok else
+               "NOT GREEN: " + (
+                   "the check did not pass (exit != 0), so the bug is not shown. " if c["exit_code"] != 0 else "") + (
+                   "the control also passed (exit 0), so the check does not distinguish the bug from the safe case. "
+                   if k["exit_code"] == 0 else ""))
+    return (f"{verdict}\ncheck exit {c['exit_code']}: {c['output'][-600:]}\n"
+            f"control exit {k['exit_code']}: {k['output'][-400:]}"), ok
 
 
 # Output that proves a memory error or crash in the project itself: a sanitizer report or a fatal signal,

@@ -134,7 +134,8 @@ def triage(title: str, body: str, repo_url: str, created_at: str | None = None,
         emit({"stage": "reproduce", "type": "begin"})
         builds = [s["body"] for s in (recalled or {}).get("skills", []) if s["kind"] == "build"]
         repro = reproduce(tree, project, f"{title}\n\n{body}", claims, analysis, context, ledger, emit,
-                          repo_url=repo_url, sha=ref["sha"], remembered_build=builds[0] if builds else None)
+                          repo_url=repo_url, sha=ref["sha"], remembered_build=builds[0] if builds else None,
+                          as_of=as_of)
         # Saved apart from the step-by-step events, so a resumed run can reuse it without the transcript.
         emit({"stage": "checkpoint", "key": "reproduction", "value": {k: v for k, v in repro.items() if k != "transcript"}})
     elif repro is not None:
