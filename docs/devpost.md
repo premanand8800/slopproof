@@ -83,3 +83,27 @@ nvidia-nemotron, nebius-token-factory, tavily, python, fastapi, docker, addresss
 Code search and the code checks also parse Python, Go, JavaScript and Rust. Live runs on requests (a real CVE kept
 open), gin (an invented Go "memcpy overflow", FABRICATED) and express (an invented prototype pollution, kept open at
 low priority because a related fix exists) are linked from the Benchmark page. A handful of runs, not a benchmark.
+
+## Track
+Coding & Agentic Engineering, plus Best Use of Tavily.
+
+## Testing instructions (for judges)
+- Video: https://www.youtube.com/watch?v=9OoZzGo60DI
+- Live demo: https://slopproof.aether-soft.tech (backup with recorded runs only: https://huggingface.co/spaces/premmm/slopproof)
+- No passcode: open any recorded run, click the home page's one-click live sample (about a minute), or open Proofs →
+  a bundle → Re-run live (curl built at the reported commit and at the fix, about 4 minutes, no AI involved).
+- Sandbox runs, where an agent writes, runs and tests code, need the passcode in the file uploaded under
+  Additional info. The passcode also lifts the public demo's daily run limit.
+
+## Why Tavily is essential, not decoration
+The benchmark replays each report as of the day it was filed. Without a date limit, a web search for an old report
+finds the CVE write-up published after it, and the "answer" leaks in. Every Tavily search in a replay passes
+`end_date` set to the filing date and excludes hackerone.com, so SlopProof sees only what a maintainer could have
+seen that day. Tavily `extract` reads every page a report cites so Nemotron 3 Super can judge whether it says what
+the report claims, and Tavily is also used to check CVE numbers our own model names before they are shown.
+
+## Feedback on Nebius Token Factory and NVIDIA Nemotron
+(Answered in full in the Additional info questions.) In short: one OpenAI-compatible endpoint for three Nemotron
+sizes let us route each step to the smallest model that does it well; tool calling on Nemotron 3 Ultra was reliable
+enough for a 40-step sandbox agent. What would help: per-request cost in the response, and documented reasoning
+budget controls per model.
