@@ -6,6 +6,11 @@ SlopProof
 ## Tagline
 Proof, not vibes: checks every vulnerability report against the real code, the live web and a sandbox run.
 
+## Links
+- Demo video: https://www.youtube.com/watch?v=9OoZzGo60DI
+- Live demo: https://slopproof.aether-soft.tech
+- Code: https://github.com/premanand8800/slopproof
+
 ## Inspiration
 In 2026 curl shut down its bug bounty. AI made convincing vulnerability reports nearly free to write, and each one
 still costs a maintainer hours to disprove. The usual answer is to guess from the wording whether a report is

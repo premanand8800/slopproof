@@ -14,6 +14,8 @@ It runs on **NVIDIA Nemotron models served by Nebius Token Factory**, with **Tav
 **Live demo: https://slopproof.aether-soft.tech** (recorded runs, plus live static checks; sandbox runs need the
 judges' passcode from the submission).
 
+**Demo video (2:53): https://www.youtube.com/watch?v=9OoZzGo60DI**
+
 <!-- BENCH:START -->
 **Results on 197 public curl HackerOne reports, each replayed as of the day it was filed** (final run: NVIDIA
 Nemotron on Nebius Token Factory, web search working; see [Benchmark notes](#benchmark-notes)):
