@@ -6,8 +6,10 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-ins
       python3 python3-pip python3-venv netcat-openbsd procps file ca-certificates \
       flex bison libyaml-dev libedit-dev libcurl4-openssl-dev \
     && rm -rf /var/lib/apt/lists/*
-# ccache symlinks so clang/gcc route through ccache when /usr/lib/ccache is on PATH (opt-in, see sandbox.py).
-RUN mkdir -p /usr/lib/ccache && for c in clang clang++ gcc g++ cc c++; do ln -sf /usr/bin/ccache /usr/lib/ccache/$c; done
+# ccache symlinks; commands run in a login shell (bash -lc), which resets PATH from /etc/profile, so the ccache
+# directory is put first there, and only when a shared cache is mounted (CCACHE_DIR set; opt-in, see sandbox.py).
+RUN mkdir -p /usr/lib/ccache && for c in clang clang++ gcc g++ cc c++; do ln -sf /usr/bin/ccache /usr/lib/ccache/$c; done \
+    && printf '[ -n "$CCACHE_DIR" ] && PATH="/usr/lib/ccache:$PATH"\n' > /etc/profile.d/ccache.sh
 RUN useradd -m -u 1000 runner
 USER runner
 WORKDIR /work

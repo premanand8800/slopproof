@@ -335,7 +335,6 @@ def test_ccache_mount_is_off_by_default_and_opt_in(monkeypatch, tmp_path):
     monkeypatch.setenv("SLOPPROOF_CCACHE", str(tmp_path / "cc"))
     args = _ccache_mount()
     assert "-v" in args and "CCACHE_DIR=/ccache" in args
-    assert any("/usr/lib/ccache" in a for a in args)  # clang/gcc route through ccache transparently
     assert (tmp_path / "cc").is_dir()
 
 

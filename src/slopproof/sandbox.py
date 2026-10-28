@@ -22,10 +22,9 @@ def _ccache_mount() -> list[str]:
     p = Path(d).expanduser()
     p.mkdir(parents=True, exist_ok=True)
     os.chmod(p, 0o777)  # the container's unprivileged runner (uid 1000) must be able to write it
-    # Route clang/gcc through ccache transparently (via /usr/lib/ccache on PATH), so build commands and proof
-    # bundles stay plain and portable; ccache only ever runs when this shared cache is mounted.
-    path = "/usr/lib/ccache:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
-    return ["-v", f"{p}:/ccache", "-e", "CCACHE_DIR=/ccache", "-e", "CCACHE_MAXSIZE=5G", "-e", f"PATH={path}"]
+    # With CCACHE_DIR set, the image's /etc/profile.d/ccache.sh puts /usr/lib/ccache first on PATH, so clang/gcc
+    # route through ccache while build commands and proof bundles stay plain and portable.
+    return ["-v", f"{p}:/ccache", "-e", "CCACHE_DIR=/ccache", "-e", "CCACHE_MAXSIZE=5G"]
 
 
 class Sandbox:
