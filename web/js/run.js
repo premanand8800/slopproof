@@ -205,6 +205,7 @@ class Run {
     box.innerHTML = `<div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line)">
       ${stopped ? `<p style="margin:0 0 10px;font-size:13px">Stopped${stoppedAt ? ` at <b>${esc(stoppedAt.title)}</b>` : ""}. Finished steps are kept, so resuming only runs what is left.</p>` : ""}
       ${needPass ? `<input id="r-pass" type="password" placeholder="sandbox passcode" style="height:38px;margin-bottom:8px">` : ""}
+      ${stopped ? `<input id="r-key" type="password" autocomplete="off" placeholder="your Nebius Token Factory API key (optional: used for this run only, never stored)" style="height:38px;margin-bottom:8px">` : ""}
       <div class="row wrap">
         ${stopped ? `<button class="btn small primary" id="r-resume">Resume from where it stopped</button>` : ""}
         <button class="btn small" id="r-fresh">${stopped ? "Start over" : "Run again"}</button></div>
@@ -215,7 +216,8 @@ class Run {
       $$("button", box).forEach((b) => (b.disabled = true));
       try {
         const r = await fetch(`/api/jobs/${encodeURIComponent(this.id)}/retry`, { method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ fresh, passcode: needPass ? $("#r-pass", box).value : null }) });
+          body: JSON.stringify({ fresh, passcode: needPass ? $("#r-pass", box).value : null,
+            api_key: $("#r-key", box) ? $("#r-key", box).value.trim() || null : null }) });
         const j = await r.json();
         if (!r.ok) throw new Error(j.detail || "Could not start the run.");
         rememberRun({ id: j.job, title: $("#r-title", this.root).textContent, ts: Date.now() / 1000 });

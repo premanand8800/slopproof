@@ -17,7 +17,9 @@ It runs on **NVIDIA Nemotron models served by Nebius Token Factory**, with **Tav
 >   https://huggingface.co/spaces/premmm/slopproof)
 > - **See a proof re-run, no passcode, 3 clicks:** Proofs → pick a bundle → **Re-run live**. curl is built at the
 >   reported commit (bug present) and at curl's fix (bug gone), about 4 minutes, with no AI involved.
-> - **Try a live check, no passcode:** the home page's one-click sample, about a minute.
+> - **Try a live check, no passcode:** the home page's one-click sample, about a minute. If the demo's Nebius
+>   credit has run out, open "Use your own Nebius key" on the form and paste a Token Factory API key: it is used for
+>   that run's model calls only, never stored, logged or shown.
 > - **Sandbox runs** (an agent that writes, runs and tests code) need the passcode in the file uploaded with the
 >   Devpost submission (Additional info). It also lifts the public demo's daily run limit.
 

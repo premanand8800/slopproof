@@ -64,6 +64,10 @@ ROUTES.home = async () => {
         <span class="muted" style="font-size:13px" id="sandbox-note">Static checks take about 2 minutes. The sandbox (Docker, no network, AddressSanitizer) adds 5 to 15 minutes.</span>
         <input id="passcode" type="password" placeholder="demo passcode (in the Devpost text)" class="hidden">
       </div>
+      ${STATIC ? "" : `<details class="paste" id="ownkey"><summary>Use your own Nebius key</summary>
+        <p class="muted" style="font-size:13px;margin:6px 0">If the demo's Token Factory credit runs out, the run can use your own
+        Nebius Token Factory API key. It is used for this run's model calls only: never stored, logged or shown. About $0.15 per static check.</p>
+        <input id="apikey" type="password" autocomplete="off" placeholder="Nebius Token Factory API key"></details>`}
       <div class="examples"><span class="muted" style="font-size:13px">Recorded runs:</span>
         ${EXAMPLES.map((e) => `<a class="ex" href="#/report/${e.mode}/${e.id}"><span class="tag ${e.kind}">${e.kind === "slop" ? "AI slop" : "real CVE"}</span>${esc(e.label)}</a>`).join("")}
       </div>
@@ -119,6 +123,10 @@ ROUTES.home = async () => {
   const health = await loadHealth();
   if (!$("#form")) return;
   if (!health.sandbox) { $("#sandbox").checked = false; $("#sandbox").disabled = true; }
+  if (health.credit_out && $("#ownkey")) {
+    $("#ownkey").open = true;
+    $("#formmsg").textContent = "The demo's Nebius credit is used up right now: add your own Token Factory key below to run a live check, or open a recorded run.";
+  }
   const syncPass = () => $("#passcode").classList.toggle("hidden", !(health.sandbox_passcode && $("#sandbox").checked));
   $("#sandbox").onchange = syncPass;
   syncPass();
@@ -139,7 +147,8 @@ ROUTES.home = async () => {
     const msg = $("#formmsg"), go = $("#go");
     msg.className = "form-msg";
     msg.textContent = "";
-    const body = { sandbox: $("#sandbox").checked, passcode: $("#passcode").value || null };
+    const body = { sandbox: $("#sandbox").checked, passcode: $("#passcode").value || null,
+      api_key: ($("#apikey") && $("#apikey").value.trim()) || null };
     if ($("#url").value.trim()) body.url = $("#url").value.trim();
     else Object.assign(body, { text: $("#text").value, repo: $("#repo").value.trim(), title: $("#ptitle").value });
     if (!body.url && !body.text) {
@@ -159,6 +168,7 @@ ROUTES.home = async () => {
       msg.className = "form-msg err";
       msg.textContent = err.message;
       if (/passcode/.test(err.message) && health.sandbox_passcode) $("#passcode").classList.remove("hidden");
+      if (/credit is used up|key was not accepted/.test(err.message) && $("#ownkey")) $("#ownkey").open = true;
       go.disabled = false;
       go.textContent = "Check report";
     }

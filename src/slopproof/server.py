@@ -17,6 +17,7 @@ from fastapi.responses import HTMLResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
+from . import llm
 from .benchscore import score
 from .pipeline import fetch_report, resume_from_events, triage
 
@@ -76,13 +77,14 @@ class TriageRequest(BaseModel):
     repo: str | None = None
     sandbox: bool = True
     passcode: str | None = None
+    api_key: str | None = None  # the visitor's own Nebius Token Factory key, for this run only
 
 
 @app.get("/api/health")
 def health():
     active = sum(1 for j in jobs.values() if j["result"] is None and not any(
         e["stage"] in ("done", "error") for e in j["events"]))
-    return {"ok": True, "active_jobs": active, "sandbox": SANDBOX_ENABLED, "sandbox_passcode": bool(SANDBOX_KEY), "daily_runs": DAILY_RUNS or None,
+    return {"ok": True, "active_jobs": active, "credit_out": time.time() - _credit["out_at"] < 1800, "sandbox": SANDBOX_ENABLED, "sandbox_passcode": bool(SANDBOX_KEY), "daily_runs": DAILY_RUNS or None,
             "nebius_key": bool(os.environ.get("NEBIUS_API_KEY")), "tavily_key": bool(os.environ.get("TAVILY_API_KEY"))}
 
 
@@ -104,7 +106,9 @@ def start(req: TriageRequest):
         repo = req.repo
     if not repo:
         raise HTTPException(400, "Could not infer the repository. Add the GitHub repo URL.")
-    return {"job": launch(rep, repo, bool(req.sandbox and SANDBOX_ENABLED), req.url, exempt=judge)}
+    key = (req.api_key or "").strip() or None
+    return {"job": launch(rep, repo, bool(req.sandbox and SANDBOX_ENABLED), req.url, exempt=judge or bool(key),
+                          api_key=key)}
 
 
 def _count_run(exempt: bool = False) -> None:
@@ -122,13 +126,14 @@ def _count_run(exempt: bool = False) -> None:
 
 
 def launch(rep: dict, repo: str, sandbox: bool, url: str | None, resume: dict | None = None,
-           retry_of: str | None = None, exempt: bool = False) -> str:
+           retry_of: str | None = None, exempt: bool = False, api_key: str | None = None) -> str:
     _count_run(exempt)
     job_id, emit = new_job("triage", {"title": rep["title"], "url": url, "repo": repo, "sandbox": sandbox,
                                       "created_at": rep.get("created_at"), "retry_of": retry_of,
                                       "resumed_steps": sorted(resume or {})})
 
     def work() -> None:
+        llm.use_key(api_key)  # a visitor's own key is used for this run's model calls and never recorded
         try:
             emit({"stage": "report", "title": rep["title"], "body": rep["body"][:20000], "repo": repo,
                   "created_at": rep.get("created_at")})
@@ -146,6 +151,7 @@ def launch(rep: dict, repo: str, sandbox: bool, url: str | None, resume: dict | 
 class RetryRequest(BaseModel):
     passcode: str | None = None
     fresh: bool = False
+    api_key: str | None = None
 
 
 @app.post("/api/jobs/{job_id}/retry")
@@ -173,8 +179,14 @@ def retry(job_id: str, req: RetryRequest):
     if sandbox and SANDBOX_KEY and not judge:
         raise HTTPException(403, "This run uses the sandbox: enter the demo passcode to run it again.")
     resume = {} if req.fresh else resume_from_events(events)
-    return {"job": launch(rep, repo, sandbox, meta.get("url"), resume, retry_of=job_id, exempt=judge),
+    key = (req.api_key or "").strip() or None
+    return {"job": launch(rep, repo, sandbox, meta.get("url"), resume, retry_of=job_id, exempt=judge or bool(key),
+                          api_key=key),
             "resumed": sorted(resume)}
+
+
+# When the demo's own key last ran out of credit; the home page then offers the visitor's-own-key field up front.
+_credit = {"out_at": 0.0}
 
 
 def friendly_error(e: Exception) -> str:
@@ -185,8 +197,13 @@ def friendly_error(e: Exception) -> str:
         return "The free model quota for today is used up. It resets at 00:00 UTC; try again then."
     if "429" in text or "Rate limit" in text:
         return "The model provider is rate limiting us right now. Wait a minute and try again."
+    if "401" in text or "invalid api key" in text.lower() or "Incorrect API key" in text:
+        return "The Nebius API key was not accepted. Check it and run again."
     if "402" in text or "credits" in text.lower() or "limit" in text.lower() and "key" in text.lower():
-        return "The model provider's spending limit for this demo was reached. Try again later."
+        _credit["out_at"] = time.time()
+        return ("The demo's Nebius Token Factory credit is used up. Paste your own Token Factory API key "
+                "under \"Use your own Nebius key\" to run this check on your account (used for this run only, never "
+                "stored), or browse the recorded runs and proofs, which need no model.")
     return f"The run failed: {text[:300]}"
 
 

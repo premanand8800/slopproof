@@ -1,5 +1,6 @@
 """Nebius Token Factory client with model routing and a cost ledger."""
 
+import contextvars
 import json
 import os
 import re
@@ -84,9 +85,24 @@ class Ledger:
 
 _client: OpenAI | None = None
 
+# A visitor's own Token Factory key for one run (the hosted demo's credit can run out). It lives only in this
+# context variable and the in-memory client cache: never in events, results, logs or on disk.
+_run_key: contextvars.ContextVar[str | None] = contextvars.ContextVar("slopproof_run_key", default=None)
+_keyed: dict[str, OpenAI] = {}
+
+
+def use_key(key: str | None) -> None:
+    """Send this thread's model calls (and threads started with its copied context) with the given key."""
+    _run_key.set(key or None)
+
 
 def client() -> OpenAI:
     global _client
+    key = _run_key.get()
+    if key:
+        if key not in _keyed:
+            _keyed[key] = OpenAI(api_key=key, base_url=BASE_URL, timeout=180, max_retries=3)
+        return _keyed[key]
     if _client is None:
         if PROVIDER == "openrouter":
             _client = OpenAI(api_key=os.environ["OPENROUTER_API_KEY"], base_url="https://openrouter.ai/api/v1",

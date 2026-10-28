@@ -35,3 +35,33 @@ def test_daily_budget_does_not_limit_passcode_holders(monkeypatch):
     with pytest.raises(server.HTTPException):
         server._count_run()
     server._count_run(exempt=True)
+
+
+def test_visitor_key_reaches_pool_threads_and_is_never_recorded(monkeypatch, tmp_path):
+    import threading
+    from concurrent.futures import ThreadPoolExecutor
+
+    from slopproof import llm, pipeline
+
+    seen = {}
+
+    def run():
+        llm.use_key("visitor-key-123")
+        with ThreadPoolExecutor(max_workers=2) as ex:
+            seen["pool"] = pipeline._CtxPool(ex).submit(lambda: llm.client().api_key).result()
+        seen["thread"] = llm.client().api_key
+
+    t = threading.Thread(target=run)
+    t.start()
+    t.join()
+    assert seen == {"pool": "visitor-key-123", "thread": "visitor-key-123"}
+    assert llm._run_key.get() is None  # other threads keep the demo's own key
+
+    monkeypatch.setattr(server, "JOBS_DIR", tmp_path)
+    monkeypatch.setattr(server, "triage", lambda *a, **k: (_ for _ in ()).throw(RuntimeError("402 budget")))
+    job = server.launch({"title": "t", "body": "b"}, "https://github.com/x/y", False, None, api_key="visitor-key-123")
+    for _ in range(50):
+        if any(e["stage"] == "error" for e in server.jobs[job]["events"]):
+            break
+        threading.Event().wait(0.05)
+    assert "visitor-key-123" not in (tmp_path / f"{job}.jsonl").read_text()

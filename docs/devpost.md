@@ -92,6 +92,8 @@ Coding & Agentic Engineering, plus Best Use of Tavily.
 - Live demo: https://slopproof.aether-soft.tech (backup with recorded runs only: https://huggingface.co/spaces/premmm/slopproof)
 - No passcode: open any recorded run, click the home page's one-click live sample (about a minute), or open Proofs →
   a bundle → Re-run live (curl built at the reported commit and at the fix, about 4 minutes, no AI involved).
+- If the demo's Nebius credit has run out, a live check can run on your own Token Factory key ("Use your own Nebius
+  key" on the home form; used for that run only, never stored).
 - Sandbox runs, where an agent writes, runs and tests code, need the passcode in the file uploaded under
   Additional info. The passcode also lifts the public demo's daily run limit.
 

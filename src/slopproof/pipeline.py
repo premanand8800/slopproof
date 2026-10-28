@@ -5,6 +5,7 @@ import os
 import re
 import time
 from collections.abc import Callable
+import contextvars
 from concurrent.futures import ThreadPoolExecutor
 
 import httpx
@@ -88,7 +89,8 @@ def triage(title: str, body: str, repo_url: str, created_at: str | None = None,
             "lessons": [{"text": x["text"], "source": x["source"]} for x in recalled["lessons"]]}})
 
     # Code, reference and prior-art checks and the text screen are independent, so run them together.
-    with ThreadPoolExecutor(max_workers=6) as pool:
+    with ThreadPoolExecutor(max_workers=6) as executor:
+        pool = _CtxPool(executor)
         need = lambda key: key not in done  # noqa: E731
         f_screen = pool.submit(screen, title, body, project.split("/")[-1], ledger) if need("screen") else None
         f_code = pool.submit(codecheck.check_code, tree, claims, bare, ref["sha"]) if need("code") else None
@@ -240,6 +242,16 @@ def _settled(future, fallback):
 
 # The text screen's confidence at or above which its vote to keep a report open blocks a close on code alone.
 SCREEN_DISSENT = 0.8
+
+
+class _CtxPool:
+    """submit() that runs each task in a copy of the caller's context, so a run's own API key reaches its threads."""
+
+    def __init__(self, pool: ThreadPoolExecutor):
+        self.pool = pool
+
+    def submit(self, fn, *args, **kw):
+        return self.pool.submit(contextvars.copy_context().run, fn, *args, **kw)
 
 
 def apply_guards(verdict: dict, analysis: dict | None, repro: dict | None, web: dict | None = None,
