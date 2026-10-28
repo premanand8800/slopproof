@@ -22,7 +22,8 @@ def v(verdict, **kw):
 
 def finding(status, verified=True):
     return {"claim": "the length can exceed the buffer", "status": status,
-            "evidence": [{"kind": "code", "path": "lib/a.c", "line": 3, "quote": "x", "verified": verified}]}
+            "evidence": [{"kind": "code", "path": "lib/a.c", "line": n, "quote": "x", "verified": verified}
+                         for n in (3, 9)]}
 
 
 def investigation(*findings, recommend="close"):
@@ -68,6 +69,18 @@ def test_unverified_refutation_or_no_close_recommendation_does_not_count():
                         investigation(finding("refuted", verified=False)))["verdict"] == "PLAUSIBLE"
     assert apply_guards(v("FABRICATED"), UNCLEAR, None, {}, None,
                         investigation(finding("refuted"), recommend="keep_open"))["verdict"] == "PLAUSIBLE"
+
+
+def test_a_refutation_must_be_well_cited():
+    def ref(ok, bad):
+        return {"claim": "c", "status": "refuted", "evidence": [{"verified": True}] * ok + [{"verified": False}] * bad}
+    # One verified quote is not enough, nor is a minority of verified quotes (1 of 5).
+    for f in (ref(1, 0), ref(1, 4), ref(2, 2)):
+        assert not signals([f], "close")["refutes"]
+        assert apply_guards(v("NOT_REPRODUCED"), UNCLEAR, None, {}, None, investigation(f))["verdict"] == "PLAUSIBLE"
+    assert signals([ref(2, 1)], "close")["refutes"] and signals([ref(5, 0)], "close")["refutes"]
+    # Keeping a report open needs less: one verified quote for "holds".
+    assert signals([{**ref(1, 4), "status": "holds"}], "close")["holds"]
 
 
 def test_verified_holds_blocks_every_close():
@@ -132,6 +145,7 @@ def test_findings_keep_only_verified_evidence(repo):
     checked = inv.check_findings([
         {"claim": "length is checked", "status": "refuted", "evidence": [
             {"kind": "code", "path": "lib/a.c", "line": 5, "quote": "if(n >= sizeof(buf))"},
+            {"kind": "code", "path": "lib/a.c", "line": 7, "quote": "memcpy(dst, src, n);"},
             {"kind": "web", "url": "https://curl.se/docs/security.html/",
              "quote": "Bugs in test servers are not considered security problems"}]},
         {"claim": "invented", "status": "holds", "evidence": [
@@ -166,7 +180,8 @@ def test_replay_refusal_comes_back_as_a_tool_result_and_the_agent_carries_on(rep
              content="Check the project's policy first."),
         _msg(("read_lines", {"path": "lib/a.c", "start": 1, "end": 10, "why": "the length check"})),
         _msg(("finish", {"findings": [{"claim": "no length check", "status": "refuted", "evidence": [
-            {"kind": "code", "path": "lib/a.c", "line": 5, "quote": "if(n >= sizeof(buf))"}]}],
+            {"kind": "code", "path": "lib/a.c", "line": 5, "quote": "if(n >= sizeof(buf))"},
+            {"kind": "code", "path": "lib/a.c", "line": 6, "quote": "    return;\n  memcpy(dst, src, n);"}]}],
             "recommend": "close", "confidence": 0.8, "summary": "The length is checked."})),
     ])
     seen = []
@@ -182,7 +197,7 @@ def test_replay_refusal_comes_back_as_a_tool_result_and_the_agent_carries_on(rep
     assert res["steps"][0]["refused"] and "[refused]" in seen[1][-1]["content"]
     assert res["steps"][0]["endpoint"] == "Tavily crawl" and res["steps"][0]["target"] == "curl.se/docs"
     assert res["steps"][0]["thought"].startswith("Check the project's policy")
-    assert res["calls"] == 2 and res["signals"]["refutes"] and res["evidence"] == {"verified": 1, "dropped": 0}
+    assert res["calls"] == 2 and res["signals"]["refutes"] and res["evidence"] == {"verified": 2, "dropped": 0}
     kinds = [e.get("type") for e in events if e.get("stage") == "investigate"]
     assert kinds == ["begin", "call", "result", "call", "result", "finish"]
 

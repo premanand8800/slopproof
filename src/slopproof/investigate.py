@@ -68,6 +68,8 @@ Facts that are true whether or not the vulnerability is real (a file exists, a f
 from an environment variable) are not findings: they are evidence for the claim they bear on.
 status: holds (the evidence shows the claim is true as stated, impact included), refuted (the evidence shows it
 cannot happen as stated, or gives the attacker nothing intended use does not), unknown (you could not tell).
+Not finding something is not a refutation: "I found no caller that does X" means unknown. refuted needs the code
+that prevents the claim (the check, the bound, the reset, the documented rule), quoted.
 Every holds or refuted needs evidence copied EXACTLY from tool output in this run:
 - {{"kind": "code", "path": "lib/x.c", "line": 123, "quote": "one to five lines of code exactly as shown"}}
 - {{"kind": "web", "url": "https://...", "quote": "a sentence exactly as the page returned it"}}
@@ -357,6 +359,16 @@ class Investigation:
         return checked[:8]
 
 
+def _last_sentences(text: str, limit: int = 450) -> str:
+    """The end of the agent's reasoning (where it says what it will do next), starting at a sentence."""
+    text = " ".join(text.split())
+    if len(text) <= limit:
+        return text
+    tail = text[-limit:]
+    m = re.search(r"(?<=[.!?:])\s+(?=[A-Z`])", tail)
+    return tail[m.end():] if m else "…" + tail
+
+
 def _hook(tool: str, args: dict, steps: list[dict]) -> str | None:
     """Rules checked before each call, like the reproduction agent's hooks: no repeats, no re-reading."""
     for st in steps:
@@ -390,11 +402,21 @@ def _shrink(messages: list[dict], keep_last: int = 3) -> None:
             messages[i]["content"] = c[:300] + " ...[older output trimmed; it was read]"
 
 
+def well_cited(finding: dict) -> bool:
+    """A refutation can help close a report only if the agent read the code right: at least two of its quotes
+    are where it says, and more of them check out than fail. An agent that misquotes most of what it cites has
+    not read the code it argues from (in the pilot, the one real CVE closed rested on 1 verified quote of 5)."""
+    evs = finding.get("evidence") or []
+    ok = sum(1 for e in evs if e.get("verified"))
+    return ok >= 2 and ok > len(evs) - ok
+
+
 def signals(findings: list[dict], recommend: str | None) -> dict:
-    """What the investigation may do in the guards. Only findings backed by verified evidence count."""
+    """What the investigation may do in the guards. Only findings backed by verified evidence count, and a
+    refutation only when it is well cited. Keeping a report open needs less than closing it."""
     backed = [f for f in findings or [] if any(e.get("verified") for e in f.get("evidence") or [])]
     holds = any(f["status"] == "holds" for f in backed)
-    refutes = recommend == "close" and not holds and any(f["status"] == "refuted" for f in backed)
+    refutes = recommend == "close" and not holds and any(f["status"] == "refuted" and well_cited(f) for f in backed)
     return {"holds": holds, "refutes": refutes}
 
 
@@ -503,7 +525,7 @@ def investigate(title: str, body: str, project: str, claims: dict, code: dict, w
             step = {"step": calls, "tool": tool, "endpoint": ENDPOINT.get(tool, tool), "target": _target(tool, args),
                     "why": why[:300], "args": dict(args)}
             if thought:
-                step["thought"], thought = thought[-500:], ""  # the agent's own words, shown once per turn
+                step["thought"], thought = _last_sentences(thought), ""  # the agent's own words, once per turn
             emit({"stage": "investigate", "type": "call", **step})
             blocked = _hook(tool, args, inv.steps)
             if blocked:
@@ -522,15 +544,20 @@ def investigate(title: str, body: str, project: str, claims: dict, code: dict, w
             if len(content) > OUTPUT_LIMIT:
                 content = content[:OUTPUT_LIMIT - 300] + "\n...[cut]...\n" + content[-250:]
             left = max_calls - calls
-            messages.append({"role": "tool", "tool_call_id": tc.id, "content": content + (
-                f"\n[{left} tool calls left]" if left > 2 else f"\n[{left} tool calls left: call finish now]")})
+            note = f"\n[{left} tool calls left]" if left > 2 else f"\n[{left} tool calls left: call finish now]"
+            if left == max_calls // 2 and not any(st["endpoint"].startswith("Tavily") for st in inv.steps):
+                note += ("\n[You have not checked the web yet. Do one web_search now: an advisory, a fix or the "
+                         "project's documentation of this behaviour.]")
+            messages.append({"role": "tool", "tool_call_id": tc.id, "content": content + note})
         emit({"stage": "cost", "usd": ledger.summary()["total_usd"], "credits": ledger.summary()["tavily_credits"]})
         if final is not None or stopped:
             break
     if final is None:
         # Out of budget: one last turn that can only report.
         messages.append({"role": "user", "content": f"Stop: {stopped or 'budget used up'}. Call finish now with "
-                                                    "the findings and the evidence you have."})
+                                                    "the findings and the evidence you have. If you were still "
+                                                    "looking for something, the claim it bears on is unknown, "
+                                                    "not refuted."})
         try:
             msg = chat("big", messages, ledger, "investigate", tools=FINISH_ONLY,
                        tool_choice={"type": "function", "function": {"name": "finish"}}, max_tokens=4000,
