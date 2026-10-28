@@ -59,6 +59,12 @@ class Ledger:
                 "usd": (tin * pin + tout * pout) / 1e6, "seconds": round(seconds, 2),
             })
 
+    def add_tool(self, tool: str, purpose: str, credits: float, usd: float, seconds: float) -> None:
+        """A paid non-model call (Tavily), counted in the same ledger so the cost of a run is complete."""
+        with self._lock:
+            self.calls.append({"model": tool, "purpose": purpose, "in": 0, "out": 0, "credits": credits,
+                               "usd": usd, "seconds": round(seconds, 2)})
+
     def summary(self) -> dict:
         by_model: dict[str, dict] = {}
         for c in self.calls:
