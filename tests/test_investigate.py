@@ -193,6 +193,9 @@ def test_hooks_stop_repeated_greps_and_rereading():
     assert inv_mod._hook("grep_code", {"pattern": "help_category", "path": "src"}, steps)
     assert inv_mod._hook("read_lines", {"path": "src/a.c", "start": 110, "end": 150}, steps)
     assert inv_mod._hook("read_lines", {"path": "src/a.c", "start": 150, "end": 250}, steps) is None
+    # A long read returns 100 lines; reading on from there is new, not a repeat.
+    long_read = [{"tool": "read_lines", "args": {"path": "src/b.c", "start": 700, "end": 1000}}]
+    assert inv_mod._hook("read_lines", {"path": "src/b.c", "start": 800, "end": 900}, long_read) is None
     assert inv_mod._hook("grep_code", {"pattern": "free_globalconfig"}, steps) is None
 
 
@@ -211,3 +214,105 @@ def test_tavily_feedback_names_only_the_results_used(monkeypatch):
 def test_resume_reads_a_finished_investigation():
     done = resume_from_events([{"stage": "checkpoint", "key": "investigation", "value": {"findings": []}}])
     assert done["investigation"] == {"findings": []}
+
+
+# ---- Every Tavily endpoint, reached through the real call paths, against a fake client
+class FakeTavily:
+    def __init__(self):
+        self.calls = []
+
+    def search(self, query, **kw):
+        self.calls.append(("search", kw))
+        return {"results": [{"url": "https://curl.se/docs/security.html", "title": "curl security",
+                             "content": "Bugs only reachable from test servers are not security problems.", "id": "1"},
+                            {"url": "https://gist.github.com/x", "title": "curl AI slop reports", "content": "slop"}],
+                "usage": {"credits": 1}, "request_id": "req-1"}
+
+    def extract(self, urls, **kw):
+        self.calls.append(("extract", kw))
+        return {"results": [{"url": u, "raw_content": "Local attackers are outside our threat model."} for u in urls],
+                "usage": {"credits": 1}}
+
+    def map(self, url, **kw):
+        self.calls.append(("map", kw))
+        return {"results": [f"{url}/vuln-disclosure-policy.html"], "usage": {"credits": 2}}
+
+    def crawl(self, url, **kw):
+        self.calls.append(("crawl", kw))
+        return {"results": [{"url": f"{url}/security.html", "raw_content": "We do not consider memory leaks at exit "
+                                                                            "to be security problems."}],
+                "usage": {"credits": 4}}
+
+    def research(self, input, **kw):
+        self.calls.append(("research", kw))
+        return {"request_id": "res-1", "status": "pending"}
+
+    def get_research(self, rid, include_usage=None):
+        return {"status": "completed", "content": {"summary": "already fixed in 8.5.0"},
+                "sources": [{"url": "https://curl.se/docs/CVE-2023-38545.html"}], "usage": {"credits": 10}}
+
+    def feedback(self, **kw):
+        self.calls.append(("feedback", kw))
+        return {"success": True}
+
+
+@pytest.fixture
+def fake(monkeypatch):
+    client = FakeTavily()
+    monkeypatch.setattr(webtools, "tavily", lambda: client)
+    return client
+
+
+def test_investigator_web_tools_use_every_endpoint_live(repo, fake):
+    ledger = Ledger()
+    inv = Investigation(repo.tree, repo.work, repo.first, ledger, None, lambda e: None)
+    assert "curl.se/docs/security.html" in inv.web_search("curl test server", ["curl.se"])
+    assert "threat model" in inv.read_pages(["https://curl.se/docs/x.html"], "threat model")
+    assert "vuln-disclosure-policy" in inv.map_docs("https://curl.se/docs", "security policy")
+    assert "memory leaks at exit" in inv.crawl_docs("https://curl.se/docs", "what is not a security problem")
+    assert "already fixed" in inv.deep_research("was this fixed?")
+    assert "already used" in inv.deep_research("again?")
+    assert [c[0] for c in fake.calls] == ["search", "extract", "map", "crawl", "research"]
+    assert fake.calls[0][1]["include_domains"] == ["curl.se"] and fake.calls[1][1]["query"] == "threat model"
+    assert ledger.summary()["tavily_credits"] == 1 + 1 + 2 + 4 + 10
+    # Crawled text can be quoted as evidence; a research answer cannot (quote the page itself).
+    ok = inv.check_evidence({"kind": "web", "url": "https://curl.se/docs/security.html",
+                             "quote": "We do not consider memory leaks at exit to be security problems."})
+    assert ok["verified"]
+    assert not inv.check_evidence({"kind": "web", "url": "https://curl.se/docs/CVE-2023-38545.html",
+                                   "quote": "already fixed in 8.5.0 according to research"})["verified"]
+    # Post-verdict feedback for the search this run made.
+    sent = webtools.feedback_for_run(ledger, ["https://curl.se/docs/security.html"], "NOT_REPRODUCED")
+    assert sent[0]["sent"] and fake.calls[-1] == ("feedback", {
+        "request_id": "req-1", "agent_score": 1.0, "used_urls": ["https://curl.se/docs/security.html"],
+        "comment": "SlopProof triage (NOT_REPRODUCED): 1 of 2 results cited as evidence"})
+
+
+def test_replay_search_is_dated_and_drops_label_pages(repo, fake):
+    inv = Investigation(repo.tree, repo.work, repo.first, Ledger(), "2025-03-01T10:00:00Z", lambda e: None)
+    out = inv.web_search("curl test server")
+    kw = fake.calls[0][1]
+    assert kw["end_date"] == "2025-03-01" and "hackerone.com" in kw["exclude_domains"]
+    assert "gist.github.com" in kw["exclude_domains"] and kw["search_depth"] == "basic"
+    assert "AI slop" not in out and "1 result(s) about benchmark labels dropped" in out
+    for tool, args in [("read_pages", {"urls": ["https://a.org"], "question": "q"}),
+                       ("map_docs", {"url": "https://a.org", "what": "w"}),
+                       ("crawl_docs", {"url": "https://a.org", "instructions": "i"}),
+                       ("deep_research", {"question": "q"})]:
+        content, refused = inv.call(tool, args)
+        assert refused and "[refused]" in content
+    assert len(fake.calls) == 1  # nothing but the dated search reached Tavily
+
+
+def test_scope_check_reads_the_policy_from_the_web_only_in_live_runs(tmp_path, fake, monkeypatch):
+    from slopproof import scope
+
+    seen = {}
+    monkeypatch.setattr(scope, "chat_json", lambda tier, system, user, *a, **k: seen.update(user=user) or {
+        "scope": "out_of_scope", "quote": "Local attackers are outside our threat model.", "reason": "local"})
+    out = scope.check_scope(tmp_path, "t", "a local user can ...", None, Ledger(), "psf/requests", None)
+    assert out["scope"] == "out_of_scope" and out["policy_file"] == "https://curl.se/docs/security.html"
+    assert [c[0] for c in fake.calls] == ["search", "extract"]
+    fake.calls.clear()
+    replay = scope.check_scope(tmp_path, "t", "s", None, Ledger(), "psf/requests", "2024-01-01")
+    assert replay["scope"] == "unclear" and fake.calls == []

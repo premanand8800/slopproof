@@ -36,8 +36,30 @@ def quote_in_policy(quote: str, policy: str) -> bool:
     return len(q) >= 20 and fuzz.partial_ratio(q, " ".join(policy.split())) >= 90
 
 
-def check_scope(tree: Path, title: str, summary: str, analysis: dict | None, ledger: Ledger) -> dict:
+def policy_from_web(project: str, ledger: Ledger) -> tuple[str, str] | None:
+    """Live runs only: a project with no policy file in its tree often publishes one on its site. Tavily search
+    finds the page and extract returns the parts about what is and is not a vulnerability. The returned text is
+    then the policy the quote is checked against."""
+    from . import webtools
+
+    name = project.split("/")[-1]
+    res = webtools.search(f"{name} security policy what is not considered a vulnerability", ledger,
+                          depth="basic", max_results=3)
+    urls = [r["url"] for r in res.get("results", []) if r.get("url")]
+    if not urls:
+        return None
+    page = webtools.extract(urls[:1], ledger, query=f"what the {name} project does and does not consider a "
+                                                    "security vulnerability", chunks=5)
+    got = [r for r in page.get("results", []) if (r.get("raw_content") or "").strip()]
+    return (got[0]["url"], got[0]["raw_content"]) if got else None
+
+
+def check_scope(tree: Path, title: str, summary: str, analysis: dict | None, ledger: Ledger,
+                project: str | None = None, as_of: str | None = None) -> dict:
     found = policy_text(tree)
+    if not found and project and not as_of:
+        # Not in a replay: the web today may describe a policy written after the report.
+        found = policy_from_web(project, ledger)
     if not found:
         return {"scope": "unclear", "reason": "the project has no written security policy in its tree"}
     name, policy = found

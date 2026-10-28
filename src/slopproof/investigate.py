@@ -54,14 +54,21 @@ others. Plan first: what single fact would settle the report? Check that first. 
 - whether the claimed code, option or behaviour exists at all in this version;
 - earlier fixes or advisories in the same area (git history, the project's security pages), and whether this
   report is a bypass of one;
-- whether the project documents the behaviour as intended.
+- whether the project documents the behaviour as intended;
+- the impact: what an attacker gains that intended use does not already give them (memory a command-line tool
+  leaks once before it exits, or reaching what the user could request directly, gives an attacker nothing).
+Check the web at least once (web_search, with domains set to the project's own site when that is where the
+answer is): an advisory, a fix, or documentation of the behaviour can settle in one call what code reading cannot.
 Every tool call takes a "why": one sentence on what you expect to learn. Do not repeat a call. You have about
 {calls} tool calls; call finish as soon as the evidence settles it, or when you have done what you can.
 
-In finish, each finding is one condition the vulnerability NEEDS in order to be real (for example "the length
-passed to memcpy can exceed the buffer"), not background facts true either way ("lib/ws.c exists").
-status: holds (the evidence shows the condition is met), refuted (the evidence shows it cannot be met),
-unknown (you could not tell). Every holds or refuted needs evidence copied EXACTLY from tool output in this run:
+In finish, each finding is one security claim the report makes, stated as the report states it, including what
+the attacker gains (for example "a malicious server can make curl write past the end of buf"). Usually one to three.
+Facts that are true whether or not the vulnerability is real (a file exists, a function uses memcpy, a value comes
+from an environment variable) are not findings: they are evidence for the claim they bear on.
+status: holds (the evidence shows the claim is true as stated, impact included), refuted (the evidence shows it
+cannot happen as stated, or gives the attacker nothing intended use does not), unknown (you could not tell).
+Every holds or refuted needs evidence copied EXACTLY from tool output in this run:
 - {{"kind": "code", "path": "lib/x.c", "line": 123, "quote": "one to five lines of code exactly as shown"}}
 - {{"kind": "web", "url": "https://...", "quote": "a sentence exactly as the page returned it"}}
 - {{"kind": "git", "commit": "abc123", "quote": "a line from that commit's message or diff, as shown"}}
@@ -355,16 +362,20 @@ def _hook(tool: str, args: dict, steps: list[dict]) -> str | None:
     for st in steps:
         a = st["args"]
         if st["tool"] == tool == "grep_code" and a.get("pattern") == args.get("pattern"):
-            return "[hook] You already grepped this pattern; its matches are above. Read what it found instead."
+            return ("[hook] You already grepped this pattern. Its matches were:\n" + st.get("preview", "")[:1200]
+                    + "\nUse them: read a match, or call finish.")
         if st["tool"] == tool == "read_lines" and a.get("path") == args.get("path"):
             try:
-                lo, hi = max(int(a.get("start") or 0), int(args.get("start") or 0)), \
-                    min(int(a.get("end") or 0), int(args.get("end") or 0))
+                # What the earlier call actually returned: read_lines gives at most 100 lines.
+                a_start = int(a.get("start") or 1)
+                a_end = min(int(a.get("end") or a_start + 60), a_start + 99)
+                lo, hi = max(a_start, int(args.get("start") or 0)), min(a_end, int(args.get("end") or 0))
                 span = max(1, int(args.get("end") or 0) - int(args.get("start") or 0))
             except (TypeError, ValueError):
                 continue
             if hi - lo >= 0.7 * span:
-                return "[hook] You already read these lines; they are above. Decide, or look somewhere new."
+                return ("[hook] You already read these lines (step " + str(st.get("step", "?")) + "). Decide what they show, "
+                        "look somewhere new, or call finish.")
         if st["tool"] == tool and json.dumps(a, sort_keys=True) == json.dumps(args, sort_keys=True):
             return "[hook] You already made exactly this call; its output is above."
     return None
@@ -464,10 +475,13 @@ def investigate(title: str, body: str, project: str, claims: dict, code: dict, w
             stopped = "step budget used up"
             break
         _shrink(messages)
-        msg = chat("big", messages, ledger, "investigate", tools=TOOLS, tool_choice="auto", max_tokens=3000,
-                   temperature=0.3)
+        msg = chat("big", messages, ledger, "investigate", tools=TOOLS, tool_choice="auto", max_tokens=5000,
+                   temperature=0.3, extra_body={"chat_template_kwargs": {"enable_thinking": True}})
         messages.append(_assistant_dict(msg))
-        thought = re.sub(r"<think>.*?</think>", "", msg.content or "", flags=re.S).strip()
+        # The agent's reasoning for this turn: its thinking, or what it wrote before the calls.
+        thought = getattr(msg, "reasoning_content", None) or \
+            (getattr(msg, "model_extra", None) or {}).get("reasoning_content") or ""
+        thought = str(thought).strip() or re.sub(r"<think>.*?</think>", "", msg.content or "", flags=re.S).strip()
         if not msg.tool_calls:
             messages.append({"role": "user", "content": "Use the tools, or call finish."})
             continue
@@ -489,12 +503,14 @@ def investigate(title: str, body: str, project: str, claims: dict, code: dict, w
             step = {"step": calls, "tool": tool, "endpoint": ENDPOINT.get(tool, tool), "target": _target(tool, args),
                     "why": why[:300], "args": dict(args)}
             if thought:
-                step["thought"], thought = thought[:400], ""  # the agent's own words, shown once per turn
+                step["thought"], thought = thought[-500:], ""  # the agent's own words, shown once per turn
             emit({"stage": "investigate", "type": "call", **step})
             blocked = _hook(tool, args, inv.steps)
             if blocked:
                 content, refused = blocked, False
                 step["hook"] = True
+                if len(inv.steps) >= 1 and inv.steps[-1].get("hook"):
+                    stopped = "repeated calls the hooks had already answered"
             else:
                 c0 = ledger.summary()["tavily_credits"]
                 content, refused = inv.call(tool, args)
@@ -509,7 +525,7 @@ def investigate(title: str, body: str, project: str, claims: dict, code: dict, w
             messages.append({"role": "tool", "tool_call_id": tc.id, "content": content + (
                 f"\n[{left} tool calls left]" if left > 2 else f"\n[{left} tool calls left: call finish now]")})
         emit({"stage": "cost", "usd": ledger.summary()["total_usd"], "credits": ledger.summary()["tavily_credits"]})
-        if final is not None:
+        if final is not None or stopped:
             break
     if final is None:
         # Out of budget: one last turn that can only report.

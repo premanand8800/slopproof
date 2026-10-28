@@ -124,7 +124,7 @@ def triage(title: str, body: str, repo_url: str, created_at: str | None = None,
         # The project's written policy, quoted for the maintainer. Shown only: in our benchmark curl issued CVEs
         # for a few reports its own policy lists as not security issues, so it never decides a verdict.
         try:
-            return check_scope(tree, title, claims.get("summary", ""), analysis, ledger)
+            return check_scope(tree, title, claims.get("summary", ""), analysis, ledger, project, as_of)
         except Exception as e:  # noqa: BLE001 - informative only
             return {"scope": "unclear", "reason": f"policy check failed: {str(e)[:200]}"}
     policy = step("scope", "scope", "scope", policy_check)
