@@ -1,0 +1,26 @@
+{
+  "bundle": "3e88f398ea9649622bb494d693008d6195f605d26fc4b650323dc1b7d36e82d5",
+  "claim": "The bug is reproduced. The PoC calls mxmlLoadString with a SAX callback that returns false on MXML_SAX_EVENT_ELEMENT_CLOSE for the root element. This triggers the error path in mxml_load_data (mxml-file.c:1329-1333) where mxmlDelete(node) is called on the root node (which equals 'first'), then goto ",
+  "problems": [],
+  "at_commit": {
+    "commit": "9d49b9082f3767647cf1ba48d1746c6a1e73ab39",
+    "built": true,
+    "exit_code": 0,
+    "output": "",
+    "control_exit_code": 1,
+    "control_output": "",
+    "bug_present": true,
+    "seconds": 5
+  },
+  "verdict": "VERIFIED_AND_FIXED",
+  "at_against": {
+    "commit": "7a220e3f3304e4837a776c473237b75e5414e2af",
+    "built": true,
+    "exit_code": 1,
+    "output": "",
+    "control_exit_code": 1,
+    "control_output": "",
+    "bug_present": false,
+    "seconds": 2
+  }
+}

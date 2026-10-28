@@ -1,13 +1,16 @@
 "use strict";
 // Proof bundles and How it works. Loaded last: it starts the router.
 
-// Shipped proof bundles of real curl CVEs the sandbox agent reproduced. Each has a recorded verification
-// at the reported commit and at curl's fix.
+// Shipped proof bundles of real bugs the sandbox agent reproduced (two curl CVEs, one mxml bug). Each has a
+// recorded verification at the reported commit and at the project's fix.
 const BUNDLES = [
   { name: "curl-3735184-netrc", report: "3735184", cve: "CVE-2026-8926", short: ".netrc password leak",
     title: "curl sends the .netrc password of user alice when the URL names user bob" },
   { name: "curl-4041053-effective-url", report: "4041053", cve: "CVE-2026-94266", short: "password in effective URL",
     title: "curl returns the URL with the password still in it from CURLINFO_EFFECTIVE_URL" },
+  { name: "mxml-362-sax-double-free", project: "mxml", cve: "mxml #362", short: "SAX double free (not curl)",
+    source: "GitHub issue michaelrsweet/mxml#362", run: "#/run/9ea2afb293b9",
+    title: "mxml frees the root node twice when a SAX callback stops at its closing tag" },
 ];
 
 // The recorded (or live) verification as a seal plus one result card per commit.
@@ -47,9 +50,9 @@ ROUTES.proof = async (parts) => {
   const files = Object.entries(b.files).map(([p, c]) => `<details style="margin-top:8px"><summary><code>${esc(p)}</code>
     <span class="muted">${c.length} bytes</span></summary><pre class="file">${esc(c)}</pre></details>`).join("");
   $("#p-grid").innerHTML = `
-    <div class="card"><div class="kicker">Real ${esc(ex.cve)} · HackerOne #${esc(ex.report)}</div>
+    <div class="card"><div class="kicker">Real ${esc(ex.cve)} · ${esc(ex.source || `HackerOne #${ex.report}`)}</div>
       <h2 style="font-size:20px;margin-top:8px">${esc(ex.title)}</h2>
-      <div class="row wrap" style="margin-top:6px;font-size:13px"><a href="#/report/sandbox/${esc(ex.report)}">See the triage run that wrote it →</a></div>
+      <div class="row wrap" style="margin-top:6px;font-size:13px"><a href="${esc(ex.run || `#/report/sandbox/${ex.report}`)}">See the triage run that wrote it →</a></div>
       <div class="facts">
         ${fact("meh", `Commit <code>${esc(b.commit.slice(0, 12))}</code> of <a href="${esc(b.repo)}" target="_blank" rel="noopener">${esc(b.repo)}</a>`, `bundle <code>sha256:${esc(b.sha256.slice(0, 16))}</code>`)}
         ${fact("meh", "Check command, exits 0 only while the bug is present", `<code>${esc(b.check)}</code>`)}
@@ -61,7 +64,7 @@ ROUTES.proof = async (parts) => {
       <div class="kicker" style="margin-top:20px">Re-run it yourself</div>
       <div class="cmd"><code id="p-cmd">${esc(cmd)}</code><button class="btn small" id="p-copy" aria-label="Copy the re-run command">Copy</button></div>
       ${STATIC ? "" : `<div class="kicker" style="margin-top:22px">Re-run it live</div>
-        <p class="muted" style="font-size:13px;margin:6px 0 10px">Builds curl twice in fresh sandboxes (the reported commit and the fix), about 4 minutes.
+        <p class="muted" style="font-size:13px;margin:6px 0 10px">Builds ${esc(ex.project || "curl")} twice in fresh sandboxes (the reported commit and the fix), ${ex.project === "mxml" ? "under a minute" : "about 4 minutes"}.
         No passcode: the commands are the ones in the bundle above. If someone just ran it, you see that run.</p>
         <div class="row"><button class="btn primary" id="p-run">Re-run live</button></div>
         <div class="term hidden" id="p-term"></div><div id="p-result"></div>`}

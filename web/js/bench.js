@@ -2,6 +2,8 @@
 
 // Live runs outside the curl benchmark (kept on the demo server). Reports written by us; see README "Beyond curl".
 const BEYOND = [
+  { job: "9ea2afb293b9", project: "michaelrsweet/mxml (C, with sandbox)", what: "real double free, issue #362", verdict: "CONFIRMED", ok: true,
+    note: "Reproduced with AddressSanitizer in 130 s for $0.76 of model calls; the proof bundle re-runs as VERIFIED_AND_FIXED: bug present at 9d49b90, gone at the fix 7a220e3 (see Proofs)." },
   { job: "5d238c7e8c3c", project: "psf/requests (Python)", what: "real CVE-2024-35195, written from the public advisory", verdict: "PLAUSIBLE", ok: true,
     note: "Kept open: the code at v2.31.0 (the release the report names) shows the pool reuse it describes." },
   { job: "b31796d9edea", project: "gin-gonic/gin (Go)", what: "invented “heap overflow in Context.Query()”", verdict: "FABRICATED", ok: true,
