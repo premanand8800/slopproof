@@ -59,11 +59,13 @@ class Ledger:
                 "usd": (tin * pin + tout * pout) / 1e6, "seconds": round(seconds, 2),
             })
 
-    def add_tool(self, tool: str, purpose: str, credits: float, usd: float, seconds: float) -> None:
-        """A paid non-model call (Tavily), counted in the same ledger so the cost of a run is complete."""
+    def add_tool(self, tool: str, purpose: str, credits: float, usd: float, seconds: float,
+                 extra: dict | None = None) -> None:
+        """A paid non-model call (Tavily), counted in the same ledger so the cost of a run is complete.
+        extra keeps what is needed later, such as a search's request id and result URLs for Tavily feedback."""
         with self._lock:
             self.calls.append({"model": tool, "purpose": purpose, "in": 0, "out": 0, "credits": credits,
-                               "usd": usd, "seconds": round(seconds, 2)})
+                               "usd": usd, "seconds": round(seconds, 2), **(extra or {})})
 
     def summary(self) -> dict:
         by_model: dict[str, dict] = {}
@@ -73,8 +75,11 @@ class Ledger:
             m["in"] += c["in"]
             m["out"] += c["out"]
             m["usd"] += c["usd"]
+            if "credits" in c:
+                m["credits"] = m.get("credits", 0) + (c["credits"] or 0)
         # USD is always estimated at Token Factory list prices, so runs on either provider compare directly.
-        return {"total_usd": round(sum(c["usd"] for c in self.calls), 5), "by_model": by_model, "provider": PROVIDER}
+        return {"total_usd": round(sum(c["usd"] for c in self.calls), 5), "by_model": by_model, "provider": PROVIDER,
+                "tavily_credits": sum(c.get("credits") or 0 for c in self.calls)}
 
 
 _client: OpenAI | None = None

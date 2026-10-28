@@ -12,6 +12,7 @@ they are refused: a benchmark run must not read write-ups published after the re
 Each call is counted in the run's ledger (credits and an estimated USD at pay-as-you-go prices).
 """
 
+import re
 import time
 
 from .llm import Ledger
@@ -27,7 +28,11 @@ class ReplayRefused(Exception):
 def _count(ledger: Ledger | None, tool: str, purpose: str, res: dict, t0: float, fallback: float) -> dict:
     credits = ((res or {}).get("usage") or {}).get("credits", fallback)
     if ledger is not None:
-        ledger.add_tool(f"tavily/{tool}", purpose[:160], credits, credits * USD_PER_CREDIT, time.time() - t0)
+        # The request id and result URLs let the run tell Tavily afterwards which results it actually used.
+        extra = {"request_id": res.get("request_id"), "urls": [r.get("url") for r in res.get("results") or []
+                                                                if isinstance(r, dict) and r.get("url")][:12]} \
+            if isinstance(res, dict) and res.get("request_id") else None
+        ledger.add_tool(f"tavily/{tool}", purpose[:160], credits, credits * USD_PER_CREDIT, time.time() - t0, extra)
     return res
 
 
@@ -91,9 +96,32 @@ def research(question: str, schema: dict, ledger: Ledger | None = None, as_of: s
     return _count(ledger, "research", f"research: {question}", res, t0, 10)
 
 
-def feedback(request_id: str, score: float, used_urls: list[str], comment: str = "") -> None:
+def feedback(request_id: str, score: float, used_urls: list[str], comment: str = "") -> bool:
     """Close the loop with Tavily: which results the verdict actually used. Never fails a run."""
     try:
         tavily().feedback(request_id=request_id, agent_score=score, used_urls=used_urls[:20], comment=comment[:500])
+        return True
     except Exception:  # noqa: BLE001 - feedback is a courtesy to the search provider
-        pass
+        return False
+
+
+def norm_url(url: str) -> str:
+    """A URL as compared between a search result and a citation: no scheme, fragment, query or trailing slash."""
+    u = re.sub(r"^https?://(www\.)?", "", (url or "").strip().lower())
+    return re.sub(r"[#?].*$", "", u).rstrip("/")
+
+
+def feedback_for_run(ledger: Ledger, used_urls: list[str], verdict: str = "") -> list[dict]:
+    """After a verdict: for every search this run made, tell Tavily which of its results the verdict or the
+    investigator actually cited (score 1) or that none were used (score 0)."""
+    used = {norm_url(u) for u in used_urls if u}
+    sent = []
+    for c in list(ledger.calls):
+        if c.get("model") != "tavily/search" or not c.get("request_id"):
+            continue
+        hits = [u for u in c.get("urls") or [] if norm_url(u) in used]
+        ok = feedback(c["request_id"], 1.0 if hits else 0.0, hits,
+                      f"SlopProof triage ({verdict or 'verdict'}): {len(hits)} of {len(c.get('urls') or [])} "
+                      f"results cited as evidence")
+        sent.append({"request_id": c["request_id"], "used": hits, "score": 1.0 if hits else 0.0, "sent": ok})
+    return sent

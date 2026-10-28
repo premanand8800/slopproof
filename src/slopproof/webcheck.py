@@ -22,16 +22,17 @@ Reply with one JSON object only:
 {"supported": true or false, "explanation": "one or two sentences citing what the evidence says", "evidence_url": "best URL or null"}"""
 
 
-def _search(query: str, as_of: str | None, **kw) -> dict:
-    """Tavily search. With as_of (benchmark replay) only pages published before the report are used."""
-    if as_of:
-        kw["end_date"] = as_of[:10]
-        kw["exclude_domains"] = ["hackerone.com"]
-    return tavily().search(query, **kw)
+def _search(query: str, as_of: str | None, ledger: Ledger | None = None, depth: str = "basic",
+            max_results: int = 5) -> dict:
+    """Tavily search through webtools, so credits are counted and the request can get feedback after the verdict.
+    With as_of (benchmark replay) only pages published before the report are used."""
+    from . import webtools  # webtools uses this module's client
+
+    return webtools.search(query, ledger, as_of, depth=depth, max_results=max_results)
 
 
 def check_cve(cve: str, project: str, report_summary: str, ledger: Ledger, as_of: str | None = None) -> dict:
-    res = _search(f"{cve} {project}", as_of, max_results=5, search_depth="advanced")
+    res = _search(f"{cve} {project}", as_of, ledger, depth="advanced", max_results=5)
     hits = [{"url": r["url"], "title": r["title"], "snippet": r["content"][:500]} for r in res.get("results", [])]
     evidence = "\n\n".join(f"[{h['url']}] {h['title']}\n{h['snippet']}" for h in hits) or "no results"
     judged = chat_json("mid", JUDGE,
@@ -46,7 +47,9 @@ def check_urls(urls: list[str], report_summary: str, ledger: Ledger) -> list[dic
     urls = [u for u in dict.fromkeys(urls) if re.match(r"https?://", u)][:6]
     if not urls:
         return []
-    res = tavily().extract(urls=urls)
+    from . import webtools
+
+    res = webtools.extract(urls, ledger)  # cited pages are read as they are today, also in a replay
     found = {r["url"]: r.get("raw_content") or "" for r in res.get("results", [])}
     failed = {f["url"] for f in res.get("failed_results", [])}
     out = []
@@ -77,7 +80,7 @@ same_issue is true only if the evidence describes the same bug as the report (sa
 
 def verify_cve(cve: str, project: str, ledger: Ledger, as_of: str | None = None, report_summary: str = "") -> dict:
     """Does this CVE exist, and is it about this project? Used for CVEs a model names, not the report."""
-    res = _search(cve, as_of, max_results=5)
+    res = _search(cve, as_of, ledger, max_results=5)
     hits = [{"url": r["url"], "title": r["title"], "snippet": r["content"][:400]} for r in res.get("results", [])]
     evidence = "\n\n".join(f"[{h['url']}] {h['title']}\n{h['snippet']}" for h in hits) or "no results"
     judged = chat_json("mid", CVE_FACT, f"CVE: {cve}\nProject: {project}\nReport: {report_summary}\n\nEVIDENCE:\n{evidence}",
@@ -90,7 +93,7 @@ def verify_cve(cve: str, project: str, ledger: Ledger, as_of: str | None = None,
 def prior_art(project: str, claims: dict, ledger: Ledger, as_of: str | None = None) -> dict:
     """Search for the same issue already reported, fixed, or documented as intended behaviour."""
     q = f"{project} {claims.get('vuln_class', '')} {' '.join(claims.get('functions', [])[:2])} {claims.get('summary', '')}"[:380]
-    res = _search(q, as_of, max_results=6, search_depth="advanced")
+    res = _search(q, as_of, ledger, depth="advanced", max_results=6)
     hits = [{"url": r["url"], "title": r["title"], "snippet": r["content"][:400]} for r in res.get("results", [])]
     evidence = "\n\n".join(f"[{h['url']}] {h['title']}\n{h['snippet']}" for h in hits) or "no results"
     judged = chat_json("mid", """You look for prior art on a security report. Reply with one JSON object only:
