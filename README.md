@@ -147,6 +147,23 @@ Rules the system holds itself to:
   report may be a bypass of that fix.
 - **A buggy PoC proves nothing.** Passing user input as a format string in *your own* test program is not a curl bug.
 
+### Why a fixed pipeline with agents inside, not one agent deciding everything
+
+Triage has to check every claim on every report. An agent that decides what to check can skip the check that
+would have kept a real CVE open, and the benchmark would not show which one it skipped. So the order of checks is
+fixed, and the open-ended work goes to agents that run in feedback loops:
+
+- **Reproduction agent** (Nemotron 3 Ultra, native tool calls `run`, `write_file`, `finish`, up to 40 steps): picks
+  each command, reads the build error or the AddressSanitizer output, changes its approach and tries again. Its
+  result counts only after our code re-runs the check from scratch together with a negative control.
+- **Fix agent** (tool calls `run`, `edit`, `finish`): writes a patch where the bug reproduces; the patch counts only
+  if the bundle check stops passing in a fresh sandbox and the project's own related tests still pass. Failing
+  tests are given back to the agent for another attempt.
+- **Code analysis** asks for more code by name (`read_next`); it is fetched from the real tree for a second pass.
+
+A step that fails (a web search, memory) counts as unknown, and unknown blocks a close: a failure makes SlopProof
+more careful, never wrong.
+
 ## Benchmark
 
 We replay every public curl HackerOne report we could collect:

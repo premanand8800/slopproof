@@ -62,9 +62,8 @@ ROUTES.proof = async (parts) => {
       <div class="cmd"><code id="p-cmd">${esc(cmd)}</code><button class="btn small" id="p-copy" aria-label="Copy the re-run command">Copy</button></div>
       ${STATIC ? "" : `<div class="kicker" style="margin-top:22px">Re-run it live</div>
         <p class="muted" style="font-size:13px;margin:6px 0 10px">Builds curl twice in fresh sandboxes (the reported commit and the fix), about 4 minutes.
-        It runs code on this host, so it needs the demo passcode.</p>
-        <div class="row"><input id="p-pass" type="password" placeholder="demo passcode" style="max-width:200px;height:40px">
-          <button class="btn primary" id="p-run">Re-run live</button></div>
+        No passcode: the commands are the ones in the bundle above. If someone just ran it, you see that run.</p>
+        <div class="row"><button class="btn primary" id="p-run">Re-run live</button></div>
         <div class="term hidden" id="p-term"></div><div id="p-result"></div>`}
     </div>`;
   $("#p-dl").onclick = () => download(`${ex.name}.json`, b);
@@ -77,9 +76,10 @@ ROUTES.proof = async (parts) => {
     term.textContent = "Starting a fresh sandbox…\n";
     $("#p-result").innerHTML = "";
     btn.disabled = true;
-    const r = await fetch(`/api/examples/${ex.name}/verify?passcode=${encodeURIComponent($("#p-pass").value)}`, { method: "POST" });
+    const r = await fetch(`/api/examples/${ex.name}/verify`, { method: "POST" });
     const j = await r.json();
     if (!r.ok) { term.textContent += `${j.detail || "Failed."}\n`; btn.disabled = false; return; }
+    if (j.joined) term.textContent = "Showing the re-run started in the last few minutes.\n";
     const t0 = Date.now();
     es = new EventSource(`/api/jobs/${j.job}/events`);
     es.onmessage = (m) => {

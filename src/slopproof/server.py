@@ -206,20 +206,35 @@ def example(name: str):
     return _example(name)
 
 
+# Re-running a shipped bundle needs no passcode: its commands are fixed in the repository, not typed by a visitor.
+# One re-run at a time; a click while one runs, or within VERIFY_REUSE seconds of the last, joins that job.
+VERIFY_REUSE = 15 * 60
+_verify: dict = {"job": None, "name": None, "at": 0.0}
+_verify_lock = threading.Lock()
+
+
 @app.post("/api/examples/{name}/verify")
-def verify_example(name: str, passcode: str | None = None):
+def verify_example(name: str):
     """Re-run one of the shipped example bundles live. Only bundles in the repository can run here;
     anyone can verify their own bundle locally with `slopproof verify`."""
     bundle = _example(name)
     if not SANDBOX_ENABLED:
         raise HTTPException(403, "This host has no sandbox. Run: slopproof verify " + f"examples/bundles/{name}.json")
-    if SANDBOX_KEY and not secrets.compare_digest(passcode or "", SANDBOX_KEY):
-        raise HTTPException(403, "Verifying runs a full build in the sandbox and needs the demo passcode.")
     recorded = (EXAMPLES / f"{name}.verification.json")
     against = json.loads(recorded.read_text()).get("at_against", {}).get("commit") if recorded.exists() else None
     from .bundle import verify
 
-    job_id, emit = new_job("verify", {"title": bundle.get("claim", name)})
+    with _verify_lock:
+        last = _verify["job"]
+        ended = {e.get("stage") for e in jobs[last]["events"]} if last in jobs else {"error"}
+        running = not ended & {"done", "error"}
+        if running and _verify["name"] != name:
+            raise HTTPException(429, "Another proof is re-running right now. Try again in a few minutes.")
+        recent_ok = "done" in ended and time.time() - _verify["at"] < VERIFY_REUSE
+        if _verify["name"] == name and (running or recent_ok):
+            return {"job": last, "joined": True}
+        job_id, emit = new_job("verify", {"title": bundle.get("claim", name)})
+        _verify.update(job=job_id, name=name, at=time.time())
 
     def work() -> None:
         try:
