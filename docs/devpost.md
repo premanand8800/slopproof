@@ -4,7 +4,7 @@
 SlopProof
 
 ## Tagline
-Proof, not vibes: checks every vulnerability report against the real code, the live web and a sandbox run.
+Proof before priority: checks every vulnerability report against the real code, the live web and a sandbox run.
 
 ## Links
 - Demo video: https://www.youtube.com/watch?v=9OoZzGo60DI
@@ -23,7 +23,7 @@ Paste a HackerOne report or GitHub issue. SlopProof:
 1. extracts every checkable claim (files, functions, lines, quoted code, CVEs, URLs, attack surface);
 2. checks them against the project's git tree as of the report date: do the files and functions exist, is the
    quoted code real or invented;
-3. finds the code the report is about, even when it names none (tree-sitter, BM25 and the call graph);
+3. finds the code the report is about, even when it names none (tree-sitter functions ranked with BM25);
 4. checks cited CVEs, pages and prior art with Tavily;
 5. reads the real code with Nemotron 3 Ultra to decide whether the claimed condition can happen;
 6. lets a Nemotron 3 Ultra agent build the project with AddressSanitizer in a locked-down sandbox and try to

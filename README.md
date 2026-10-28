@@ -11,10 +11,15 @@ verdict backed by evidence, plus a reply they can post.
 Built for the Nebius x NVIDIA Global AI Hackathon, **Coding and Agentic Engineering** track.
 It runs on **NVIDIA Nemotron models served by Nebius Token Factory**, with **Tavily** for web evidence.
 
-**Live demo: https://slopproof.aether-soft.tech** (recorded runs, plus live static checks; sandbox runs need the
-judges' passcode from the submission).
-
-**Demo video (2:53): https://www.youtube.com/watch?v=9OoZzGo60DI**
+> **For judges**
+> - **Video (2:53):** https://www.youtube.com/watch?v=9OoZzGo60DI
+> - **Live demo:** https://slopproof.aether-soft.tech (backup, recorded runs only:
+>   https://huggingface.co/spaces/premmm/slopproof)
+> - **See a proof re-run, no passcode, 3 clicks:** Proofs → pick a bundle → **Re-run live**. curl is built at the
+>   reported commit (bug present) and at curl's fix (bug gone), about 4 minutes, with no AI involved.
+> - **Try a live check, no passcode:** the home page's one-click sample, about a minute.
+> - **Sandbox runs** (an agent that writes, runs and tests code) need the passcode in the file uploaded with the
+>   Devpost submission (Additional info). It also lifts the public demo's daily run limit.
 
 <!-- BENCH:START -->
 **Results on 197 public curl HackerOne reports, each replayed as of the day it was filed** (final run: NVIDIA
@@ -151,7 +156,7 @@ Rules the system holds itself to:
 
 Triage has to check every claim on every report. An agent that decides what to check can skip the check that
 would have kept a real CVE open, and the benchmark would not show which one it skipped. So the order of checks is
-fixed, and the open-ended work goes to agents that run in feedback loops:
+fixed, and the open-ended work goes to agents that write, run and test code in feedback loops:
 
 - **Reproduction agent** (Nemotron 3 Ultra, native tool calls `run`, `write_file`, `finish`, up to 40 steps): picks
   each command, reads the build error or the AddressSanitizer output, changes its approach and tries again. Its
@@ -292,7 +297,7 @@ uv run python bench/eval_search.py                # code search vs. the function
 ## How we use NVIDIA Nemotron and Nebius Token Factory
 
 Every model call goes to Token Factory's OpenAI-compatible endpoint (`https://api.tokenfactory.nebius.com/v1/`).
-Each step uses the smallest model that does the job well, which keeps the static pass at about two cents per report:
+Each step uses the smallest model that does the job well, which keeps the static pass at about $0.065 per report (median 44 s):
 
 | Step | Model | Why |
 |---|---|---|
@@ -324,12 +329,10 @@ replays each report as of its filing date and checks whether a baseline's stated
 
 | Tool | What it does | Difference |
 |---|---|---|
-| [HackerOne Hai Triage / Agentic Validation](https://www.hackerone.com/press-release/hackerone-unveils-hai-triage-upgraded-ai-powered-vulnerability-response) (2025) | AI agents assess incoming reports in minutes as likely valid, invalid or needing review; [human analysts confirm outcomes and reproduce findings](https://docs.hackerone.com/en/articles/8837878-how-hai-triage-works) | Commercial and tied to the HackerOne platform; reproduction is done by people. SlopProof is open, runs anywhere, and reproduces in a sandbox |
+| [HackerOne Hai Triage / Agentic Validation](https://www.hackerone.com/press-release/hackerone-unveils-hai-triage-upgraded-ai-powered-vulnerability-response) (2025) | AI agents assess incoming reports in minutes as likely valid, invalid or needing review; [human analysts confirm outcomes and reproduce findings](https://docs.hackerone.com/en/articles/8837878-how-hai-triage-works) | Commercial and tied to the HackerOne platform (curl left it in 2026); reproduction is done by people. SlopProof is open, runs anywhere (including as a GitHub Action), and reproduces in a sandbox |
 | [Elastic's AI triage pipeline](https://www.elastic.co/security-labs/blog/ai-vulnerability-triage-bug-bounty-hackerone) | Analyses HackerOne reports and reproduces them in sandboxed VMs; 85% agreement with engineers on 764 reports, about $2 per report | The closest match. Internal to Elastic and its products, not released. SlopProof is open source, about $0.07 per report for the static path, and publishes a replayable benchmark |
 | [Nikasha](https://pypi.org/project/nikasha/) | Deterministic check of a report's factual claims against the source at the named version, with commit/path/line evidence | Roughly SlopProof's claim-checking step, without web checks, analysis or reproduction |
 | [ProjectDiscovery Neo Triage](https://projectdiscovery.io/triage) | Reproduces incoming findings against a company's live web and cloud assets in a sandbox | Closed, enterprise, web targets. SlopProof builds the project's source as of the report date and tests memory-safety and logic claims in C code |
-| [HackerOne Hai Triage](https://www.hackerone.com/platform/triage) | AI-assisted triage for programs on HackerOne | Platform-bound and paid. curl left HackerOne in 2026; SlopProof runs anywhere, including as a GitHub Action |
-| [Elastic's triage pipeline](https://www.elastic.co/security-labs/blog/ai-vulnerability-triage-bug-bounty-hackerone) | Internal agent for Elastic's bug bounty: 85% agreement with humans, about $2 per report | Internal, not released. SlopProof is open, about $0.07 per report statically, and publishes a replayable benchmark |
 | [Anthropic OSS Scanner](https://red.anthropic.com/oss-scanner/), [ossscanner.org](https://ossscanner.org/), [Argo](https://github.com/gigioneggiando/argo) | AI agents that scan repositories to find new bugs | They find bugs; SlopProof checks reports other people send. More AI bug finding means more reports to check |
 | [Pydantic AI sandboxes](https://pydantic.dev/docs/ai/harness/index.md) (Docker, E2B, Modal, BoxLite and others) | Execution environments for agents | Infrastructure, not triage. SlopProof's own sandbox is a small hardened Docker runner with optional gVisor |
 

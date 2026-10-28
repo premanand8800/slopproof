@@ -158,6 +158,7 @@ ROUTES.home = async () => {
     } catch (err) {
       msg.className = "form-msg err";
       msg.textContent = err.message;
+      if (/passcode/.test(err.message) && health.sandbox_passcode) $("#passcode").classList.remove("hidden");
       go.disabled = false;
       go.textContent = "Check report";
     }

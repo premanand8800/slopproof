@@ -25,3 +25,13 @@ def test_example_rerun_needs_no_passcode_and_is_shared(monkeypatch):
     other = c.post("/api/examples/curl-4041053-effective-url/verify")
     assert other.status_code == 429
     gate.set()
+
+
+def test_daily_budget_does_not_limit_passcode_holders(monkeypatch):
+    monkeypatch.setattr(server, "DAILY_RUNS", 1)
+    monkeypatch.setattr(server, "_runs_today", {"day": "", "n": 0})
+    server._count_run()
+    import pytest
+    with pytest.raises(server.HTTPException):
+        server._count_run()
+    server._count_run(exempt=True)

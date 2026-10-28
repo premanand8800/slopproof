@@ -88,7 +88,8 @@ def health():
 
 @app.post("/api/triage")
 def start(req: TriageRequest):
-    if req.sandbox and SANDBOX_ENABLED and SANDBOX_KEY and not secrets.compare_digest(req.passcode or "", SANDBOX_KEY):
+    judge = bool(SANDBOX_KEY) and secrets.compare_digest(req.passcode or "", SANDBOX_KEY)
+    if req.sandbox and SANDBOX_ENABLED and SANDBOX_KEY and not judge:
         raise HTTPException(403, "The sandbox needs the demo passcode. Untick it to run the static checks.")
     if req.url:
         try:
@@ -103,22 +104,26 @@ def start(req: TriageRequest):
         repo = req.repo
     if not repo:
         raise HTTPException(400, "Could not infer the repository. Add the GitHub repo URL.")
-    return {"job": launch(rep, repo, bool(req.sandbox and SANDBOX_ENABLED), req.url)}
+    return {"job": launch(rep, repo, bool(req.sandbox and SANDBOX_ENABLED), req.url, exempt=judge)}
 
 
-def _count_run() -> None:
+def _count_run(exempt: bool = False) -> None:
+    """The daily budget protects the public demo; anyone with the demo passcode (the judges) is not limited."""
+    if exempt:
+        return
     with _lock:
         day = time.strftime("%Y-%m-%d")
         if _runs_today["day"] != day:
             _runs_today.update(day=day, n=0)
         if DAILY_RUNS and _runs_today["n"] >= DAILY_RUNS:
-            raise HTTPException(429, "The public demo hit today's budget. Browse the recorded runs, or run SlopProof locally.")
+            raise HTTPException(429, "The public demo hit today's budget. Browse the recorded runs, run SlopProof "
+                                     "locally, or enter the demo passcode (judges) to run without the limit.")
         _runs_today["n"] += 1
 
 
 def launch(rep: dict, repo: str, sandbox: bool, url: str | None, resume: dict | None = None,
-           retry_of: str | None = None) -> str:
-    _count_run()
+           retry_of: str | None = None, exempt: bool = False) -> str:
+    _count_run(exempt)
     job_id, emit = new_job("triage", {"title": rep["title"], "url": url, "repo": repo, "sandbox": sandbox,
                                       "created_at": rep.get("created_at"), "retry_of": retry_of,
                                       "resumed_steps": sorted(resume or {})})
@@ -164,10 +169,12 @@ def retry(job_id: str, req: RetryRequest):
     else:
         raise HTTPException(400, "This run has no saved report to retry.")
     sandbox = bool(meta.get("sandbox")) and SANDBOX_ENABLED
-    if sandbox and SANDBOX_KEY and not secrets.compare_digest(req.passcode or "", SANDBOX_KEY):
+    judge = bool(SANDBOX_KEY) and secrets.compare_digest(req.passcode or "", SANDBOX_KEY)
+    if sandbox and SANDBOX_KEY and not judge:
         raise HTTPException(403, "This run uses the sandbox: enter the demo passcode to run it again.")
     resume = {} if req.fresh else resume_from_events(events)
-    return {"job": launch(rep, repo, sandbox, meta.get("url"), resume, retry_of=job_id), "resumed": sorted(resume)}
+    return {"job": launch(rep, repo, sandbox, meta.get("url"), resume, retry_of=job_id, exempt=judge),
+            "resumed": sorted(resume)}
 
 
 def friendly_error(e: Exception) -> str:
