@@ -1,41 +1,59 @@
-# Demo video script (target 2:45, hard limit 3:00)
+# Demo video script (final cut 2:53, hard limit 3:00)
 
-Screen recording of the web app, voice or captions. Numbers are from the current benchmark; update after the
-final runs.
+Lead with proof, not "AI triages bug reports". Real screen footage of https://slopproof.aether-soft.tech, voice
+narration with burned-in captions, no music (a quiet self-synthesised tone bed only). No new paid runs: the gin
+report is the recorded run of the home page's "run one live" sample, replayed at the pace it was recorded.
 
-## 0:00–0:20 Problem
-Screen: curl's public list of AI-slop reports, then a news line about curl ending its bug bounty.
-> In 2026 curl shut down its bug bounty. AI made fake vulnerability reports almost free to write, and each one
-> still costs a maintainer hours to disprove. Guessing from the wording is not enough: many real CVEs this year
-> were found with AI too.
+## 0:00–0:08 Hook
+Screen: the CONFIRMED stamp of #3735184 (proof sha chip), then the VERIFIED_AND_FIXED seal on the Proofs page.
+> Most AI triage asks you to trust the AI. SlopProof gives you proof you can re-run, without AI.
 
-## 0:20–0:35 What SlopProof does
-Screen: How it works tab (pipeline).
-> SlopProof checks a report instead of judging its style. It checks every claim against the project's real code on
-> the day of the report, checks every reference on the live web, and then lets an NVIDIA Nemotron agent try to
-> reproduce the bug in a locked-down sandbox.
+## 0:08–0:29 Problem and what it does
+Screen: home page (hero, headline numbers), pan down to "What happens to a report".
+> AI made fake vulnerability reports almost free to write, and each one still costs a maintainer hours to
+> disprove. In 2026, curl shut down its bug bounty.
+> SlopProof checks the report, not its style: the claims against the real code, the references on the web, and
+> real-looking bugs in a sandbox.
 
-## 0:35–1:20 Live: a slop report
-Screen: paste a slop report URL, stages fill in live.
-> This report claims a buffer overflow in curl's WebSocket code. Nemotron Lightning pulls out the claims.
-> The quoted code is checked line by line against the real file: here is the diff. Tavily checks the cited sources.
-> Nemotron Ultra reads the real code: the bounds check two lines earlier makes this impossible.
-> Verdict: not reproduced, with file and line, and a polite reply the maintainer can paste. About two cents.
+## 0:29–1:24 One report, paste to verdict, nothing cut
+Screen: paste the invented gin report (repo, title, body) into the form; then its recorded run, replayed at real
+speed (32 s): stages light up, the claim check expands, the FABRICATED stamp lands with the 95% ring and the
+`context.go:412` chip, then the evidence list and the suggested reply. On-screen badge: "Recorded run of this
+report · replayed at real speed".
+> Here is a report written like AI slop: a heap overflow in gin's Context.Query(). This is SlopProof's recorded run
+> of it, replayed at real speed.
+> Nemotron 3.5 Lightning extracts the claims, and each is checked against gin's real source. parseQueryBuffer()
+> does not exist, and the quoted code is nowhere in the codebase.
+> Tavily checks the web, Nemotron 3 Super reads it, and Nemotron 3 Ultra reads the real code.
+> Verdict: FABRICATED, 95% confidence. Line 412 of context.go is just a closing brace.
+> Every reason cites a checked fact, with a reply ready to paste. 32 seconds, 2 cents.
 
-## 1:20–1:55 Sandbox: a real CVE
-Screen: replay of report #3735184, terminal stage.
-> Now a real report: curl sends a .netrc password for the wrong user. The report names no code, so code search
-> finds it: override_login in lib/url.c. The agent builds curl with AddressSanitizer, writes a test through the
-> real command line, and reproduces the leak in 161 seconds, for 31 cents. Confirmed.
+## 1:24–1:54 Proof bundle
+Screen: replay of #3735184 (CONFIRMED stamp lands), then Proofs page: commit + check command, the
+VERIFIED_AND_FIXED seal, reported commit "bug present" vs fix commit "bug gone".
+> Real bugs get more than a verdict. For curl's .netrc password leak, a Nemotron agent built curl with
+> AddressSanitizer, in a sandbox with no network, and reproduced it.
+> That run becomes a proof bundle: a pinned commit, a test, and one check command. Re-run from scratch: bug present
+> at the reported commit, gone at curl's fix. No AI in the loop.
+> The fix commit is the negative control: a check that never fails proves nothing.
 
-## 1:55–2:30 Benchmark and baseline
-Screen: Benchmark tab, comparison table, the false-statements list.
-> We replayed 197 public curl reports, each as of the day it was filed. Zero of 148 real CVE reports were
-> wrongly closed. 21 of 49 slop reports are closed with evidence, and 38 of 49 are closed or moved to the bottom.
-> Why not just ask a model "is this slop?" We tried. It closes more, but 13 of its 31 reasons are false:
-> it says lib/ws.c does not exist. That is answering slop with slop.
+## 1:54–2:10 Plain-model baseline
+Screen: Benchmark scoreboard, then the baseline's false statements (#2298307 "lib/ws.c does not exist").
+> Why not just ask a model "is this slop?" Same Nemotron, text only: 13 of its 31 closing reasons are false. It
+> says lib/ws.c does not exist. That is answering slop with slop.
 
-## 2:30–2:45 Close
-Screen: GitHub Action comment on an issue, then the repo.
-> Every model call runs on NVIDIA Nemotron through Nebius Token Factory, with Tavily for the web. It runs as a web
-> app, a CLI or a GitHub Action, and it is open source. Proof, not vibes.
+## 2:10–2:28 Numbers
+Screen: Benchmark stat tiles and scoreboard.
+> We replayed 197 curl reports, as of their filing dates. 0 of 148 real CVEs wrongly closed. 21 of 49 slop reports
+> closed, with checked evidence. 2 real CVEs proved. About $0.065 a report.
+
+## 2:28–2:38 Beyond curl
+Screen: Benchmark "Beyond curl" (requests, gin, express, fluent-bit).
+> Beyond curl, it ran live on requests, gin, express and fluent-bit, and the code checks parse C, Python, Go,
+> JavaScript and Rust.
+
+## 2:38–2:53 Close
+Screen: end card: NVIDIA Nemotron 3.5 Lightning · 3 Super · 3 Ultra via Nebius Token Factory · Tavily,
+https://slopproof.aether-soft.tech, github.com/premanand8800/slopproof.
+> Every model call runs on NVIDIA Nemotron (3.5 Lightning, 3 Super, 3 Ultra) through Nebius Token Factory, with
+> Tavily for the web. SlopProof is open source. Proof, not vibes.
