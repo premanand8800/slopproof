@@ -65,3 +65,15 @@ def test_visitor_key_reaches_pool_threads_and_is_never_recorded(monkeypatch, tmp
             break
         threading.Event().wait(0.05)
     assert "visitor-key-123" not in (tmp_path / f"{job}.jsonl").read_text()
+
+
+def test_empty_model_answer_is_retried(monkeypatch):
+    from types import SimpleNamespace
+
+    from slopproof import llm
+
+    answers = [SimpleNamespace(choices=[], usage=None),
+               SimpleNamespace(choices=[SimpleNamespace(message="ok")], usage=None)]
+    monkeypatch.setattr(llm, "_create", lambda model, messages, kw: answers.pop(0))
+    monkeypatch.setattr(llm.time, "sleep", lambda s: None)
+    assert llm.chat("fast", [], llm.Ledger(), "test") == "ok"

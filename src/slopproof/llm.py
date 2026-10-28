@@ -149,6 +149,16 @@ def chat(tier: str, messages: list[dict], ledger: Ledger, purpose: str, **kw):
         model = model.removesuffix(":free")
         resp = _create(model, messages, kw)
     ledger.add(MODELS[tier], purpose, resp.usage, time.time() - t0)
+    # An overloaded endpoint (often a free one) can answer with no choices: wait and ask again, and on the last
+    # try use the paid endpoint, which serves the same weights.
+    for attempt in range(3):
+        if resp.choices:
+            break
+        time.sleep(5 * (attempt + 1))
+        if attempt == 2:
+            model = model.removesuffix(":free")
+        resp = _create(model, messages, kw)
+        ledger.add(MODELS[tier], purpose, resp.usage, 0)
     if not resp.choices:
         raise ValueError(f"{purpose}: empty response from {model}")
     return resp.choices[0].message
