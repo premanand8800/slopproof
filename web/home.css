@@ -9,7 +9,7 @@
   background: color-mix(in srgb, var(--card-2) 70%, transparent); }
 .term-open .term-line { font-size: 21px; color: var(--ink); display: flex; align-items: baseline; flex-wrap: wrap; gap: 0 2px; }
 .term-open .hint { margin-left: auto; font-size: 17px; color: var(--muted); }
-.term-list { list-style: none; margin: 6px 0 0; padding: 0; font: 20px/1.25 "VT323", "IBM Plex Mono", monospace; }
+.term-list { list-style: none; margin: 6px 0 0; padding: 0; font: 20px/1.25 "VT323", "JetBrains Mono", monospace; }
 .term-list a { position: relative; display: flex; align-items: baseline; gap: 8px; padding: 4px 30px 4px 8px; margin: 0 -8px;
   border-radius: 6px; color: var(--ink-2); }
 .term-list a:hover, .term-list a:focus-visible { background: var(--ink); color: var(--bg); text-decoration: none; outline: none; }

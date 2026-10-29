@@ -13,7 +13,7 @@
 .vsum.v-FABRICATED { --stamp: var(--fab); }
 .vstamp-wrap { display: inline-grid; place-items: center; padding: 4px 2px; flex: none; }
 .vsum .vbadge.vstamp {
-  font: 400 25px/1 "VT323", "IBM Plex Mono", monospace; letter-spacing: .08em; text-transform: uppercase;
+  font: 400 25px/1 "VT323", "JetBrains Mono", monospace; letter-spacing: .08em; text-transform: uppercase;
   color: var(--stamp); background: color-mix(in srgb, var(--stamp) 9%, transparent);
   border: 4px double var(--stamp); border-radius: 6px; padding: 5px 10px 3px;
   transform: rotate(-4deg); white-space: nowrap;
@@ -36,14 +36,14 @@
   animation: ring 1s .25s ease-out backwards;
 }
 .vring::before { content: ""; position: absolute; inset: 5px; border-radius: 50%; background: var(--card); }
-.vring b { position: relative; font: 600 13px/1 "IBM Plex Mono", monospace; color: var(--ink); }
+.vring b { position: relative; font: 600 13px/1 "JetBrains Mono", monospace; color: var(--ink); }
 .vring b i { font-style: normal; font-size: 9px; color: var(--muted); margin-left: 1px; }
 @keyframes ring { from { --p: 0; } }
 
 /* Evidence chips */
 .vchips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .vchips:empty { display: none; }
-.vchip { font: 500 12px/1.2 "IBM Plex Mono", monospace; color: var(--ink-2); background: var(--card-2); border: 1px solid var(--line);
+.vchip { font: 500 12px/1.2 "JetBrains Mono", monospace; color: var(--ink-2); background: var(--card-2); border: 1px solid var(--line);
   border-radius: 6px; padding: 3px 8px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .vchip.hit { color: var(--bad); border-color: color-mix(in srgb, var(--bad) 40%, var(--line)); background: var(--bad-soft); }
 .vchip.proof { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 40%, var(--line)); background: var(--ok-soft); }
@@ -58,7 +58,7 @@ button.vchip:hover { border-color: var(--accent); color: var(--accent); }
 /* Cited code, shown with real line numbers */
 .fact > div { min-width: 0; overflow-wrap: anywhere; }
 .codeblk { margin-top: 6px; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--card-2); }
-.cb-file { font: 11.5px "IBM Plex Mono", monospace; color: var(--muted); padding: 4px 10px; border-bottom: 1px solid var(--line); }
+.cb-file { font: 11.5px "JetBrains Mono", monospace; color: var(--muted); padding: 4px 10px; border-bottom: 1px solid var(--line); }
 .codeblk pre { font-size: 12.5px; line-height: 1.6; overflow-x: auto; white-space: pre; word-break: normal; padding: 4px 0; }
 .cb-row { display: flex; }
 .cb-n { flex: none; width: 4.5em; padding: 0 10px; text-align: right; color: var(--muted); user-select: none; }
@@ -80,7 +80,7 @@ button.vchip:hover { border-color: var(--accent); color: var(--accent); }
 .iv-note { font-size: 13px; margin: 0 0 8px; }
 .iv-step { border-left: 2px solid var(--line); padding: 4px 0 6px 12px; margin: 0 0 6px; }
 .iv-thought { font-size: 13px; color: var(--ink-2); font-style: italic; margin-bottom: 4px; }
-.iv-call { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px; font: 12.5px/1.4 "IBM Plex Mono", monospace; }
+.iv-call { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px; font: 12.5px/1.4 "JetBrains Mono", monospace; }
 .iv-n { color: var(--muted); min-width: 1.6em; }
 .iv-ep { border-radius: 5px; padding: 1px 7px; border: 1px solid var(--line); background: var(--card-2); color: var(--ink-2); }
 .iv-ep.tv { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 40%, var(--line)); background: var(--accent-soft); }
@@ -90,12 +90,12 @@ button.vchip:hover { border-color: var(--accent); color: var(--accent); }
 .iv-res summary { cursor: pointer; color: var(--muted); }
 .iv-res pre { max-height: 220px; overflow: auto; font-size: 12px; white-space: pre-wrap; background: var(--card-2);
   border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; margin-top: 4px; }
-.iv-refused { color: var(--warn); font: 12px "IBM Plex Mono", monospace; }
+.iv-refused { color: var(--warn); font: 12px "JetBrains Mono", monospace; }
 .iv-summary { font-size: 14px; margin: 0 0 8px; }
 .iv-ev { font-size: 13px; margin-top: 4px; overflow-wrap: anywhere; }
-.iv-ev q { display: block; font: 12px/1.45 "IBM Plex Mono", monospace; color: var(--ink-2); margin: 2px 0 0 1.2em; white-space: pre-wrap; }
+.iv-ev q { display: block; font: 12px/1.45 "JetBrains Mono", monospace; color: var(--ink-2); margin: 2px 0 0 1.2em; white-space: pre-wrap; }
 .iv-ev q::before, .iv-ev q::after { content: ""; }
-.iv-tag { font: 600 11.5px "IBM Plex Mono", monospace; }
+.iv-tag { font: 600 11.5px "JetBrains Mono", monospace; }
 .iv-ev.ok .iv-tag { color: var(--ok); }
 .iv-ev.drop .iv-tag { color: var(--bad); }
 .iv-ev.drop q { text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--bad) 50%, transparent); }

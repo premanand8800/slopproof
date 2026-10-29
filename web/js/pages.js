@@ -328,10 +328,43 @@ ROUTES.memory = async () => {
   memTree($("#mtree"), m);
 };
 
+const HOW_STAGES = [
+  { n: "Report", badge: "input", desc: "A vulnerability report, as filed.", chips: [["a heap overflow in lib/ws.c, with a quoted snippet and a CVE", "n"]] },
+  { n: "Extract claims", badge: "Nemotron 3.5 Lightning", desc: "Files, functions, line numbers, quoted code, CVEs, URLs, attack surface.", chips: [["claims extracted", "n"]] },
+  { n: "Check claims against the code", badge: "git tree at the report date", desc: "Do the files and functions exist? Is the quoted code real or invented?", chips: [["lib/ws.c exists ✓", "ok"], ["quoted code NOT in tree ✗", "bad"]] },
+  { n: "Find the code", badge: "tree-sitter + BM25, no model", desc: "Ranks the project's functions against the report, even when it names none.", chips: [["candidate functions ranked", "n"]] },
+  { n: "Web evidence", badge: "Tavily + Nemotron 3 Super", desc: "Search, extract, map, crawl, research; judged by Nemotron 3 Super.", chips: [["CVE-2026-8926 verified ✓", "ok"]] },
+  { n: "Text screen", badge: "Nemotron 3 Ultra", desc: "Reads the wording only. A vote, never evidence.", chips: [["vote only, never evidence", "n"]] },
+  { n: "Static analysis", badge: "Nemotron 3 Ultra", desc: "Reads the real code, traces sizes, bounds and ownership; cites file:line.", chips: [["cites file:line ✓", "ok"]] },
+  { n: "Investigator agent", badge: "Nemotron 3 Ultra + git + Tavily", desc: "Tool calls decide what to look at next; every quote is checked in the code.", chips: [["quote verified in code ✓", "ok"], ["unverified quote dropped ✗", "bad"]] },
+  { n: "Sandbox reproduction", badge: "Nemotron 3 Ultra + Docker + AddressSanitizer", desc: "Builds, runs a PoC through the real attack surface, re-runs the proof with a negative control.", chips: [["ASan: heap-use-after-free", "bad"], ["VERIFIED_AND_FIXED", "ok"]] },
+  { n: "Verdict", badge: "hard guards in code", desc: "CONFIRMED, PLAUSIBLE, NOT_REPRODUCED or FABRICATED, with findings.", chips: [["CONFIRMED needs a reproduction", "ok"], ["a close needs a second signal", "n"], ["doubt never closes", "n"]] },
+];
+
+function howFlow(host) {
+  const reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  host.innerHTML = `<div class="hf-top"><span class="muted hf-note">Illustrative walk-through of one report. The chips show the kind of fact each stage records.</span>
+    <span class="hf-ctl"><button class="btn" id="hf-pause" type="button">Pause</button><button class="btn" id="hf-replay" type="button">Replay</button></span></div>
+    <ol class="hf" role="list" aria-label="The ten stages a report passes through">${HOW_STAGES.map((s, i) => `<li class="hf-row" data-i="${i}">
+      <span class="hf-dot" aria-hidden="true">${i + 1}</span>
+      <div class="hf-main"><div class="hf-name"><b>${esc(s.n)}</b><span class="hf-badge">${esc(s.badge)}</span></div><div class="hf-desc">${esc(s.desc)}</div></div>
+      <div class="hf-chips">${s.chips.map(([t, k]) => `<span class="hf-chip ${k}">${esc(t)}</span>`).join("")}</div></li>`).join("")}</ol>`;
+  const ol = host.querySelector(".hf"), rows = [...ol.children], pb = $("#hf-pause");
+  let cur = -1, timer = null, paused = false;
+  const set = (n) => { cur = n; rows.forEach((r, i) => { r.classList.toggle("done", i < n); r.classList.toggle("cur", i === n); r.classList.toggle("off", i > n); }); ol.style.setProperty("--prog", n < 0 ? 0 : n / (rows.length - 1)); };
+  const sched = () => { clearTimeout(timer); timer = setTimeout(() => { if (!ol.isConnected) return; set(cur >= rows.length ? -1 : cur + 1); sched(); }, cur >= rows.length - 1 ? 3500 : 1900); };
+  if (reduce) { set(rows.length); $("#hf-pause").style.display = "none"; $("#hf-replay").style.display = "none"; return; }
+  pb.onclick = () => { paused = !paused; pb.textContent = paused ? "Play" : "Pause"; paused ? clearTimeout(timer) : sched(); };
+  $("#hf-replay").onclick = () => { paused = false; pb.textContent = "Pause"; set(-1); sched(); };
+  set(-1); sched();
+}
+
 ROUTES.how = () => {
   app.innerHTML = `<div class="page-head"><h1>How it works</h1>
     <p>Writing style is never evidence: many real curl CVEs in 2026 were found with AI tools. SlopProof asks whether a
     report is <b>true</b>, and answers with facts a maintainer can check.</p></div>
+    <div class="card hfcard" id="hf-host"></div>
+    <details class="mdet"><summary><h2>The stages in detail</h2></summary>
     <ol class="pipeline">
       <li><div><b>Extract every checkable claim</b><span>Files, functions, line numbers, quoted code, CVEs, URLs and the attack surface. Nemotron 3.5 Lightning.</span></div></li>
       <li><div><b>Check claims against the real code</b><span>The git tree as of the report's date. Quoted code is matched line by line, with a diff and git history, so code from an older version is not called invented.</span></div></li>
@@ -342,15 +375,16 @@ ROUTES.how = () => {
       <li><div><b>Reproduce in a sandbox</b><span>A Nemotron 3 Ultra agent builds the project with AddressSanitizer in Docker (no network, read-only root, all capabilities dropped) and triggers the bug through the real attack surface.</span></div></li>
       <li><div><b>Prove it</b><span>A reproduction becomes a proof bundle and is re-run from scratch in a fresh sandbox. Only then can a report be CONFIRMED.</span></div></li>
       <li><div><b>Verdict and reply</b><span>CONFIRMED, PLAUSIBLE, NOT_REPRODUCED or FABRICATED, with findings that cite file:line or a source, and a reply ready to post.</span></div></li>
-    </ol>
-    <div class="section-title"><h2>Rules the code enforces</h2></div>
+    </ol></details>
+<div class="section-title"><h2>Rules the code enforces</h2></div>
     <div class="rules">
       <div class="card"><b>Doubt never closes a report</b><p>Closing needs the verdict model plus a second, independent signal. Anything else stays PLAUSIBLE.</p></div>
       <div class="card"><b>CONFIRMED needs a proof that re-runs</b><p>The test must run the project's own code, show an impact over intended use, and pass again in a fresh sandbox.</p></div>
       <div class="card"><b>A buggy test proves nothing</b><p>A test that overflows its own buffer, or copies the project's logic into its own program, does not count.</p></div>
       <div class="card"><b>Every number is reproducible</b><p>The benchmark, the baseline and its fact-check, and code search are scripts in the repository.</p></div>
     </div>
-    <p style="margin-top:22px"><a class="btn" href="${GITHUB}" target="_blank" rel="noopener">Read the source on GitHub</a></p>`;
+        <p style="margin-top:22px"><a class="btn" href="${GITHUB}" target="_blank" rel="noopener">Read the source on GitHub</a></p>`;
+  howFlow($("#hf-host"));
 };
 
 route();
