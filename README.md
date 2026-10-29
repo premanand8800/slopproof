@@ -1,17 +1,44 @@
+<div align="center">
+
+<img src="docs/logo.svg" alt="SlopProof logo, a shield with a check mark" width="96" height="96">
+
 # SlopProof
 
-**Proof before priority, for every vulnerability report.**
+### Proof before priority, for every vulnerability report.
 
-SlopProof triages security reports sent to open source projects. It checks every claim against the project's
-real source code as of the day the report was filed, checks every reference on the web, follows the code to the
-callers real input comes through, and lets an NVIDIA Nemotron agent try to **reproduce the bug in a locked-down
-sandbox**. A reproduced bug becomes a **proof bundle anyone can re-run with no AI involved**. Maintainers get a
-verdict backed by evidence, plus a reply they can post.
+Triage security reports sent to open source projects: every claim checked against the real code, every bug proved in a sandbox.
 
-Built for the Nebius x NVIDIA Global AI Hackathon, **Coding and Agentic Engineering** track.
-It runs on **NVIDIA Nemotron models served by Nebius Token Factory**, with **Tavily** for web evidence.
+<p>
+<a href="https://slopproof.aether-soft.tech"><img alt="Live demo slopproof.aether-soft.tech" src="https://img.shields.io/badge/Live_demo-slopproof.aether--soft.tech-3157ff?style=for-the-badge"></a>
+<a href="https://www.youtube.com/watch?v=9OoZzGo60DI"><img alt="Demo video YouTube" src="https://img.shields.io/badge/Demo_video-YouTube-FF0000?style=for-the-badge&logo=youtube&logoColor=white"></a>
+<a href="https://huggingface.co/spaces/premmm/slopproof"><img alt="Backup Hugging Face Space" src="https://img.shields.io/badge/Backup-Hugging_Face_Space-FFD21E?style=for-the-badge&logo=huggingface&logoColor=black"></a>
+<a href="LICENSE"><img alt="License MIT" src="https://img.shields.io/badge/License-MIT-2ea44f?style=for-the-badge"></a>
+</p>
+<p>
+<a href="https://www.nvidia.com/en-us/ai-data-science/foundation-models/nemotron/"><img alt="NVIDIA Nemotron" src="https://img.shields.io/badge/NVIDIA-Nemotron-76B900?style=for-the-badge&logo=nvidia&logoColor=white"></a>
+<a href="https://tokenfactory.nebius.com/"><img alt="Nebius Token Factory" src="https://img.shields.io/badge/Nebius-Token_Factory-0B1B3F?style=for-the-badge"></a>
+<a href="https://tavily.com/"><img alt="Tavily web evidence" src="https://img.shields.io/badge/Tavily-web_evidence-4B5EFF?style=for-the-badge"></a>
+<a href="https://www.python.org/"><img alt="Python 3.12+" src="https://img.shields.io/badge/Python-3.12+-3776AB?style=for-the-badge&logo=python&logoColor=white"></a>
+<a href="https://fastapi.tiangolo.com/"><img alt="FastAPI" src="https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white"></a>
+<a href="https://www.docker.com/"><img alt="Docker sandbox" src="https://img.shields.io/badge/Docker-sandbox-2496ED?style=for-the-badge&logo=docker&logoColor=white"></a>
+<a href="https://github.com/google/sanitizers/wiki/AddressSanitizer"><img alt="AddressSanitizer" src="https://img.shields.io/badge/AddressSanitizer-555555?style=for-the-badge"></a>
+<a href="https://tree-sitter.github.io/tree-sitter/"><img alt="tree-sitter" src="https://img.shields.io/badge/tree--sitter-2B7A4B?style=for-the-badge"></a>
+</p>
+<p>
+<img alt="real CVEs wrongly closed 0/148" src="https://img.shields.io/badge/real_CVEs_wrongly_closed-0%2F148-2ea44f?style=for-the-badge">
+<img alt="slop closed 24/49" src="https://img.shields.io/badge/slop_closed-24%2F49-3157ff?style=for-the-badge">
+</p>
 
+<p>
+<a href="docs/screens/home.png"><img src="docs/screens/home.png" alt="SlopProof home page" width="49%"></a>
+<a href="docs/screens/bench.png"><img src="docs/screens/bench.png" alt="SlopProof benchmark page" width="49%"></a>
+</p>
+
+</div>
+
+> [!TIP]
 > **For judges**
+>
 > - **Video (2:53):** https://www.youtube.com/watch?v=9OoZzGo60DI
 > - **Live demo:** https://slopproof.aether-soft.tech (backup, recorded runs only:
 >   https://huggingface.co/spaces/premmm/slopproof)
@@ -23,12 +50,26 @@ It runs on **NVIDIA Nemotron models served by Nebius Token Factory**, with **Tav
 > - **Sandbox runs** (an agent that writes, runs and tests code) need the passcode in the file uploaded with the
 >   Devpost submission (Additional info). It also lifts the public demo's daily run limit.
 
+SlopProof triages security reports sent to open source projects. It checks every claim against the project's
+real source code as of the day the report was filed, checks every reference on the web, follows the code to the
+callers real input comes through, and lets an NVIDIA Nemotron agent try to **reproduce the bug in a locked-down
+sandbox**. A reproduced bug becomes a **proof bundle anyone can re-run with no AI involved**. Maintainers get a
+verdict backed by evidence, plus a reply they can post.
+
+Built for the Nebius x NVIDIA Global AI Hackathon, **Coding and Agentic Engineering** track.
+It runs on **NVIDIA Nemotron models served by Nebius Token Factory**, with **Tavily** for web evidence.
+
+**Contents:** [The problem](#the-problem) · [Example](#example-an-accurate-report-where-the-question-is-reachability) · [Proof bundles](#proof-bundles-reports-that-carry-their-own-proof) · [Memory](#memory-learning-across-runs-without-being-taught-by-attackers) · [How it works](#how-it-works) · [Benchmark](#benchmark) · [Nemotron and Nebius](#how-we-use-nvidia-nemotron-and-nebius-token-factory) · [Tavily](#how-we-use-tavily) · [Related work](#related-work-and-how-slopproof-differs) · [Run it](#run-it) · [Project layout](#project-layout) · [Safety](#safety) · [License](#license)
+
+---
+
+
 <!-- BENCH:START -->
 **Results on 197 public curl HackerOne reports, each replayed as of the day it was filed** (final run: NVIDIA
 Nemotron on Nebius Token Factory, web search working; see [Benchmark notes](#benchmark-notes)):
 
 | | SlopProof (static checks) | Text-only baseline (same model) |
-|---|---|---|
+|:--|:--|:--|
 | Real CVE reports wrongly closed | **0 of 148** | 0 of 148 |
 | AI-slop reports closed | **24 of 49** (49%) with the investigator; 21 of 49 without | 31 of 49 (63%) |
 | Closes whose stated reason is false | Reasons cite `file:line` or a source (the manual check of 24 headlines was on the v1 run) | **13 of 31**, verified against the git tree |
@@ -216,7 +257,7 @@ Titles of real reports were renamed to `CVE-XXXX: ...` after disclosure; that pr
 ### Baseline: why not just ask a model "is this slop?"
 
 `bench/baseline.py` asks Nemotron 3 Ultra to judge each report from its text alone. It is a strong baseline: it
-closes 31 of 49 slop reports and no real ones. But it is often right for the wrong reasons.
+closes **31 of 49** slop reports and no real ones. But it is often right for the wrong reasons.
 `bench/factcheck_baseline.py` checks its stated reasons against curl's git tree on the report's date and public
 sources: **13 of its 31 closes give at least one false reason**. It says `lib/ws.c` does not exist, that
 `curl_easy_setopt` is invented, that CVE-2023-38545 is not real, and that `ngtcp2` is a fake library.
@@ -235,7 +276,7 @@ whole identifier. The top functions go to the analysis next to any cited code.
 functions its fix commit changed; the search runs on the tree as of the report date, before the fix.
 
 | Fixed function found in the top… | 1 | 5 | 10 |
-|---|---|---|---|
+|:--|--:|--:|--:|
 | Functions the report names (before) | 45 / 139 | 70 / 139 | 74 / 139 |
 | **Code search** | **69 / 139** | **103 / 139** | **114 / 139** |
 | Reports that name no code: before | 0 / 16 | 0 / 16 | 0 / 16 |
@@ -264,20 +305,21 @@ real reports on its own (about 4 in 10 quotes for both), which is why it only lo
 
 ### Honest limits
 
-- The guard rules were chosen after error analysis on this same dataset. The held-out set below is the only
-  check on reports never seen during development.
-- Two slop reports were first CONFIRMED by the sandbox: one PoC re-implemented curl's logic in its own program, and
-  one read `/etc/passwd` through an encoded `file://` path, which a plain `file:///etc/passwd` also does. The checks
-  that now catch both (the PoC must run curl's own CLI or library; without a sanitizer report in curl's code, an
-  independent model must see a gain over intended use) were written after seeing these two cases.
-- The sandbox numbers are a small sample (27 reports) because each run costs about $0.59 (median).
-- Held-out check: 60 reports curl closed as *not applicable* between May and October 2026, never seen during
-  development. SlopProof closed 2 and sent 3 more to the bottom of the queue. For 51 of the 60, the code does
-  behave as the report says: these are accurate reports that curl judged out of scope, not invented ones.
-  SlopProof checks truth; deciding scope stays with the maintainer, helped by a quote from the project's own
-  policy. (The text-only screen kept 55 of the 60 too.)
-- Build recipes are tuned for curl. For other projects the sandbox agent reads the build files itself; outside
-  curl and fluent-bit this is untested.
+> [!NOTE]
+> - The guard rules were chosen after error analysis on this same dataset. The held-out set below is the only
+>   check on reports never seen during development.
+> - Two slop reports were first CONFIRMED by the sandbox: one PoC re-implemented curl's logic in its own program, and
+>   one read `/etc/passwd` through an encoded `file://` path, which a plain `file:///etc/passwd` also does. The checks
+>   that now catch both (the PoC must run curl's own CLI or library; without a sanitizer report in curl's code, an
+>   independent model must see a gain over intended use) were written after seeing these two cases.
+> - The sandbox numbers are a small sample (27 reports) because each run costs about $0.59 (median).
+> - Held-out check: 60 reports curl closed as *not applicable* between May and October 2026, never seen during
+>   development. SlopProof closed 2 and sent 3 more to the bottom of the queue. For 51 of the 60, the code does
+>   behave as the report says: these are accurate reports that curl judged out of scope, not invented ones.
+>   SlopProof checks truth; deciding scope stays with the maintainer, helped by a quote from the project's own
+>   policy. (The text-only screen kept 55 of the 60 too.)
+> - Build recipes are tuned for curl. For other projects the sandbox agent reads the build files itself; outside
+>   curl and fluent-bit this is untested.
 
 ### Beyond curl
 
@@ -287,7 +329,7 @@ server: report texts we wrote (one from a public advisory, two invented the way 
 and a real mxml bug report run unchanged from its GitHub issue:
 
 | Project | Report | Verdict |
-|---|---|---|
+|:--|:--|:--|
 | psf/requests (Python) | real CVE-2024-35195 (`verify=False` sticks to the connection pool), from the advisory | PLAUSIBLE: the code at v2.31.0 shows the pool reuse |
 | gin-gonic/gin (Go) | invented heap overflow via `memcpy` in `Context.Query()` | FABRICATED: the function and the code do not exist |
 | expressjs/express (JavaScript) | invented prototype pollution in `res.json()` | PLAUSIBLE, low priority: `deepMergeJson()` does not exist, but a related fix keeps a code-only close off |
@@ -300,6 +342,9 @@ checked at HEAD, `res.json` was looked up as `resjson`, and JavaScript functions
 tied to curl.
 
 ### Benchmark notes
+
+<details>
+<summary>Show the benchmark notes</summary>
 
 - **Investigator run.** `bench/results_static_investigator.jsonl` (`bench/run_investigate.py`): the investigator
   ran on the 176 reports the fixed checks left open, as of each filing date (Tavily search with `end_date` only;
@@ -332,7 +377,12 @@ tied to curl.
   instead of the safe case. The same lesson as #3583983: an agent-chosen control can differ in the wrong way,
   which is why a proof is only counted once it re-runs as VERIFIED_AND_FIXED against the project's own fix.
 
+</details>
+
 ### Run the benchmark
+
+<details>
+<summary>Show the benchmark commands</summary>
 
 ```bash
 uv run python bench/fetch_dataset.py              # build bench/dataset.jsonl
@@ -344,13 +394,15 @@ uv run python bench/rescore.py                    # re-apply the guard rules to 
 uv run python bench/eval_search.py                # code search vs. the functions each CVE fix changed
 ```
 
+</details>
+
 ## How we use NVIDIA Nemotron and Nebius Token Factory
 
 Every model call goes to Token Factory's OpenAI-compatible endpoint (`https://api.tokenfactory.nebius.com/v1/`).
 Each step uses the smallest model that does the job well, which keeps the static pass at about $0.065 per report (median 44 s):
 
 | Step | Model | Why |
-|---|---|---|
+|:--|:--|:--|
 | Claim extraction | `nvidia/Nemotron-3_5-Lightning` | Fast, cheap structured extraction; thinking off |
 | Reference and prior-art judging | `nvidia/nemotron-3-super-120b-a12b` | Reliable reading of search results; fallback extractor for long reports |
 | Static analysis, reproduction agent, verdict | `nvidia/Nemotron-3-Ultra-550b-a55b` | Long-context code reasoning and multi-step tool use with thinking on |
@@ -367,7 +419,7 @@ Tavily is how SlopProof checks the outside world, not decoration. Every call goe
 and refuses the endpoints that read today's web during a benchmark replay:
 
 | Endpoint | Used for |
-|---|---|
+|:--|:--|
 | `search` | Every cited CVE (does it exist, is it this project, is it the same bug); prior art (the same issue already reported, fixed or documented); the investigator's `web_search`, optionally limited to the project's own domains. In a replay: `end_date` = the filing date, hackerone.com and the slop-list gist excluded, `search_depth` basic. |
 | `extract` | Every URL a report cites, judged against the claim; the investigator's `read_pages`, which passes a question so only the relevant chunks come back; in live runs, the project's security policy page when its tree has no policy file (the scope check's quote is then checked against that page). |
 | `map` | The investigator's `map_docs`: list a project's documentation pages matching what it looks for (security policy, advisories, an option's docs). |
@@ -389,7 +441,7 @@ analysis and sandbox reproduction in one pipeline; proof bundles that verify wit
 replays each report as of its filing date and checks whether a baseline's stated reasons are true.
 
 | Tool | What it does | Difference |
-|---|---|---|
+|:--|:--|:--|
 | [HackerOne Hai Triage / Agentic Validation](https://www.hackerone.com/press-release/hackerone-unveils-hai-triage-upgraded-ai-powered-vulnerability-response) (2025) | AI agents assess incoming reports in minutes as likely valid, invalid or needing review; [human analysts confirm outcomes and reproduce findings](https://docs.hackerone.com/en/articles/8837878-how-hai-triage-works) | Commercial and tied to the HackerOne platform (curl left it in 2026); reproduction is done by people. SlopProof is open, runs anywhere (including as a GitHub Action), and reproduces in a sandbox |
 | [Elastic's AI triage pipeline](https://www.elastic.co/security-labs/blog/ai-vulnerability-triage-bug-bounty-hackerone) | Analyses HackerOne reports and reproduces them in sandboxed VMs; 85% agreement with engineers on 764 reports, about $2 per report | The closest match. Internal to Elastic and its products, not released. SlopProof is open source, about $0.07 per report for the static path, and publishes a replayable benchmark |
 | [Nikasha](https://pypi.org/project/nikasha/) | Deterministic check of a report's factual claims against the source at the named version, with commit/path/line evidence | Roughly SlopProof's claim-checking step, without web checks, analysis or reproduction |
@@ -427,6 +479,9 @@ anywhere that runs a container (`docker build .`, port 7860).
 
 ## Project layout
 
+<details>
+<summary>Show the source tree</summary>
+
 ```
 src/slopproof/
   llm.py        Token Factory client, model tiers, cost ledger
@@ -447,13 +502,16 @@ web/            single-page UI
 bench/          dataset builder, replay runner, results
 ```
 
+</details>
+
 ## Safety
 
-Reproduction runs untrusted, model-written code. The sandbox has no network (`--network none`), runs as an
-unprivileged user, drops all Linux capabilities, sets `no-new-privileges`, mounts the root filesystem read-only
-(with a small `/tmp` tmpfs), and caps memory, CPU and process count. Each run gets a fresh copy of the source tree
-that is deleted afterwards. A container shares the host kernel, so for anything beyond a demo set
-`SLOPPROOF_RUNTIME=runsc` to run it under [gVisor](https://gvisor.dev), or use a microVM. SlopProof never posts anything; it drafts a reply for a human to send.
+> [!WARNING]
+> Reproduction runs untrusted, model-written code. The sandbox has no network (`--network none`), runs as an
+> unprivileged user, drops all Linux capabilities, sets `no-new-privileges`, mounts the root filesystem read-only
+> (with a small `/tmp` tmpfs), and caps memory, CPU and process count. Each run gets a fresh copy of the source tree
+> that is deleted afterwards. A container shares the host kernel, so for anything beyond a demo set
+> `SLOPPROOF_RUNTIME=runsc` to run it under [gVisor](https://gvisor.dev), or use a microVM. SlopProof never posts anything; it drafts a reply for a human to send.
 
 ## License
 
