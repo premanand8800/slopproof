@@ -176,3 +176,5 @@ svg.tr { display: block; width: 100%; min-width: 640px; height: auto; font-famil
 @media (max-width: 640px) { .hf-row { grid-template-columns: 32px minmax(0, 1fr); } .hf-chips { grid-column: 2; } }
 @media (prefers-reduced-motion: reduce) { .hf *, .hf { transition: none !important; } }
 .hfcard { margin-top: 18px; }
+.hf-row.branch .hf-main { border-left: 2px dashed var(--warn); padding-left: 10px; margin-left: -2px; }
+.hf-cond { margin-top: 3px; font: 600 12px/1.3 var(--f-mono); color: var(--warn); }

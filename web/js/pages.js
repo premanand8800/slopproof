@@ -336,18 +336,20 @@ const HOW_STAGES = [
   { n: "Web evidence", badge: "Tavily + Nemotron 3 Super", desc: "Search, extract, map, crawl, research; judged by Nemotron 3 Super.", chips: [["CVE-2026-8926 verified ✓", "ok"]] },
   { n: "Text screen", badge: "Nemotron 3 Ultra", desc: "Reads the wording only. A vote, never evidence.", chips: [["vote only, never evidence", "n"]] },
   { n: "Static analysis", badge: "Nemotron 3 Ultra", desc: "Reads the real code, traces sizes, bounds and ownership; cites file:line.", chips: [["cites file:line ✓", "ok"]] },
-  { n: "Investigator agent", badge: "Nemotron 3 Ultra + git + Tavily", desc: "Tool calls decide what to look at next; every quote is checked in the code.", chips: [["quote verified in code ✓", "ok"], ["unverified quote dropped ✗", "bad"]] },
   { n: "Sandbox reproduction", badge: "Nemotron 3 Ultra + Docker + AddressSanitizer", desc: "Builds, runs a PoC through the real attack surface, re-runs the proof with a negative control.", chips: [["ASan: heap-use-after-free", "bad"], ["VERIFIED_AND_FIXED", "ok"]] },
-  { n: "Verdict", badge: "hard guards in code", desc: "CONFIRMED, PLAUSIBLE, NOT_REPRODUCED or FABRICATED, with findings.", chips: [["CONFIRMED needs a reproduction", "ok"], ["a close needs a second signal", "n"], ["doubt never closes", "n"]] },
+  { n: "Verdict", badge: "Nemotron 3 Ultra + guards", desc: "CONFIRMED, PLAUSIBLE, NOT_REPRODUCED or FABRICATED, with findings.", chips: [["PLAUSIBLE: still open", "n"]] },
+  { n: "Investigator agent", cond: "only if the verdict is still PLAUSIBLE", badge: "Nemotron 3 Ultra + git + Tavily", desc: "Tool calls decide what to look at next; every quote is checked in the code. Skipped when the verdict is already settled.", chips: [["quote verified in code ✓", "ok"], ["unverified quote dropped ✗", "bad"]] },
+  { n: "Final verdict", badge: "hard guards in code", desc: "The guards run again with the investigator's verified evidence; the verdict model decides again if it found a verified refutation.", chips: [["CONFIRMED needs a reproduction", "ok"], ["a close needs a second signal", "n"], ["doubt never closes", "n"]] },
+  { n: "Tavily feedback", badge: "Tavily", desc: "Tells Tavily which search results the verdict actually cited.", chips: [["cited results scored 1", "n"]] },
 ];
 
 function howFlow(host) {
   const reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
   host.innerHTML = `<div class="hf-top"><span class="muted hf-note">Illustrative walk-through of one report. The chips show the kind of fact each stage records.</span>
     <span class="hf-ctl"><button class="btn" id="hf-pause" type="button">Pause</button><button class="btn" id="hf-replay" type="button">Replay</button></span></div>
-    <ol class="hf" role="list" aria-label="The ten stages a report passes through">${HOW_STAGES.map((s, i) => `<li class="hf-row" data-i="${i}">
+    <ol class="hf" role="list" aria-label="The stages a report passes through">${HOW_STAGES.map((s, i) => `<li class="hf-row${s.cond ? " branch" : ""}" data-i="${i}">
       <span class="hf-dot" aria-hidden="true">${i + 1}</span>
-      <div class="hf-main"><div class="hf-name"><b>${esc(s.n)}</b><span class="hf-badge">${esc(s.badge)}</span></div><div class="hf-desc">${esc(s.desc)}</div></div>
+      <div class="hf-main"><div class="hf-name"><b>${esc(s.n)}</b><span class="hf-badge">${esc(s.badge)}</span></div>${s.cond ? `<div class="hf-cond">↳ ${esc(s.cond)}</div>` : ""}<div class="hf-desc">${esc(s.desc)}</div></div>
       <div class="hf-chips">${s.chips.map(([t, k]) => `<span class="hf-chip ${k}">${esc(t)}</span>`).join("")}</div></li>`).join("")}</ol>`;
   const ol = host.querySelector(".hf"), rows = [...ol.children], pb = $("#hf-pause");
   let cur = -1, timer = null, paused = false;
@@ -375,6 +377,8 @@ ROUTES.how = () => {
       <li><div><b>Reproduce in a sandbox</b><span>A Nemotron 3 Ultra agent builds the project with AddressSanitizer in Docker (no network, read-only root, all capabilities dropped) and triggers the bug through the real attack surface.</span></div></li>
       <li><div><b>Prove it</b><span>A reproduction becomes a proof bundle and is re-run from scratch in a fresh sandbox. Only then can a report be CONFIRMED.</span></div></li>
       <li><div><b>Verdict and reply</b><span>CONFIRMED, PLAUSIBLE, NOT_REPRODUCED or FABRICATED, with findings that cite file:line or a source, and a reply ready to post.</span></div></li>
+      <li><div><b>Investigate, only if the verdict is still open</b><span>A Nemotron 3 Ultra agent with git and every Tavily endpoint decides what to look at next. Its quotes must be verified in the code; a verified refutation can be the second close signal, a verified "claim holds" blocks any close. Then the verdict is decided again.</span></div></li>
+      <li><div><b>Tavily feedback</b><span>After the verdict, each search the run made is told which of its results the verdict or the investigator actually cited.</span></div></li>
     </ol></details>
 <div class="section-title"><h2>Rules the code enforces</h2></div>
     <div class="rules">
