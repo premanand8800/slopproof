@@ -168,6 +168,7 @@ function memTree(host, m) {
   const fi = story.items.map((i) => i.type).lastIndexOf("fact");
   const made = fi >= 0 ? story.items.splice(fi, 1)[0]
     : { type: "fact", label: "fact: parser.c", src: "code (model reading)", f: { file: "parser.c", blob: "a1b2c3d4e5f6" } };
+  const subj = (made.f.subject || made.f.file || "").split(" ")[0], srcShort = String(made.src || "").split(" (")[0];
   const blob7 = (made.f.blob || "").slice(0, 7), mfile = made.f.file || "file";
   const others = names.filter((n) => pj[n] !== story).sort((a, b) => pj[b].items.length - pj[a].items.length).slice(0, 4).map((n) => pj[n]);
   const hidden = names.length - 1 - others.length;
@@ -208,8 +209,9 @@ function memTree(host, m) {
   // step 3: new leaf, with its source and pin
   g += `<path class="edge f3 newe" pathLength="1" d="${curve(300, story.cy, 353, my)}"/>
     <g transform="translate(360 ${my})" class="storyleaf"><g class="nd f3"><circle r="9" class="t-fact"><title>new ${esc(made.label)} (source: ${esc(made.src)})</title></circle><circle r="13" class="halo"/></g>
-    <text class="fd f3" x="18" y="-2" font-size="12" font-weight="600">${esc(short(made.label, 24))}</text>
-    <text class="mu fd f3 pin" x="18" y="12" font-size="10.5">from ${esc(short(made.src, 16))} · pin @${esc(blob7)}</text>
+    <g class="fd f3"><rect class="newb" x="18" y="-14" width="30" height="14" rx="4"/><text class="newt" x="33" y="-4" text-anchor="middle" font-size="9.5" font-weight="700">NEW</text>
+    <text x="53" y="-3" font-size="12" font-weight="600">${esc(short(subj, 22))}</text></g>
+    <text class="mu fd f3 pin" x="18" y="12" font-size="10.5">from ${esc(short(srcShort, 14))} · pin @${esc(blob7)}</text>
     <text class="fd f4 stl" x="18" y="12" font-size="10.5">STALE: ${esc(short(mfile, 14))} changed</text></g>`;
   // step 5: barrier + verdict
   g += `<line class="fd f5 bar" x1="592" y1="8" x2="592" y2="${H - 8}"/>
