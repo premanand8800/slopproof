@@ -333,13 +333,13 @@ const HOW_STAGES = [
   { n: "Extract claims", badge: "Nemotron 3.5 Lightning", desc: "Files, functions, line numbers, quoted code, CVEs, URLs, attack surface.", chips: [["claims extracted", "n"]] },
   { n: "Check claims against the code", badge: "git tree at the report date", desc: "Do the files and functions exist? Is the quoted code real or invented?", chips: [["lib/ws.c exists ✓", "ok"], ["quoted code NOT in tree ✗", "bad"]] },
   { n: "Find the code", badge: "tree-sitter + BM25, no model", desc: "Ranks the project's functions against the report, even when it names none.", chips: [["candidate functions ranked", "n"]] },
-  { n: "Web evidence", badge: "Tavily + Nemotron 3 Super", desc: "Search, extract, map, crawl, research; judged by Nemotron 3 Super.", chips: [["CVE-2026-8926 verified ✓", "ok"]] },
+  { n: "Web evidence", badge: "Tavily + Nemotron 3 Super", desc: "Search, extract, map, crawl, research; judged by Nemotron 3 Super.", chips: [["cited CVE exists, but is a different bug ✗", "bad"]] },
   { n: "Text screen", badge: "Nemotron 3 Ultra", desc: "Reads the wording only. A vote, never evidence.", chips: [["vote only, never evidence", "n"]] },
-  { n: "Static analysis", badge: "Nemotron 3 Ultra", desc: "Reads the real code, traces sizes, bounds and ownership; cites file:line.", chips: [["cites file:line ✓", "ok"]] },
-  { n: "Sandbox reproduction", badge: "Nemotron 3 Ultra + Docker + AddressSanitizer", desc: "Builds, runs a PoC through the real attack surface, re-runs the proof with a negative control.", chips: [["ASan: heap-use-after-free", "bad"], ["VERIFIED_AND_FIXED", "ok"]] },
+  { n: "Static analysis", badge: "Nemotron 3 Ultra", desc: "Reads the real code, traces sizes, bounds and ownership; cites file:line.", chips: [["bounds check at file:line rules it out", "ok"]] },
+  { n: "Sandbox reproduction", badge: "Nemotron 3 Ultra + Docker + AddressSanitizer", desc: "Builds, runs a PoC through the real attack surface, re-runs the proof with a negative control.", chips: [["no AddressSanitizer report in the step budget", "n"], ["not reproduced, so not CONFIRMED", "n"]] },
   { n: "Verdict", badge: "Nemotron 3 Ultra + guards", desc: "CONFIRMED, PLAUSIBLE, NOT_REPRODUCED or FABRICATED, with findings.", chips: [["PLAUSIBLE: still open", "n"]] },
   { n: "Investigator agent", cond: "only if the verdict is still PLAUSIBLE", badge: "Nemotron 3 Ultra + git + Tavily", desc: "Tool calls decide what to look at next; every quote is checked in the code. Skipped when the verdict is already settled.", chips: [["quote verified in code ✓", "ok"], ["unverified quote dropped ✗", "bad"]] },
-  { n: "Final verdict", badge: "hard guards in code", desc: "The guards run again with the investigator's verified evidence; the verdict model decides again if it found a verified refutation.", chips: [["CONFIRMED needs a reproduction", "ok"], ["a close needs a second signal", "n"], ["doubt never closes", "n"]] },
+  { n: "Final verdict", badge: "hard guards in code", desc: "The guards run again with the investigator's verified evidence; the verdict model decides again if it found a verified refutation.", chips: [["FABRICATED, with verified quotes", "bad"], ["CONFIRMED needs a reproduction", "n"], ["a close needs a second signal", "n"], ["doubt never closes", "n"]] },
   { n: "Tavily feedback", badge: "Tavily", desc: "Tells Tavily which search results the verdict actually cited.", chips: [["cited results scored 1", "n"]] },
 ];
 
