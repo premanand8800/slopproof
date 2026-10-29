@@ -114,3 +114,36 @@ pre.diff .dh { color: var(--muted); }
 .mdet { margin-top: 16px; } .mdet summary { display: flex; align-items: baseline; justify-content: space-between; cursor: pointer; padding: 8px 0; }
 .mdet summary h2 { font-size: 18px; margin: 0; display: inline; }
 .mdet > .card { margin-top: 6px; }
+
+/* Animated memory tree */
+.mt-cap { min-height: 3.1em; font-size: 14px; color: var(--ink-2); margin-bottom: 8px; }
+.mt-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+svg.tr { display: block; width: 100%; min-width: 640px; height: auto; font-family: "IBM Plex Sans", system-ui, sans-serif; }
+.tr text { fill: var(--ink); } .tr text.mu, .tr .mu { fill: var(--muted); } .tr .rt { fill: var(--accent-ink); }
+.tr .root { fill: var(--accent); }
+.tr .pill { fill: var(--card-2); stroke: var(--line-2); stroke-width: 1.5; } .tr .pill.sp { stroke: var(--accent); }
+.tr .rpt { fill: var(--card-2); stroke: var(--accent); stroke-width: 1.5; stroke-dasharray: 4 3; }
+.tr .vd { fill: var(--card-2); stroke: var(--ink-2); stroke-width: 1.5; }
+.tr .t-fact { fill: var(--ok); } .tr .t-skill { fill: var(--accent); } .tr .t-lesson { fill: var(--fab); }
+.tr .halo { fill: none; stroke: var(--warn); stroke-width: 2; opacity: 0; transition: opacity .6s; }
+.tr.on-4 .halo { opacity: 1; }
+.tr .storyleaf .t-fact { transition: fill .6s; } .tr.on-4 .storyleaf .t-fact { fill: var(--warn); }
+.tr .stl { fill: var(--warn); font-weight: 600; }
+.tr .edge { fill: none; stroke: var(--line-2); stroke-width: 2; stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset 1s ease, stroke .4s; }
+.tr .rep { stroke: var(--accent); } .tr .newe { stroke: var(--ok); }
+.tr[data-cur="2"] .rec { stroke: var(--accent); stroke-width: 3.5; }
+.tr .bar { stroke: var(--bad); stroke-width: 2; stroke-dasharray: 6 5; }
+.tr .xs { stroke: var(--bad); stroke-width: 2.5; fill: none; stroke-linecap: round; }
+.tr .nd { opacity: 0; transform: scale(.4); transform-box: fill-box; transform-origin: center; transition: opacity .6s, transform .6s cubic-bezier(.2, 1.4, .4, 1); }
+.tr .fd { opacity: 0; transition: opacity .6s; }
+.tr .ring { fill: none; stroke: var(--accent); stroke-width: 3; opacity: 0; transform-box: fill-box; transform-origin: center; }
+.tr[data-cur="2"] .ring { animation: mpulse 1.1s ease-out 3; }
+@keyframes mpulse { from { opacity: .9; transform: scale(1); } to { opacity: 0; transform: scale(1.35); } }
+.tr.on-1 .f1.nd { opacity: 1; transform: none; } .tr.on-1 .f1.edge { stroke-dashoffset: 0; } .tr.on-1 .f1.fd { opacity: 1; }
+.tr.on-2 .f2.nd { opacity: 1; transform: none; } .tr.on-2 .f2.edge { stroke-dashoffset: 0; } .tr.on-2 .f2.fd { opacity: 1; }
+.tr.on-3 .f3.nd { opacity: 1; transform: none; } .tr.on-3 .f3.edge { stroke-dashoffset: 0; } .tr.on-3 .f3.fd { opacity: 1; }
+.tr.on-4 .f4.nd { opacity: 1; transform: none; } .tr.on-4 .f4.edge { stroke-dashoffset: 0; } .tr.on-4 .f4.fd { opacity: 1; }
+.tr.on-5 .f5.nd { opacity: 1; transform: none; } .tr.on-5 .f5.edge { stroke-dashoffset: 0; } .tr.on-5 .f5.fd { opacity: 1; }
+.tr.on-4 .f3.fd.pin { opacity: 0; }
+.mt-ctl { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 10px; font-size: 12.5px; }
+@media (prefers-reduced-motion: reduce) { .tr *, .tr { transition: none !important; animation: none !important; } }

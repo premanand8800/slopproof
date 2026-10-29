@@ -150,17 +150,103 @@ ROUTES.proof = async (parts) => {
 
 
 // ---- Memory page graphs (inline SVG, theme tokens only) ----
-const MEM_FLOW = `<div class="mflow" role="group" aria-label="How memory works: read path and write path">
-  <div class="mrow"><span class="mtag">Read</span>
-    <div class="mbox">Report arrives</div><i class="marr" aria-hidden="true"></i>
-    <div class="mbox">Recall by project and area</div><i class="marr" aria-hidden="true"></i>
-    <div class="mbox">Helps search and build</div><i class="marr stop" aria-hidden="true"></i>
-    <div class="mbox no">Never decides a verdict</div></div>
-  <div class="mrow"><span class="mtag w">Write</span>
-    <div class="mbox">Hard check passes<small>build worked, code line exists, proof re-ran</small></div><i class="marr" aria-hidden="true"></i>
-    <div class="mbox">Stored with its source</div><i class="marr" aria-hidden="true"></i>
-    <div class="mbox">Pinned to a file version</div><i class="marr" aria-hidden="true"></i>
-    <div class="mbox warn">Turns stale when the file changes</div></div></div>`;
+// Animated memory tree: real projects/facts/skills/lessons from the API, with a scripted (replay) story over them.
+function memTree(host, m) {
+  const short = (t, n) => ((t = String(t || "")).length > n ? t.slice(0, n - 1) + "…" : t);
+  const reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const pj = {};
+  const P = (k) => (pj[k] = pj[k] || { name: k, items: [], verdict: null });
+  m.skills.forEach((x) => P(x.project).items.push({ type: "skill", label: `skill: ${x.kind} recipe`, src: x.source }));
+  m.facts.forEach((x) => P(x.project).items.push({ type: "fact", label: `fact: ${x.file || x.subject}`, src: x.source, f: x }));
+  m.lessons.forEach((x) => P(x.project === "*" ? "all projects" : x.project).items.push({ type: "lesson", label: `lesson: ${(x.trigger || "review").split(",")[0]}`, src: x.source }));
+  m.episodes.forEach((e) => { const o = P(e.project); if (!o.verdict) o.verdict = e.verdict; });
+  const names = Object.keys(pj);
+  if (!names.length) { host.innerHTML = `<p class="muted" style="margin:0">Nothing stored yet: memory starts empty and grows after the first hard check passes.</p>`; return; }
+  const score = (p) => (p.items.some((i) => i.type === "skill") ? 2 : 0) + (p.items.some((i) => i.type === "fact") ? 2 : 0) + (p.verdict ? 1 : 0);
+  const story = pj[names.slice().sort((a, b) => score(pj[b]) - score(pj[a]))[0]];
+  // the story's newest fact is held back and "created" at step 3
+  const fi = story.items.map((i) => i.type).lastIndexOf("fact");
+  const made = fi >= 0 ? story.items.splice(fi, 1)[0]
+    : { type: "fact", label: "fact: parser.c", src: "code (model reading)", f: { file: "parser.c", blob: "a1b2c3d4e5f6" } };
+  const blob7 = (made.f.blob || "").slice(0, 7), mfile = made.f.file || "file";
+  const others = names.filter((n) => pj[n] !== story).sort((a, b) => pj[b].items.length - pj[a].items.length).slice(0, 4).map((n) => pj[n]);
+  const hidden = names.length - 1 - others.length;
+  const order = [...others, story];
+  let y = 22;
+  order.forEach((p) => {
+    const uniq = []; const t = new Set();
+    p.items.forEach((i) => { if (!t.has(i.type)) { t.add(i.type); uniq.push(i); } });
+    p.shown = [...uniq, ...p.items.filter((i) => !uniq.includes(i))].slice(0, 2);
+    p.more = p.items.length - p.shown.length;
+    const rows = p.shown.length + (p.more ? 1 : 0) + (p === story ? 1 : 0);
+    const h = Math.max(rows * 28, 36);
+    p.top = y + (h - rows * 28) / 2; p.cy = y + h / 2; y += h + 12;
+  });
+  const H = Math.round(y + 44), W = 760, rootY = order.reduce((a, p) => a + p.cy, 0) / order.length;
+  const curve = (x1, y1, x2, y2) => `M${x1} ${y1} C${(x1 + x2) / 2} ${y1} ${(x1 + x2) / 2} ${y2} ${x2} ${y2}`;
+  const leafY = (p, i) => p.top + i * 28 + 14;
+  let g = "";
+  order.forEach((p) => {
+    g += `<path class="edge f1" pathLength="1" d="${curve(80, rootY, 150, p.cy)}"><title>${esc(p.name)} branch</title></path>`;
+    p.shown.forEach((it, i) => {
+      const ly = leafY(p, i);
+      g += `<path class="edge f1${p === story ? " rec" : ""}" pathLength="1" d="${curve(300, p.cy, 353, ly)}"/>
+        <g transform="translate(360 ${ly})"><g class="nd f1"><circle r="7" class="t-${it.type}"><title>${esc(it.label)} (source: ${esc(it.src)})</title></circle>
+        <text x="14" y="4" font-size="12">${esc(short(it.label, 26))}</text></g></g>`;
+    });
+    if (p.more) g += `<text class="mu fd f1" x="374" y="${leafY(p, p.shown.length + (p === story ? 1 : 0)) + 4}" font-size="11">+${p.more} more</text>`;
+    g += `<g transform="translate(150 ${p.cy - 14})"><g class="nd f1">${p === story ? `<rect class="ring" width="150" height="28" rx="14"/>` : ""}
+      <rect class="pill${p === story ? " sp" : ""}" width="150" height="28" rx="14"><title>${esc(p.name)}</title></rect><text x="75" y="18" text-anchor="middle" font-size="12" font-weight="600">${esc(short(p.name, 20))}</text></g></g>`;
+  });
+  const my = leafY(story, story.shown.length);
+  g += `<g transform="translate(50 ${rootY})"><circle r="30" class="root"/><text text-anchor="middle" y="4" class="rt" font-size="12" font-weight="700">Memory</text></g>`;
+  // step 2: report + recall
+  const ry = story.cy + 28;
+  g += `<path class="edge f2 rep" pathLength="1" d="${curve(98, ry, 150, story.cy + 6)}"/>
+    <g transform="translate(8 ${ry - 13})"><g class="nd f2"><rect class="rpt" width="90" height="26" rx="8"/><text x="45" y="17" text-anchor="middle" font-size="12" font-weight="600">Report</text></g></g>
+    <text class="mu fd f2" x="8" y="${ry + 26}" font-size="10.5">replay, then recall</text>`;
+  // step 3: new leaf, with its source and pin
+  g += `<path class="edge f3 newe" pathLength="1" d="${curve(300, story.cy, 353, my)}"/>
+    <g transform="translate(360 ${my})" class="storyleaf"><g class="nd f3"><circle r="9" class="t-fact"><title>new ${esc(made.label)} (source: ${esc(made.src)})</title></circle><circle r="13" class="halo"/></g>
+    <text class="fd f3" x="18" y="-2" font-size="12" font-weight="600">${esc(short(made.label, 24))}</text>
+    <text class="mu fd f3 pin" x="18" y="12" font-size="10.5">from ${esc(short(made.src, 16))} · pin @${esc(blob7)}</text>
+    <text class="fd f4 stl" x="18" y="12" font-size="10.5">STALE: ${esc(short(mfile, 14))} changed</text></g>`;
+  // step 5: barrier + verdict
+  g += `<line class="fd f5 bar" x1="592" y1="8" x2="592" y2="${H - 8}"/>
+    <text class="fd f5 mu" x="604" y="16" font-size="10.5">memory never decides</text>
+    <path class="xs fd f5" d="M562 ${my} H586 M586 ${my - 6} L598 ${my + 6} M598 ${my - 6} L586 ${my + 6}"/>
+    <g transform="translate(612 ${my - 22})"><g class="nd f5"><rect class="vd" width="140" height="44" rx="10"/><text x="70" y="19" text-anchor="middle" font-size="12" font-weight="700">Verdict</text>
+    <text x="70" y="34" text-anchor="middle" font-size="10.5" class="mu">${esc(short(story.verdict ? story.verdict.toLowerCase().replace("_", " ") + ", from evidence" : "decided from evidence", 24))}</text></g></g>`;
+  const recalled = story.shown.map((i) => i.label).join(", ") || "nothing yet";
+  const cnt = (a) => a.length;
+  const caps = [
+    `Memory grows one branch per project: ${names.length} projects, ${cnt(m.skills)} skills, ${cnt(m.facts)} facts, ${cnt(m.lessons)} lessons (real data).`,
+    `Replay: a report about ${story.name} arrives. Memory recalls what it has: ${recalled}.`,
+    `A hard check passes (build worked, code line exists, proof re-ran), so a new fact is stored with its source: ${made.src}.`,
+    `The pinned file ${mfile} changes (pin @${blob7} no longer matches). The fact turns stale until a run sees it again.`,
+    `The verdict comes from evidence, outside memory. Memory edges stop at the barrier: it never decides.`];
+  const desc = "Animated tree. " + caps.join(" ");
+  host.innerHTML = `<div class="mt-cap" id="mt-cap" aria-live="polite"></div>
+    <div class="mt-scroll"><svg class="tr" viewBox="0 0 ${W} ${H}" role="img" aria-labelledby="mt-t mt-d" data-cur="0"><title id="mt-t">How memory grows and stops short of the verdict</title><desc id="mt-d">${esc(desc)}</desc>${g}</svg></div>
+    <div class="mt-ctl"><button class="btn" id="mt-pause" type="button">Pause</button><button class="btn" id="mt-replay" type="button">Replay</button><span class="muted" id="mt-ind"></span>
+    <span class="mlegend" style="margin:0 0 0 auto"><span><i class="sw c-fresh"></i>fact</span><span><i class="sw c-skill"></i>skill</span><span><i class="sw c-lesson"></i>lesson</span><span><i class="sw c-stale"></i>stale</span></span></div>
+    ${hidden > 0 ? `<p class="muted" style="margin:8px 0 0;font-size:12px">${hidden} more project${hidden > 1 ? "s" : ""} not drawn.</p>` : ""}`;
+  const svg = host.querySelector("svg"), cap = $("#mt-cap"), ind = $("#mt-ind"), sc = host.querySelector(".mt-scroll"), pb = $("#mt-pause");
+  const D = [900, 4200, 4800, 4800, 4200, 5600];
+  let step = 0, timer = null, paused = false;
+  const set = (n) => {
+    step = n; svg.dataset.cur = n;
+    for (let k = 1; k <= 5; k++) svg.classList.toggle("on-" + k, k <= n);
+    cap.textContent = n ? caps[n - 1] : "Memory, replayed on real data.";
+    ind.textContent = n ? `step ${n} of 5 · replay` : "replay";
+    if (!reduce && sc.scrollWidth > sc.clientWidth + 4) sc.scrollTo({ left: n >= 5 ? 9999 : n >= 3 ? 100 : 0, behavior: "smooth" });
+  };
+  const sched = () => { clearTimeout(timer); timer = setTimeout(() => { if (!svg.isConnected) return; set((step + 1) % 6); sched(); }, D[step]); };
+  if (reduce) { set(5); host.querySelector(".mt-ctl button").style.display = "none"; $("#mt-replay").style.display = "none"; ind.textContent = "final state (reduced motion)"; return; }
+  pb.onclick = () => { paused = !paused; pb.textContent = paused ? "Play" : "Pause"; paused ? clearTimeout(timer) : sched(); };
+  $("#mt-replay").onclick = () => { paused = false; pb.textContent = "Pause"; set(0); sched(); };
+  set(0); sched();
+}
 
 function memBar(parts, label, max) {
   // parts: [{v, cls, name}] drawn as percentage rects inside one responsive SVG
@@ -210,7 +296,7 @@ function memCharts(m) {
     ${memLegend(Object.keys(vc).map((v) => [vc[v], v.toLowerCase().replace("_", " ")]))}` : `<p class="muted" style="margin:0">No runs remembered yet.</p>`;
 
   const card = (t, sub, body) => `<div class="card mcard"><h3>${t}</h3><p class="muted msub">${sub}</p>${body}</div>`;
-  return `<div class="section-title"><h2>How memory works</h2></div><div class="card">${MEM_FLOW}</div>
+  return `<div class="section-title"><h2>How memory works</h2></div><div class="card mtcard" id="mtree"></div>
     <div class="section-title"><h2>What is stored</h2></div>
     <div class="mgrid">${card("Stored per project", "Count of items by type. Facts are fresh until the pinned file changes.", stored)}
     ${card("Skills: worked vs failed", "Procedures that worked, ranked by net wins.", skills)}
@@ -237,6 +323,7 @@ ROUTES.memory = async () => {
       `${esc(x.project)} · triggers: ${esc(x.trigger)} · from ${esc(x.source)} · used ${x.uses}×<br>${esc(x.evidence)}`), "No lessons yet.") +
     section("Episodes (runs remembered)", m.episodes, (e) => fact("meh", `<b>${esc(e.project)}</b> · ${esc(e.title)}`,
       `${esc(e.verdict)} · sandbox: ${esc(e.repro || "not run")} · ${e.steps} commands · $${(e.cost || 0).toFixed(3)} · ${ago(e.ts)}`), "No runs remembered yet.");
+  memTree($("#mtree"), m);
 };
 
 ROUTES.how = () => {
