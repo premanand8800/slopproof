@@ -148,6 +148,75 @@ ROUTES.proof = async (parts) => {
   return () => es && es.close();
 };
 
+
+// ---- Memory page graphs (inline SVG, theme tokens only) ----
+const MEM_FLOW = `<div class="mflow" role="group" aria-label="How memory works: read path and write path">
+  <div class="mrow"><span class="mtag">Read</span>
+    <div class="mbox">Report arrives</div><i class="marr" aria-hidden="true"></i>
+    <div class="mbox">Recall by project and area</div><i class="marr" aria-hidden="true"></i>
+    <div class="mbox">Helps search and build</div><i class="marr stop" aria-hidden="true"></i>
+    <div class="mbox no">Never decides a verdict</div></div>
+  <div class="mrow"><span class="mtag w">Write</span>
+    <div class="mbox">Hard check passes<small>build worked, code line exists, proof re-ran</small></div><i class="marr" aria-hidden="true"></i>
+    <div class="mbox">Stored with its source</div><i class="marr" aria-hidden="true"></i>
+    <div class="mbox">Pinned to a file version</div><i class="marr" aria-hidden="true"></i>
+    <div class="mbox warn">Turns stale when the file changes</div></div></div>`;
+
+function memBar(parts, label, max) {
+  // parts: [{v, cls, name}] drawn as percentage rects inside one responsive SVG
+  const total = max || parts.reduce((a, p) => a + p.v, 0) || 1;
+  let x = 0, rects = "";
+  for (const p of parts) { if (!p.v) continue; const w = (p.v / total) * 100; rects += `<rect x="${x}%" y="0" width="${w}%" height="100%" class="${p.cls}"><title>${esc(p.name)}: ${p.v}</title></rect>`; x += w; }
+  return `<svg class="mbar" role="img" aria-label="${esc(label)}" preserveAspectRatio="none"><title>${esc(label)}</title><rect width="100%" height="100%" class="bg"/>${rects}</svg>`;
+}
+function memLegend(items) { return `<div class="mlegend">${items.map(([c, n]) => `<span><i class="sw ${c}"></i>${n}</span>`).join("")}</div>`; }
+
+function memCharts(m) {
+  const isStale = (f) => f.stale === true || (f.status && f.status !== "active");
+  const proj = {};
+  const get = (k) => (proj[k] = proj[k] || { skills: 0, fresh: 0, stale: 0, lessons: 0 });
+  m.skills.forEach((s) => get(s.project).skills++);
+  m.facts.forEach((f) => (isStale(f) ? get(f.project).stale++ : get(f.project).fresh++));
+  m.lessons.forEach((l) => get(l.project === "*" ? "all projects" : l.project).lessons++);
+  const names = Object.keys(proj).sort((a, b) => (proj[b].skills + proj[b].fresh + proj[b].stale + proj[b].lessons) - (proj[a].skills + proj[a].fresh + proj[a].stale + proj[a].lessons));
+  const tot = (p) => p.skills + p.fresh + p.stale + p.lessons;
+  const max = Math.max(1, ...names.map((n) => tot(proj[n])));
+  const stored = names.length ? `<div class="mchart">${names.map((n) => { const p = proj[n];
+    return `<div class="mrw"><div class="ml" title="${esc(n)}">${esc(n)}</div>${memBar([
+      { v: p.skills, cls: "c-skill", name: "skills" }, { v: p.fresh, cls: "c-fresh", name: "fresh facts" },
+      { v: p.stale, cls: "c-stale", name: "stale facts" }, { v: p.lessons, cls: "c-lesson", name: "lessons" }],
+      `${n}: ${p.skills} skills, ${p.fresh} fresh facts, ${p.stale} stale facts, ${p.lessons} lessons`, max)}<div class="mv">${tot(p)}</div></div>`; }).join("")}</div>
+    ${memLegend([["c-skill", "skills"], ["c-fresh", "fresh facts"], ["c-stale", "stale facts (file changed)"], ["c-lesson", "lessons"]])}`
+    : `<p class="muted" style="margin:0">Nothing stored yet.</p>`;
+
+  const sk = m.skills.slice().sort((a, b) => (b.successes - b.failures) - (a.successes - a.failures));
+  const smax = Math.max(1, ...sk.map((s) => Math.max(s.successes, s.failures)));
+  const skills = sk.length ? `<div class="mchart">${sk.map((s) => { const lab = `${s.project} · ${s.kind}`;
+    const fw = (s.failures / smax) * 50, sw = (s.successes / smax) * 50;
+    return `<div class="mrw"><div class="ml" title="${esc(s.title)}">${esc(lab)}</div>
+      <svg class="mbar" role="img" aria-label="${esc(`${lab}: worked ${s.successes} times, failed ${s.failures} times`)}" preserveAspectRatio="none"><title>${esc(`${lab}: worked ${s.successes}, failed ${s.failures}`)}</title>
+      <rect width="100%" height="100%" class="bg"/><rect x="${50 - fw}%" width="${fw}%" height="100%" class="c-bad"/><rect x="50%" width="${sw}%" height="100%" class="c-fresh"/><rect x="50%" width="1.5" height="100%" class="ax" transform="translate(-.75 0)"/></svg>
+      <div class="mv"><span class="bd">${s.failures}</span> / <span class="gd">${s.successes}</span></div></div>`; }).join("")}</div>
+    ${memLegend([["c-bad", "failed (left)"], ["c-fresh", "worked (right)"]])}`
+    : `<p class="muted" style="margin:0">No skills yet: a build or proof has to succeed first.</p>`;
+
+  const vc = { CONFIRMED: "c-fresh", PLAUSIBLE: "c-stale", NOT_REPRODUCED: "c-skill", FABRICATED: "c-lesson" };
+  const ep = {}; m.episodes.forEach((e) => { const o = (ep[e.project] = ep[e.project] || {}); o[e.verdict] = (o[e.verdict] || 0) + 1; });
+  const en = Object.keys(ep).sort((a, b) => Object.values(ep[b]).reduce((x, y) => x + y, 0) - Object.values(ep[a]).reduce((x, y) => x + y, 0));
+  const emax = Math.max(1, ...en.map((n) => Object.values(ep[n]).reduce((x, y) => x + y, 0)));
+  const eps = en.length ? `<div class="mchart">${en.map((n) => { const parts = Object.keys(vc).map((v) => ({ v: ep[n][v] || 0, cls: vc[v], name: v }));
+    const t = parts.reduce((a, p) => a + p.v, 0);
+    return `<div class="mrw"><div class="ml" title="${esc(n)}">${esc(n)}</div>${memBar(parts, `${n}: ` + parts.filter((p) => p.v).map((p) => `${p.v} ${p.name}`).join(", "), emax)}<div class="mv">${t}</div></div>`; }).join("")}</div>
+    ${memLegend(Object.keys(vc).map((v) => [vc[v], v.toLowerCase().replace("_", " ")]))}` : `<p class="muted" style="margin:0">No runs remembered yet.</p>`;
+
+  const card = (t, sub, body) => `<div class="card mcard"><h3>${t}</h3><p class="muted msub">${sub}</p>${body}</div>`;
+  return `<div class="section-title"><h2>How memory works</h2></div><div class="card">${MEM_FLOW}</div>
+    <div class="section-title"><h2>What is stored</h2></div>
+    <div class="mgrid">${card("Stored per project", "Count of items by type. Facts are fresh until the pinned file changes.", stored)}
+    ${card("Skills: worked vs failed", "Procedures that worked, ranked by net wins.", skills)}
+    ${card("Runs remembered, by verdict", "Each run is kept as an episode, labelled with its verdict.", eps)}</div>`;
+}
+
 ROUTES.memory = async () => {
   app.innerHTML = `<div class="page-head"><h1>Memory</h1>
     <p>What SlopProof remembers across runs, modelled on how people remember, with the safeguards triage needs.
@@ -157,9 +226,9 @@ ROUTES.memory = async () => {
     verdict, and benchmark runs do not use it.</p></div><div id="m-body"><div class="card"><div class="skeleton"></div></div></div>`;
   if (STATIC) { $("#m-body").innerHTML = `<div class="card muted">Memory lives on the server that runs triage; this static copy has none.</div>`; return; }
   const m = await getJSON("/api/memory");
-  const section = (title, rows, render, empty) => `<div class="section-title"><h2>${title}</h2><span class="muted" style="font-size:13px">${rows.length}</span></div>
-    <div class="card" style="padding:16px">${rows.length ? `<div class="facts" style="margin-top:0">${rows.map(render).join("")}</div>` : `<p class="muted" style="margin:0">${empty}</p>`}</div>`;
-  $("#m-body").innerHTML = `<p class="muted">Mode: <b>${esc(m.mode)}</b></p>` +
+  const section = (title, rows, render, empty) => `<details class="mdet"><summary><h2>${title}</h2><span class="muted" style="font-size:13px">${rows.length}</span></summary>
+    <div class="card" style="padding:16px">${rows.length ? `<div class="facts" style="margin-top:0">${rows.map(render).join("")}</div>` : `<p class="muted" style="margin:0">${empty}</p>`}</div></details>`;
+  $("#m-body").innerHTML = `<p class="muted">Mode: <b>${esc(m.mode)}</b></p>` + memCharts(m) + `<div class="section-title"><h2>Details</h2></div>` +
     section("Skills (procedures that worked)", m.skills, (s) => fact("good", `<b>${esc(s.project)}</b> · ${esc(s.kind)}: ${esc(s.title)}`,
       `<pre style="font-size:12px;margin-top:4px">${esc(s.body)}</pre>worked ${s.successes}× · failed ${s.failures}× · source: ${esc(s.source)}`), "No skills yet: a build or proof has to succeed first.") +
     section("Facts (pinned to code)", m.facts, (f) => fact("meh", `<b>${esc(f.project)}</b> · <code>${esc(f.subject)}</code>`,

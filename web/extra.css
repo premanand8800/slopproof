@@ -79,3 +79,38 @@ html.pal-open { overflow: hidden; }
 pre.diff .da { color: var(--ok); background: var(--ok-soft); display: inline-block; min-width: 100%; }
 pre.diff .dd { color: var(--bad); background: var(--bad-soft); display: inline-block; min-width: 100%; }
 pre.diff .dh { color: var(--muted); }
+
+/* Memory page graphs */
+.mflow { display: grid; gap: 14px; }
+.mrow { display: flex; flex-wrap: wrap; align-items: stretch; gap: 8px; }
+.mtag { flex: 0 0 52px; align-self: center; font: 600 12px "IBM Plex Mono", monospace; text-transform: uppercase; color: var(--accent); }
+.mtag.w { color: var(--ok); }
+.mbox { flex: 1 1 130px; min-width: 0; padding: 10px 12px; border: 1px solid var(--line-2); border-radius: 10px; background: var(--card-2); font-size: 13.5px; font-weight: 600; }
+.mbox small { display: block; margin-top: 3px; font-weight: 400; font-size: 12px; color: var(--muted); }
+.mbox.no { border-color: var(--bad); background: var(--bad-soft); color: var(--bad); }
+.mbox.warn { border-color: var(--warn); background: var(--warn-soft); color: var(--warn); }
+.marr { flex: 0 0 18px; align-self: center; height: 2px; background: var(--muted); position: relative; }
+.marr::after { content: ""; position: absolute; right: -1px; top: -4px; border: 5px solid transparent; border-left: 7px solid var(--muted); border-right: 0; }
+.marr.stop { background: var(--bad); } .marr.stop::after { border-left-color: var(--bad); }
+@media (max-width: 640px) {
+  .mtag { flex-basis: 100%; } .mbox { flex-basis: 100%; }
+  .marr { flex: 0 0 2px; height: 14px; margin-left: 20px; margin-right: calc(100% - 22px); }
+  .marr::after { right: auto; top: auto; left: -4px; bottom: -1px; border: 5px solid transparent; border-left-color: transparent; border-left-width: 5px; border-top: 7px solid var(--muted); border-bottom: 0; }
+  .marr.stop::after { border-top-color: var(--bad); }
+}
+.mgrid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr)); }
+.mcard { min-width: 0; padding: 18px; } .mcard h3 { margin: 0; font-size: 16px; } .msub { margin: 2px 0 12px; font-size: 13px; }
+.mchart { display: grid; gap: 8px; }
+.mrw { display: grid; grid-template-columns: minmax(90px, 42%) minmax(0, 1fr) auto; align-items: center; gap: 8px; font-size: 12.5px; }
+.ml { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink-2); }
+.mv { min-width: 34px; text-align: right; font: 12px "IBM Plex Mono", monospace; color: var(--ink-2); }
+.mv .bd { color: var(--bad); } .mv .gd { color: var(--ok); }
+.mbar { width: 100%; height: 18px; display: block; border-radius: 4px; overflow: hidden; }
+.mbar .bg { fill: var(--card-2); } .mbar .ax { fill: var(--muted); }
+.c-skill { fill: var(--accent); background: var(--accent); } .c-fresh { fill: var(--ok); background: var(--ok); }
+.c-stale { fill: var(--warn); background: var(--warn); } .c-lesson { fill: var(--fab); background: var(--fab); } .c-bad { fill: var(--bad); background: var(--bad); }
+.mlegend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 12px; font-size: 12px; color: var(--ink-2); }
+.mlegend .sw { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; }
+.mdet { margin-top: 16px; } .mdet summary { display: flex; align-items: baseline; justify-content: space-between; cursor: pointer; padding: 8px 0; }
+.mdet summary h2 { font-size: 18px; margin: 0; display: inline; }
+.mdet > .card { margin-top: 6px; }
